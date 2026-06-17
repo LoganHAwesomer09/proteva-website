@@ -33,10 +33,16 @@
   .avatar { width: 32px; height: 32px; border-radius: 50%; background: #E1F5EE; color: #0F6E56; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
   .logout-btn { background: transparent; border: 1.5px solid #ddd; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #555; }
   .logout-btn:hover { border-color: #1D9E75; color: #1D9E75; }
-  .banner { background: #E1F5EE; border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 14px; }
+  .banner { border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 14px; transition: background 0.3s; }
+  .banner.all-safe { background: #E1F5EE; }
+  .banner.needs-review { background: #FAEEDA; }
   .banner-icon { font-size: 30px; }
-  .banner h2 { font-size: 17px; color: #085041; margin: 0; }
-  .banner p { font-size: 13px; color: #0F6E56; margin: 2px 0 0; }
+  .banner.all-safe h2 { color: #085041; }
+  .banner.all-safe p { color: #0F6E56; }
+  .banner.needs-review h2 { color: #633806; }
+  .banner.needs-review p { color: #854F0B; }
+  .banner h2 { font-size: 17px; margin: 0; }
+  .banner p { font-size: 13px; margin: 2px 0 0; }
   .section-head { display: flex; justify-content: space-between; align-items: center; margin: 0 0 12px; }
   .section-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin: 0; }
   .add-btn { background: #E1F5EE; color: #0F6E56; border: none; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
@@ -46,8 +52,9 @@
   .m-info { flex: 1; }
   .m-name { font-size: 15px; font-weight: 600; margin: 0; }
   .m-detail { font-size: 13px; color: #888; margin: 2px 0 0; }
-  .badge { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
-  .badge.safe { background: #E1F5EE; color: #0F6E56; }
+  .status-select { border: 1.5px solid #eee; border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 600; cursor: pointer; outline: none; background: #fff; }
+  .status-select.safe { color: #0F6E56; border-color: #9FE1CB; background: #F4FBF8; }
+  .status-select.review { color: #854F0B; border-color: #FAC775; background: #FFFBF3; }
   .m-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 18px; padding: 0 4px; }
   .m-delete:hover { color: #A32D2D; }
   .empty { text-align: center; padding: 2.5rem 1rem; color: #999; font-size: 14px; background: #fff; border: 1px dashed #ddd; border-radius: 14px; }
@@ -92,8 +99,8 @@
     </div>
   </div>
 
-  <div class="banner">
-    <span class="banner-icon">🛡️</span>
+  <div class="banner all-safe" id="banner">
+    <span class="banner-icon" id="banner-icon">🛡️</span>
     <div>
       <h2 id="banner-title">Everyone is safe today</h2>
       <p id="banner-sub">Loading your family...</p>
@@ -184,29 +191,62 @@
     loadMembers();
   }
 
+  function updateBanner(people){
+    const banner=document.getElementById('banner');
+    const icon=document.getElementById('banner-icon');
+    const title=document.getElementById('banner-title');
+    const sub=document.getElementById('banner-sub');
+    const count=people.length;
+    const needsReview=people.filter(p=>p.status==='review').length;
+
+    if(count===0){
+      banner.className='banner all-safe'; icon.textContent='🛡️';
+      title.textContent='Everyone is safe today';
+      sub.textContent='Add your first family member to get started';
+      return;
+    }
+    if(needsReview>0){
+      banner.className='banner needs-review'; icon.textContent='⚠️';
+      title.textContent=needsReview+' family member'+(needsReview>1?'s need':' needs')+' a look';
+      sub.textContent='Tap their status to review · '+count+' protected total';
+    }else{
+      banner.className='banner all-safe'; icon.textContent='🛡️';
+      title.textContent='Everyone is safe today';
+      sub.textContent=count+' family member'+(count>1?'s':'')+' protected · last checked just now';
+    }
+  }
+
   async function loadMembers(){
     const list=document.getElementById('member-list');
     const {data,error}=await sb.from('protected_people').select('*').order('created_at',{ascending:true});
     if(error){list.innerHTML='<div class="empty">Could not load your family. Please refresh.</div>';return;}
-    const count=data.length;
-    document.getElementById('banner-sub').textContent = count===0 ? 'Add your first family member to get started' : count+' family member'+(count>1?'s':'')+' protected · last checked just now';
-    if(count===0){
+    updateBanner(data);
+    if(data.length===0){
       list.innerHTML='<div class="empty">No family members yet.<br>Click "+ Add family member" to add someone you want to protect.</div>';
       return;
     }
     list.innerHTML=data.map(p=>{
       const initials=p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
-      const device=p.device?p.device+' · safe and protected':'safe and protected';
+      const device=p.device?p.device+' · protected':'protected';
+      const st=p.status||'safe';
       return '<div class="member">'+
         '<span class="m-avatar">'+initials+'</span>'+
         '<div class="m-info"><p class="m-name">'+escapeHtml(p.name)+'</p><p class="m-detail">'+escapeHtml(device)+'</p></div>'+
-        '<span class="badge safe">✓ Safe</span>'+
+        '<select class="status-select '+(st==='review'?'review':'safe')+'" onchange="updateStatus(\''+p.id+'\',this.value)">'+
+          '<option value="safe"'+(st==='safe'?' selected':'')+'>✓ Safe</option>'+
+          '<option value="review"'+(st==='review'?' selected':'')+'>⚠ Needs review</option>'+
+        '</select>'+
         '<button class="m-delete" onclick="deleteMember(\''+p.id+'\')" title="Remove">×</button>'+
         '</div>';
     }).join('');
   }
 
   function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+  async function updateStatus(id,status){
+    await sb.from('protected_people').update({status}).eq('id',id);
+    loadMembers();
+  }
 
   function openModal(){document.getElementById('modal').style.display='flex';document.getElementById('m-name').value='';document.getElementById('m-device').value='';document.getElementById('modal-error').style.display='none';}
   function closeModal(){document.getElementById('modal').style.display='none';}
