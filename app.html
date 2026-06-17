@@ -29,7 +29,6 @@
 
   .dash-wrap { display: none; max-width: 760px; margin: 0 auto; padding: 1.5rem; }
   .dash-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-  .dash-user { display: flex; align-items: center; gap: 10px; }
   .avatar { width: 32px; height: 32px; border-radius: 50%; background: #E1F5EE; color: #0F6E56; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
   .top-btn { background: transparent; border: 1.5px solid #ddd; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #555; }
   .top-btn:hover { border-color: #1D9E75; color: #1D9E75; }
@@ -59,17 +58,25 @@
   .back-link { background: none; border: none; color: #1D9E75; font-size: 14px; font-weight: 600; cursor: pointer; padding: 0; margin-bottom: 1rem; }
 
   .feed { background: #fff; border: 1px solid #eee; border-radius: 14px; overflow: hidden; margin-bottom: 1.5rem; }
-  .feed-item { padding: 1rem 1.25rem; display: flex; align-items: flex-start; gap: 12px; border-bottom: 1px solid #f2f2f2; }
+  .feed-item { padding: 1rem 1.25rem; border-bottom: 1px solid #f2f2f2; }
   .feed-item:last-child { border-bottom: none; }
+  .feed-row { display: flex; align-items: flex-start; gap: 12px; }
   .feed-icon { font-size: 20px; margin-top: 1px; flex-shrink: 0; }
   .feed-body { flex: 1; }
-  .feed-text { font-size: 14px; margin: 0; }
+  .feed-text { font-size: 14px; margin: 0; font-weight: 500; }
   .feed-meta { font-size: 12px; color: #999; margin: 3px 0 0; }
   .feed-tag { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
   .feed-tag.stopped { background: #E1F5EE; color: #0F6E56; }
   .feed-tag.attention { background: #E6F1FB; color: #185FA5; }
   .feed-tag.resolved { background: #F0EFEA; color: #5F5E5A; }
-  .feed-resolve { background: #185FA5; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+  .expand-btn { background: none; border: none; color: #1D9E75; font-size: 13px; font-weight: 600; cursor: pointer; padding: 6px 0 0; }
+  .detail { margin-top: 12px; padding: 14px 16px; background: #F7FBF9; border: 1px solid #E1F0EA; border-radius: 10px; display: none; }
+  .detail.open { display: block; }
+  .detail-block { margin-bottom: 10px; }
+  .detail-block:last-of-type { margin-bottom: 0; }
+  .detail-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #0F6E56; margin: 0 0 2px; }
+  .detail-text { font-size: 13px; color: #444; margin: 0; line-height: 1.5; }
+  .feed-resolve { background: #185FA5; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 12px; }
 
   .member { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 0.85rem 1.1rem; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
   .m-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; background: #E1F5EE; color: #0F6E56; }
@@ -125,7 +132,6 @@
     </div>
   </div>
 
-  <!-- MAIN DASHBOARD VIEW -->
   <div id="main-view">
     <div class="banner calm" id="banner">
       <span class="banner-icon" id="banner-icon">🛡️</span>
@@ -155,7 +161,6 @@
     <p class="demo-note">Demo: <a onclick="simulateThreat()">simulate a threat Proteva catches</a></p>
   </div>
 
-  <!-- HISTORY VIEW -->
   <div id="history-view" style="display:none;">
     <button class="back-link" onclick="showMain()">← Back to dashboard</button>
     <p class="page-title">Resolved history</p>
@@ -192,13 +197,34 @@
   let isSignupMode = false;
 
   const THREATS = [
-    {icon:'🚫', text:'Blocked a fake "Microsoft support" pop-up', tag:'stopped'},
-    {icon:'📧', text:'Caught a phishing text pretending to be from the bank', tag:'stopped'},
-    {icon:'🔒', text:'Stopped an unauthorized remote-access attempt', tag:'stopped'},
-    {icon:'📱', text:'Blocked a predatory app from installing', tag:'stopped'},
-    {icon:'🎣', text:'Removed a fake "IRS refund" link from a text', tag:'stopped'},
-    {icon:'⚠️', text:'A new app is requesting unusual permissions', tag:'attention'},
-    {icon:'👁️', text:'An unfamiliar login was seen — confirming it was them', tag:'attention'}
+    {icon:'🚫', text:'Blocked a fake "Microsoft support" pop-up', tag:'stopped',
+      why:'These pop-ups try to scare people into calling a fake "support" number, where scammers ask for remote access or payment.',
+      did:'Proteva closed the pop-up immediately and blocked the website it came from. Nothing was clicked or called.',
+      actions:'No action needed — this was fully handled. You may want to gently remind your loved one that real companies never use pop-ups like this.'},
+    {icon:'📧', text:'Caught a phishing text pretending to be from the bank', tag:'stopped',
+      why:'Scammers send fake "your account is locked" texts with links that steal banking login details.',
+      did:'Proteva disabled the dangerous link before it could be opened and flagged the sender.',
+      actions:'No action needed. If you\'d like, confirm with your loved one that they didn\'t already tap the link earlier.'},
+    {icon:'🔒', text:'Stopped an unauthorized remote-access attempt', tag:'stopped',
+      why:'Scammers often try to install remote-control apps to take over a device and access accounts or money.',
+      did:'Proteva blocked the remote-access attempt and prevented the app from connecting.',
+      actions:'No action needed — fully blocked. Worth a friendly check-in to make sure no one called your loved one claiming to be "tech support."'},
+    {icon:'📱', text:'Blocked a predatory app from installing', tag:'stopped',
+      why:'Some apps target seniors with hidden fees, data harvesting, or manipulative subscriptions.',
+      did:'Proteva stopped the app from installing and removed the download.',
+      actions:'No action needed. You can review which apps are allowed anytime in settings.'},
+    {icon:'🎣', text:'Removed a fake "IRS refund" link from a text', tag:'stopped',
+      why:'Fake government refund messages trick people into entering personal and payment information.',
+      did:'Proteva removed the malicious link and flagged the message as a scam.',
+      actions:'No action needed. The IRS never texts about refunds — a good thing to mention to your loved one.'},
+    {icon:'⚠️', text:'A new app is requesting unusual permissions', tag:'attention',
+      why:'A newly installed app is asking for access to contacts, microphone, and location together — a combination common in data-harvesting apps that target seniors.',
+      did:'Proteva paused the app before it could run and is holding it until you decide.',
+      actions:'Check with your loved one whether they meant to install this app. If yes and it seems trustworthy, you can allow it. If unsure, remove it — Proteva can do that for you.'},
+    {icon:'👁️', text:'An unfamiliar login was seen — confirming it was them', tag:'attention',
+      why:'A sign-in happened from a device or location Proteva hasn\'t seen before. This can be normal (a new phone) or a sign someone else has access.',
+      did:'Proteva flagged the login and is monitoring the account closely until it\'s confirmed.',
+      actions:'Ask your loved one if they recently signed in somewhere new. If yes, mark this resolved. If not, it\'s worth changing the password — Proteva can guide them through it.'}
   ];
 
   function showError(t){const e=document.getElementById('msg-error');e.textContent=t;e.style.display='block';document.getElementById('msg-success').style.display='none';}
@@ -251,19 +277,10 @@
     loadAll();
   }
 
-  function showMain(){
-    document.getElementById('main-view').style.display='block';
-    document.getElementById('history-view').style.display='none';
-  }
-  function showHistory(){
-    document.getElementById('main-view').style.display='none';
-    document.getElementById('history-view').style.display='block';
-    loadHistory();
-  }
+  function showMain(){document.getElementById('main-view').style.display='block';document.getElementById('history-view').style.display='none';}
+  function showHistory(){document.getElementById('main-view').style.display='none';document.getElementById('history-view').style.display='block';loadHistory();}
 
-  async function loadAll(){
-    await Promise.all([loadMembers(), loadFeed()]);
-  }
+  async function loadAll(){ await Promise.all([loadMembers(), loadFeed()]); }
 
   function timeAgo(ts){
     const diff=(Date.now()-new Date(ts).getTime())/1000;
@@ -272,54 +289,61 @@
     if(diff<86400)return Math.floor(diff/3600)+'h ago';
     return Math.floor(diff/86400)+'d ago';
   }
-  function fullDate(ts){
-    return new Date(ts).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
-  }
+  function fullDate(ts){return new Date(ts).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});}
 
   async function loadMembers(){
     const list=document.getElementById('member-list');
     const {data,error}=await sb.from('protected_people').select('*').order('created_at',{ascending:true});
     if(error){list.innerHTML='<div class="empty">Could not load your family.</div>';return;}
     document.getElementById('stat-people').textContent=data.length;
-    if(data.length===0){
-      list.innerHTML='<div class="empty">No family members yet. Add someone you want to protect.</div>';
-      return;
-    }
+    if(data.length===0){list.innerHTML='<div class="empty">No family members yet. Add someone you want to protect.</div>';return;}
     list.innerHTML=data.map(p=>{
       const initials=p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
       const device=p.device?p.device+' · protected':'protected';
-      return '<div class="member">'+
-        '<span class="m-avatar">'+initials+'</span>'+
+      return '<div class="member"><span class="m-avatar">'+initials+'</span>'+
         '<div class="m-info"><p class="m-name">'+escapeHtml(p.name)+'</p><p class="m-detail">'+escapeHtml(device)+'</p></div>'+
         '<span class="m-badge">✓ Protected</span>'+
-        '<button class="m-delete" onclick="deleteMember(\''+p.id+'\')" title="Remove">×</button>'+
-        '</div>';
+        '<button class="m-delete" onclick="deleteMember(\''+p.id+'\')" title="Remove">×</button></div>';
     }).join('');
+  }
+
+  function detailHtml(a){
+    if(!a.detail_why && !a.detail_did && !a.detail_actions) return '';
+    let h='<div class="detail" id="detail-'+a.id+'">';
+    if(a.detail_why){h+='<div class="detail-block"><p class="detail-label">What happened</p><p class="detail-text">'+escapeHtml(a.detail_why)+'</p></div>';}
+    if(a.detail_did){h+='<div class="detail-block"><p class="detail-label">What Proteva did</p><p class="detail-text">'+escapeHtml(a.detail_did)+'</p></div>';}
+    if(a.detail_actions){h+='<div class="detail-block"><p class="detail-label">What you can do</p><p class="detail-text">'+escapeHtml(a.detail_actions)+'</p></div>';}
+    h+='</div>';
+    return h;
   }
 
   async function loadFeed(){
     const feed=document.getElementById('feed');
-    // Main feed shows everything EXCEPT resolved items
     const {data,error}=await sb.from('activity').select('*').eq('resolved',false).order('created_at',{ascending:false}).limit(15);
     if(error){feed.innerHTML='<div class="empty">Could not load activity.</div>';updateBanner(0,0);return;}
-
     const stopped=data.filter(a=>a.tag==='stopped').length;
     const attention=data.filter(a=>a.tag==='attention').length;
     document.getElementById('stat-stopped').textContent=stopped;
     document.getElementById('stat-attention').textContent=attention;
     updateBanner(stopped, attention);
-
-    if(data.length===0){
-      feed.innerHTML='<div class="empty">Nothing to report right now. Proteva is watching quietly.<br>When it catches something, you\'ll see it here.</div>';
-      return;
-    }
+    if(data.length===0){feed.innerHTML='<div class="empty">Nothing to report right now. Proteva is watching quietly.<br>When it catches something, you\'ll see it here.</div>';return;}
     feed.innerHTML='<div class="feed">'+data.map(a=>{
       const needsAction = a.tag==='attention';
       const tagHtml = a.tag==='stopped' ? '<span class="feed-tag stopped">Handled</span>' : '<span class="feed-tag attention">Your input</span>';
-      let body='<p class="feed-text">'+escapeHtml(a.text)+'</p><p class="feed-meta">'+timeAgo(a.created_at)+(a.tag==='stopped'?' · handled automatically':'')+'</p>';
-      if(needsAction){ body+='<button class="feed-resolve" onclick="resolveItem(\''+a.id+'\')">Mark as resolved</button>'; }
-      return '<div class="feed-item"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+body+'</div>'+tagHtml+'</div>';
+      const hasDetail = a.detail_why || a.detail_did || a.detail_actions;
+      let inner='<p class="feed-text">'+escapeHtml(a.text)+'</p><p class="feed-meta">'+timeAgo(a.created_at)+(a.tag==='stopped'?' · handled automatically':'')+'</p>';
+      if(hasDetail){ inner+='<button class="expand-btn" onclick="toggleDetail(\''+a.id+'\',this)">See details ▾</button>'; }
+      inner+=detailHtml(a);
+      if(needsAction){ inner+='<button class="feed-resolve" onclick="resolveItem(\''+a.id+'\')">Mark as resolved</button>'; }
+      return '<div class="feed-item"><div class="feed-row"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+inner+'</div>'+tagHtml+'</div></div>';
     }).join('')+'</div>';
+  }
+
+  function toggleDetail(id, btn){
+    const d=document.getElementById('detail-'+id);
+    if(!d)return;
+    const open=d.classList.toggle('open');
+    btn.textContent = open ? 'Hide details ▴' : 'See details ▾';
   }
 
   async function loadHistory(){
@@ -327,14 +351,12 @@
     feed.innerHTML='<div class="empty">Loading...</div>';
     const {data,error}=await sb.from('activity').select('*').eq('resolved',true).order('created_at',{ascending:false}).limit(50);
     if(error){feed.innerHTML='<div class="empty">Could not load history.</div>';return;}
-    if(data.length===0){
-      feed.innerHTML='<div class="empty">No resolved items yet.<br>When you mark something as resolved, it\'ll be archived here.</div>';
-      return;
-    }
+    if(data.length===0){feed.innerHTML='<div class="empty">No resolved items yet.<br>When you mark something as resolved, it\'ll be archived here.</div>';return;}
     feed.innerHTML='<div class="feed">'+data.map(a=>{
-      return '<div class="feed-item"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+
-        '<p class="feed-text">'+escapeHtml(a.text)+'</p><p class="feed-meta">'+fullDate(a.created_at)+'</p>'+
-        '</div><span class="feed-tag resolved">✓ Resolved</span></div>';
+      const hasDetail = a.detail_why || a.detail_did || a.detail_actions;
+      let inner='<p class="feed-text">'+escapeHtml(a.text)+'</p><p class="feed-meta">'+fullDate(a.created_at)+'</p>';
+      if(hasDetail){ inner+='<button class="expand-btn" onclick="toggleDetail(\''+a.id+'\',this)">See details ▾</button>'+detailHtml(a); }
+      return '<div class="feed-item"><div class="feed-row"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+inner+'</div><span class="feed-tag resolved">✓ Resolved</span></div></div>';
     }).join('')+'</div>';
   }
 
@@ -356,14 +378,11 @@
 
   function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-  async function resolveItem(id){
-    await sb.from('activity').update({resolved:true}).eq('id',id);
-    loadFeed();
-  }
+  async function resolveItem(id){ await sb.from('activity').update({resolved:true}).eq('id',id); loadFeed(); }
 
   async function simulateThreat(){
     const t=THREATS[Math.floor(Math.random()*THREATS.length)];
-    await sb.from('activity').insert([{icon:t.icon, text:t.text, tag:t.tag}]);
+    await sb.from('activity').insert([{icon:t.icon, text:t.text, tag:t.tag, detail_why:t.why, detail_did:t.did, detail_actions:t.actions}]);
     loadFeed();
   }
 
@@ -382,16 +401,11 @@
       const {error}=await sb.from('protected_people').insert([{name,device}]);
       if(error)throw error;
       closeModal(); loadMembers();
-    }catch(e){
-      err.textContent='Could not add. Please try again.'; err.style.display='block';
-    }
+    }catch(e){ err.textContent='Could not add. Please try again.'; err.style.display='block'; }
     btn.disabled=false; btn.textContent='Add';
   }
 
-  async function deleteMember(id){
-    await sb.from('protected_people').delete().eq('id',id);
-    loadMembers();
-  }
+  async function deleteMember(id){ await sb.from('protected_people').delete().eq('id',id); loadMembers(); }
 
   async function handleLogout(){
     await sb.auth.signOut();
