@@ -69,6 +69,9 @@
   .feed-tag.stopped { background: #E1F5EE; color: #0F6E56; }
   .feed-tag.attention { background: #E6F1FB; color: #185FA5; }
   .feed-tag.resolved { background: #F0EFEA; color: #5F5E5A; }
+  .feed-x { background: none; border: none; color: #c4c4c4; cursor: pointer; font-size: 20px; line-height: 1; padding: 0 2px; flex-shrink: 0; }
+  .feed-x:hover { color: #A32D2D; }
+  .right-stack { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .expand-btn { background: none; border: none; color: #1D9E75; font-size: 13px; font-weight: 600; cursor: pointer; padding: 6px 0 0; }
   .detail { margin-top: 12px; padding: 14px 16px; background: #F7FBF9; border: 1px solid #E1F0EA; border-radius: 10px; display: none; }
   .detail.open { display: block; }
@@ -76,7 +79,9 @@
   .detail-block:last-of-type { margin-bottom: 0; }
   .detail-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #0F6E56; margin: 0 0 2px; }
   .detail-text { font-size: 13px; color: #444; margin: 0; line-height: 1.5; }
-  .feed-resolve { background: #185FA5; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 12px; }
+
+  .date-header { font-size: 13px; font-weight: 700; color: #555; margin: 1.25rem 0 0.6rem; padding-bottom: 4px; border-bottom: 1px solid #e8e8e8; }
+  .date-header:first-child { margin-top: 0; }
 
   .member { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 0.85rem 1.1rem; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
   .m-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; background: #E1F5EE; color: #0F6E56; }
@@ -163,8 +168,8 @@
 
   <div id="history-view" style="display:none;">
     <button class="back-link" onclick="showMain()">← Back to dashboard</button>
-    <p class="page-title">Resolved history</p>
-    <p class="page-sub">A record of everything you've handled. Kept here so your dashboard stays clear.</p>
+    <p class="page-title">History</p>
+    <p class="page-sub">A record of everything you've cleared, organized by day. Kept here so your dashboard stays clear.</p>
     <div id="history-feed"></div>
   </div>
 </div>
@@ -289,7 +294,8 @@
     if(diff<86400)return Math.floor(diff/3600)+'h ago';
     return Math.floor(diff/86400)+'d ago';
   }
-  function fullDate(ts){return new Date(ts).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});}
+  function timeOnly(ts){return new Date(ts).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});}
+  function dayLabel(ts){return new Date(ts).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'});}
 
   async function loadMembers(){
     const list=document.getElementById('member-list');
@@ -319,7 +325,7 @@
 
   async function loadFeed(){
     const feed=document.getElementById('feed');
-    const {data,error}=await sb.from('activity').select('*').eq('resolved',false).order('created_at',{ascending:false}).limit(15);
+    const {data,error}=await sb.from('activity').select('*').eq('resolved',false).order('created_at',{ascending:false}).limit(20);
     if(error){feed.innerHTML='<div class="empty">Could not load activity.</div>';updateBanner(0,0);return;}
     const stopped=data.filter(a=>a.tag==='stopped').length;
     const attention=data.filter(a=>a.tag==='attention').length;
@@ -328,14 +334,13 @@
     updateBanner(stopped, attention);
     if(data.length===0){feed.innerHTML='<div class="empty">Nothing to report right now. Proteva is watching quietly.<br>When it catches something, you\'ll see it here.</div>';return;}
     feed.innerHTML='<div class="feed">'+data.map(a=>{
-      const needsAction = a.tag==='attention';
       const tagHtml = a.tag==='stopped' ? '<span class="feed-tag stopped">Handled</span>' : '<span class="feed-tag attention">Your input</span>';
       const hasDetail = a.detail_why || a.detail_did || a.detail_actions;
       let inner='<p class="feed-text">'+escapeHtml(a.text)+'</p><p class="feed-meta">'+timeAgo(a.created_at)+(a.tag==='stopped'?' · handled automatically':'')+'</p>';
       if(hasDetail){ inner+='<button class="expand-btn" onclick="toggleDetail(\''+a.id+'\',this)">See details ▾</button>'; }
       inner+=detailHtml(a);
-      if(needsAction){ inner+='<button class="feed-resolve" onclick="resolveItem(\''+a.id+'\')">Mark as resolved</button>'; }
-      return '<div class="feed-item"><div class="feed-row"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+inner+'</div>'+tagHtml+'</div></div>';
+      return '<div class="feed-item"><div class="feed-row"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+inner+'</div>'+
+        '<div class="right-stack">'+tagHtml+'<button class="feed-x" onclick="archiveItem(\''+a.id+'\')" title="Clear from dashboard">×</button></div></div></div>';
     }).join('')+'</div>';
   }
 
@@ -349,15 +354,31 @@
   async function loadHistory(){
     const feed=document.getElementById('history-feed');
     feed.innerHTML='<div class="empty">Loading...</div>';
-    const {data,error}=await sb.from('activity').select('*').eq('resolved',true).order('created_at',{ascending:false}).limit(50);
+    const {data,error}=await sb.from('activity').select('*').eq('resolved',true).order('created_at',{ascending:false}).limit(100);
     if(error){feed.innerHTML='<div class="empty">Could not load history.</div>';return;}
-    if(data.length===0){feed.innerHTML='<div class="empty">No resolved items yet.<br>When you mark something as resolved, it\'ll be archived here.</div>';return;}
-    feed.innerHTML='<div class="feed">'+data.map(a=>{
-      const hasDetail = a.detail_why || a.detail_did || a.detail_actions;
-      let inner='<p class="feed-text">'+escapeHtml(a.text)+'</p><p class="feed-meta">'+fullDate(a.created_at)+'</p>';
-      if(hasDetail){ inner+='<button class="expand-btn" onclick="toggleDetail(\''+a.id+'\',this)">See details ▾</button>'+detailHtml(a); }
-      return '<div class="feed-item"><div class="feed-row"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+inner+'</div><span class="feed-tag resolved">✓ Resolved</span></div></div>';
-    }).join('')+'</div>';
+    if(data.length===0){feed.innerHTML='<div class="empty">No history yet.<br>When you clear an item with the × button, it\'ll be filed here by date.</div>';return;}
+
+    // group by day
+    const groups={};
+    const order=[];
+    data.forEach(a=>{
+      const key=dayLabel(a.created_at);
+      if(!groups[key]){groups[key]=[];order.push(key);}
+      groups[key].push(a);
+    });
+
+    let html='';
+    order.forEach(day=>{
+      html+='<div class="date-header">'+day+'</div><div class="feed">';
+      html+=groups[day].map(a=>{
+        const hasDetail = a.detail_why || a.detail_did || a.detail_actions;
+        let inner='<p class="feed-text">'+escapeHtml(a.text)+'</p><p class="feed-meta">'+timeOnly(a.created_at)+'</p>';
+        if(hasDetail){ inner+='<button class="expand-btn" onclick="toggleDetail(\''+a.id+'\',this)">See details ▾</button>'+detailHtml(a); }
+        return '<div class="feed-item"><div class="feed-row"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+inner+'</div><span class="feed-tag resolved">Cleared</span></div></div>';
+      }).join('');
+      html+='</div>';
+    });
+    feed.innerHTML=html;
   }
 
   function updateBanner(stopped, attention){
@@ -378,7 +399,7 @@
 
   function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-  async function resolveItem(id){ await sb.from('activity').update({resolved:true}).eq('id',id); loadFeed(); }
+  async function archiveItem(id){ await sb.from('activity').update({resolved:true}).eq('id',id); loadFeed(); }
 
   async function simulateThreat(){
     const t=THREATS[Math.floor(Math.random()*THREATS.length)];
