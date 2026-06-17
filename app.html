@@ -16,8 +16,8 @@
   .auth-sub { text-align: center; font-size: 14px; color: #777; margin-bottom: 1.75rem; }
   .field { margin-bottom: 1rem; }
   .field label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
-  .field input { width: 100%; padding: 13px 15px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 15px; outline: none; transition: border 0.2s; }
-  .field input:focus { border-color: #1D9E75; }
+  .field input, .field select { width: 100%; padding: 13px 15px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 15px; outline: none; transition: border 0.2s; background: #fff; }
+  .field input:focus, .field select:focus { border-color: #1D9E75; }
   .btn-primary { width: 100%; background: #1D9E75; color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
   .btn-primary:hover { background: #0F6E56; }
   .btn-primary:disabled { background: #9FE1CB; cursor: not-allowed; }
@@ -37,20 +37,26 @@
   .banner-icon { font-size: 30px; }
   .banner h2 { font-size: 17px; color: #085041; margin: 0; }
   .banner p { font-size: 13px; color: #0F6E56; margin: 2px 0 0; }
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
-  .stat { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 1.1rem; }
-  .stat-label { font-size: 13px; color: #888; }
-  .stat-num { font-size: 26px; font-weight: 700; margin: 4px 0 0; }
-  .stat-sub { font-size: 12px; color: #999; }
-  .section-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px; }
+  .section-head { display: flex; justify-content: space-between; align-items: center; margin: 0 0 12px; }
+  .section-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin: 0; }
+  .add-btn { background: #E1F5EE; color: #0F6E56; border: none; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .add-btn:hover { background: #9FE1CB; }
   .member { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
-  .m-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+  .m-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; background: #E1F5EE; color: #0F6E56; }
   .m-info { flex: 1; }
   .m-name { font-size: 15px; font-weight: 600; margin: 0; }
   .m-detail { font-size: 13px; color: #888; margin: 2px 0 0; }
   .badge { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
   .badge.safe { background: #E1F5EE; color: #0F6E56; }
-  .badge.review { background: #FAEEDA; color: #854F0B; }
+  .m-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 18px; padding: 0 4px; }
+  .m-delete:hover { color: #A32D2D; }
+  .empty { text-align: center; padding: 2.5rem 1rem; color: #999; font-size: 14px; background: #fff; border: 1px dashed #ddd; border-radius: 14px; }
+
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; padding: 1.5rem; z-index: 10; }
+  .modal { background: #fff; border-radius: 16px; padding: 2rem; width: 100%; max-width: 400px; }
+  .modal h3 { font-size: 18px; margin: 0 0 1.25rem; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 1.25rem; }
+  .btn-cancel { flex: 1; background: #fff; border: 1.5px solid #ddd; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; color: #555; }
 </style>
 </head>
 <body>
@@ -59,10 +65,8 @@
   <div class="auth-card">
     <div class="logo">Pro<span>teva</span></div>
     <p class="auth-sub" id="auth-subtitle">Welcome back — sign in to your family dashboard</p>
-
     <div class="msg error" id="msg-error"></div>
     <div class="msg success" id="msg-success"></div>
-
     <div class="field">
       <label for="email">Email address</label>
       <input type="email" id="email" placeholder="you@example.com" />
@@ -71,9 +75,7 @@
       <label for="password">Password</label>
       <input type="password" id="password" placeholder="••••••••" />
     </div>
-
     <button class="btn-primary" id="auth-btn" onclick="handleAuth()">Sign in</button>
-
     <p class="auth-toggle" id="toggle-text">
       New to Proteva? <a onclick="toggleMode()">Create an account</a>
     </p>
@@ -93,32 +95,34 @@
   <div class="banner">
     <span class="banner-icon">🛡️</span>
     <div>
-      <h2>Everyone is safe today</h2>
-      <p>3 family members protected · last checked 2 minutes ago</p>
+      <h2 id="banner-title">Everyone is safe today</h2>
+      <p id="banner-sub">Loading your family...</p>
     </div>
   </div>
 
-  <div class="stats">
-    <div class="stat"><p class="stat-label">Threats blocked</p><p class="stat-num">7</p><p class="stat-sub">this week</p></div>
-    <div class="stat"><p class="stat-label">Devices safe</p><p class="stat-num">4 / 4</p><p class="stat-sub">all protected</p></div>
-    <div class="stat"><p class="stat-label">Needs attention</p><p class="stat-num">1</p><p class="stat-sub">minor item</p></div>
+  <div class="section-head">
+    <p class="section-label">Protected family</p>
+    <button class="add-btn" onclick="openModal()">+ Add family member</button>
   </div>
+  <div id="member-list"></div>
+</div>
 
-  <p class="section-label">Protected family</p>
-  <div class="member">
-    <span class="m-avatar" style="background:#FAEEDA;color:#854F0B;">RG</span>
-    <div class="m-info"><p class="m-name">Grandma Rose</p><p class="m-detail">iPad · iPhone · safe and protected</p></div>
-    <span class="badge safe">✓ Safe</span>
-  </div>
-  <div class="member">
-    <span class="m-avatar" style="background:#E6F1FB;color:#0C447C;">HG</span>
-    <div class="m-info"><p class="m-name">Grandpa Harold</p><p class="m-detail">Android phone · safe and protected</p></div>
-    <span class="badge safe">✓ Safe</span>
-  </div>
-  <div class="member">
-    <span class="m-avatar" style="background:#FBEAF0;color:#993556;">AM</span>
-    <div class="m-info"><p class="m-name">Aunt Mary</p><p class="m-detail">iPhone · 1 app needs review</p></div>
-    <span class="badge review">⚠ Review</span>
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3>Add a family member</h3>
+    <div class="msg error" id="modal-error"></div>
+    <div class="field">
+      <label for="m-name">Their name</label>
+      <input type="text" id="m-name" placeholder="e.g. Grandma Rose" />
+    </div>
+    <div class="field">
+      <label for="m-device">Their device</label>
+      <input type="text" id="m-device" placeholder="e.g. iPhone, iPad" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="save-member-btn" onclick="addMember()">Add</button>
+    </div>
   </div>
 </div>
 
@@ -130,93 +134,119 @@
 
   let isSignupMode = false;
 
-  function showError(text) {
-    const el = document.getElementById('msg-error');
-    el.textContent = text; el.style.display = 'block';
-    document.getElementById('msg-success').style.display = 'none';
-  }
-  function showSuccess(text) {
-    const el = document.getElementById('msg-success');
-    el.textContent = text; el.style.display = 'block';
-    document.getElementById('msg-error').style.display = 'none';
-  }
-  function clearMsgs() {
-    document.getElementById('msg-error').style.display = 'none';
-    document.getElementById('msg-success').style.display = 'none';
-  }
+  function showError(t){const e=document.getElementById('msg-error');e.textContent=t;e.style.display='block';document.getElementById('msg-success').style.display='none';}
+  function showSuccess(t){const e=document.getElementById('msg-success');e.textContent=t;e.style.display='block';document.getElementById('msg-error').style.display='none';}
+  function clearMsgs(){document.getElementById('msg-error').style.display='none';document.getElementById('msg-success').style.display='none';}
 
-  function toggleMode() {
-    isSignupMode = !isSignupMode;
-    clearMsgs();
-    if (isSignupMode) {
-      document.getElementById('auth-subtitle').textContent = 'Create your account to protect your family';
-      document.getElementById('auth-btn').textContent = 'Create account';
-      document.getElementById('toggle-text').innerHTML = 'Already have an account? <a onclick="toggleMode()">Sign in</a>';
-    } else {
-      document.getElementById('auth-subtitle').textContent = 'Welcome back — sign in to your family dashboard';
-      document.getElementById('auth-btn').textContent = 'Sign in';
-      document.getElementById('toggle-text').innerHTML = 'New to Proteva? <a onclick="toggleMode()">Create an account</a>';
+  function toggleMode(){
+    isSignupMode=!isSignupMode; clearMsgs();
+    if(isSignupMode){
+      document.getElementById('auth-subtitle').textContent='Create your account to protect your family';
+      document.getElementById('auth-btn').textContent='Create account';
+      document.getElementById('toggle-text').innerHTML='Already have an account? <a onclick="toggleMode()">Sign in</a>';
+    }else{
+      document.getElementById('auth-subtitle').textContent='Welcome back — sign in to your family dashboard';
+      document.getElementById('auth-btn').textContent='Sign in';
+      document.getElementById('toggle-text').innerHTML='New to Proteva? <a onclick="toggleMode()">Create an account</a>';
     }
   }
 
-  async function handleAuth() {
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const btn = document.getElementById('auth-btn');
+  async function handleAuth(){
+    const email=document.getElementById('email').value.trim();
+    const password=document.getElementById('password').value;
+    const btn=document.getElementById('auth-btn');
     clearMsgs();
-
-    if (!email || !email.includes('@')) { showError('Please enter a valid email address.'); return; }
-    if (password.length < 6) { showError('Password must be at least 6 characters.'); return; }
-
-    btn.disabled = true;
-    btn.textContent = isSignupMode ? 'Creating...' : 'Signing in...';
-
-    try {
-      if (isSignupMode) {
-        const { data, error } = await sb.auth.signUp({ email, password });
-        if (error) throw error;
-        if (data.session) {
-          showDashboard(email);
-        } else {
-          showSuccess('Account created! Check your email to confirm, then sign in.');
-          btn.disabled = false;
-          toggleMode();
-        }
-      } else {
-        const { data, error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+    if(!email||!email.includes('@')){showError('Please enter a valid email address.');return;}
+    if(password.length<6){showError('Password must be at least 6 characters.');return;}
+    btn.disabled=true; btn.textContent=isSignupMode?'Creating...':'Signing in...';
+    try{
+      if(isSignupMode){
+        const {data,error}=await sb.auth.signUp({email,password});
+        if(error)throw error;
+        if(data.session){showDashboard(email);}
+        else{showSuccess('Account created! Check your email to confirm, then sign in.');btn.disabled=false;toggleMode();}
+      }else{
+        const {data,error}=await sb.auth.signInWithPassword({email,password});
+        if(error)throw error;
         showDashboard(email);
       }
-    } catch (err) {
-      showError(err.message || 'Something went wrong. Please try again.');
-      btn.disabled = false;
-      btn.textContent = isSignupMode ? 'Create account' : 'Sign in';
+    }catch(err){
+      showError(err.message||'Something went wrong.');
+      btn.disabled=false; btn.textContent=isSignupMode?'Create account':'Sign in';
     }
   }
 
-  function showDashboard(email) {
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('dash-screen').style.display = 'block';
-    document.getElementById('user-email').textContent = email;
-    document.getElementById('user-initial').textContent = email.charAt(0).toUpperCase();
+  function showDashboard(email){
+    document.getElementById('auth-screen').style.display='none';
+    document.getElementById('dash-screen').style.display='block';
+    document.getElementById('user-email').textContent=email;
+    document.getElementById('user-initial').textContent=email.charAt(0).toUpperCase();
+    loadMembers();
   }
 
-  async function handleLogout() {
+  async function loadMembers(){
+    const list=document.getElementById('member-list');
+    const {data,error}=await sb.from('protected_people').select('*').order('created_at',{ascending:true});
+    if(error){list.innerHTML='<div class="empty">Could not load your family. Please refresh.</div>';return;}
+    const count=data.length;
+    document.getElementById('banner-sub').textContent = count===0 ? 'Add your first family member to get started' : count+' family member'+(count>1?'s':'')+' protected · last checked just now';
+    if(count===0){
+      list.innerHTML='<div class="empty">No family members yet.<br>Click "+ Add family member" to add someone you want to protect.</div>';
+      return;
+    }
+    list.innerHTML=data.map(p=>{
+      const initials=p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+      const device=p.device?p.device+' · safe and protected':'safe and protected';
+      return '<div class="member">'+
+        '<span class="m-avatar">'+initials+'</span>'+
+        '<div class="m-info"><p class="m-name">'+escapeHtml(p.name)+'</p><p class="m-detail">'+escapeHtml(device)+'</p></div>'+
+        '<span class="badge safe">✓ Safe</span>'+
+        '<button class="m-delete" onclick="deleteMember(\''+p.id+'\')" title="Remove">×</button>'+
+        '</div>';
+    }).join('');
+  }
+
+  function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+  function openModal(){document.getElementById('modal').style.display='flex';document.getElementById('m-name').value='';document.getElementById('m-device').value='';document.getElementById('modal-error').style.display='none';}
+  function closeModal(){document.getElementById('modal').style.display='none';}
+
+  async function addMember(){
+    const name=document.getElementById('m-name').value.trim();
+    const device=document.getElementById('m-device').value.trim();
+    const btn=document.getElementById('save-member-btn');
+    const err=document.getElementById('modal-error');
+    err.style.display='none';
+    if(!name){err.textContent='Please enter a name.';err.style.display='block';return;}
+    btn.disabled=true; btn.textContent='Adding...';
+    try{
+      const {error}=await sb.from('protected_people').insert([{name,device}]);
+      if(error)throw error;
+      closeModal(); loadMembers();
+    }catch(e){
+      err.textContent='Could not add. Please try again.'; err.style.display='block';
+    }
+    btn.disabled=false; btn.textContent='Add';
+  }
+
+  async function deleteMember(id){
+    await sb.from('protected_people').delete().eq('id',id);
+    loadMembers();
+  }
+
+  async function handleLogout(){
     await sb.auth.signOut();
-    document.getElementById('dash-screen').style.display = 'none';
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('email').value = '';
-    document.getElementById('password').value = '';
-    document.getElementById('auth-btn').disabled = false;
-    document.getElementById('auth-btn').textContent = isSignupMode ? 'Create account' : 'Sign in';
+    document.getElementById('dash-screen').style.display='none';
+    document.getElementById('auth-screen').style.display='flex';
+    document.getElementById('email').value=''; document.getElementById('password').value='';
+    document.getElementById('auth-btn').disabled=false;
+    document.getElementById('auth-btn').textContent=isSignupMode?'Create account':'Sign in';
     clearMsgs();
   }
 
-  async function checkSession() {
-    const { data } = await sb.auth.getSession();
-    if (data.session) {
-      showDashboard(data.session.user.email);
-    }
+  async function checkSession(){
+    const {data}=await sb.auth.getSession();
+    if(data.session){showDashboard(data.session.user.email);}
   }
   checkSession();
 </script>
