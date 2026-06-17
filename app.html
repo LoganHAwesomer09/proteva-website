@@ -31,8 +31,9 @@
   .dash-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
   .dash-user { display: flex; align-items: center; gap: 10px; }
   .avatar { width: 32px; height: 32px; border-radius: 50%; background: #E1F5EE; color: #0F6E56; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
-  .logout-btn { background: transparent; border: 1.5px solid #ddd; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #555; }
-  .logout-btn:hover { border-color: #1D9E75; color: #1D9E75; }
+  .top-btn { background: transparent; border: 1.5px solid #ddd; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #555; }
+  .top-btn:hover { border-color: #1D9E75; color: #1D9E75; }
+  .top-actions { display: flex; gap: 8px; align-items: center; }
 
   .banner { border-radius: 16px; padding: 1.5rem 1.75rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 16px; transition: background 0.3s; }
   .banner.calm { background: #E1F5EE; }
@@ -55,6 +56,7 @@
   .section-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin: 0; }
   .add-btn { background: #E1F5EE; color: #0F6E56; border: none; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .add-btn:hover { background: #9FE1CB; }
+  .back-link { background: none; border: none; color: #1D9E75; font-size: 14px; font-weight: 600; cursor: pointer; padding: 0; margin-bottom: 1rem; }
 
   .feed { background: #fff; border: 1px solid #eee; border-radius: 14px; overflow: hidden; margin-bottom: 1.5rem; }
   .feed-item { padding: 1rem 1.25rem; display: flex; align-items: flex-start; gap: 12px; border-bottom: 1px solid #f2f2f2; }
@@ -66,6 +68,7 @@
   .feed-tag { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
   .feed-tag.stopped { background: #E1F5EE; color: #0F6E56; }
   .feed-tag.attention { background: #E6F1FB; color: #185FA5; }
+  .feed-tag.resolved { background: #F0EFEA; color: #5F5E5A; }
   .feed-resolve { background: #185FA5; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 8px; }
 
   .member { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 0.85rem 1.1rem; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
@@ -85,6 +88,8 @@
   .btn-cancel { flex: 1; background: #fff; border: 1.5px solid #ddd; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; color: #555; }
   .demo-note { font-size: 12px; color: #aaa; text-align: center; margin-top: 1rem; }
   .demo-note a { color: #1D9E75; cursor: pointer; font-weight: 600; }
+  .page-title { font-size: 22px; font-weight: 700; margin: 0 0 0.25rem; }
+  .page-sub { font-size: 14px; color: #888; margin: 0 0 1.5rem; }
 </style>
 </head>
 <body>
@@ -113,39 +118,50 @@
 <div class="dash-wrap" id="dash-screen">
   <div class="dash-top">
     <div class="logo" style="font-size:20px;">Pro<span>teva</span></div>
-    <div class="dash-user">
+    <div class="top-actions">
+      <button class="top-btn" onclick="showHistory()">🗂 History</button>
       <span class="avatar" id="user-initial">U</span>
-      <span style="font-size:13px;color:#777;" id="user-email">user@email.com</span>
-      <button class="logout-btn" onclick="handleLogout()">Log out</button>
+      <button class="top-btn" onclick="handleLogout()">Log out</button>
     </div>
   </div>
 
-  <div class="banner calm" id="banner">
-    <span class="banner-icon" id="banner-icon">🛡️</span>
-    <div>
-      <h2 id="banner-title">Everyone is safe today</h2>
-      <p id="banner-sub">Loading...</p>
+  <!-- MAIN DASHBOARD VIEW -->
+  <div id="main-view">
+    <div class="banner calm" id="banner">
+      <span class="banner-icon" id="banner-icon">🛡️</span>
+      <div>
+        <h2 id="banner-title">Everyone is safe today</h2>
+        <p id="banner-sub">Loading...</p>
+      </div>
     </div>
+
+    <div class="stats">
+      <div class="stat"><p class="stat-label">Threats stopped</p><p class="stat-num" id="stat-stopped">0</p><p class="stat-sub">automatically</p></div>
+      <div class="stat"><p class="stat-label">People protected</p><p class="stat-num" id="stat-people">0</p><p class="stat-sub">in your family</p></div>
+      <div class="stat"><p class="stat-label">Needs your input</p><p class="stat-num" id="stat-attention">0</p><p class="stat-sub">items</p></div>
+    </div>
+
+    <div class="section-head">
+      <p class="section-label">What Proteva caught &amp; handled</p>
+    </div>
+    <div id="feed"></div>
+
+    <div class="section-head">
+      <p class="section-label">Protected family</p>
+      <button class="add-btn" onclick="openModal()">+ Add family member</button>
+    </div>
+    <div id="member-list"></div>
+
+    <p class="demo-note">Demo: <a onclick="simulateThreat()">simulate a threat Proteva catches</a></p>
   </div>
 
-  <div class="stats">
-    <div class="stat"><p class="stat-label">Threats stopped</p><p class="stat-num" id="stat-stopped">0</p><p class="stat-sub">automatically</p></div>
-    <div class="stat"><p class="stat-label">People protected</p><p class="stat-num" id="stat-people">0</p><p class="stat-sub">in your family</p></div>
-    <div class="stat"><p class="stat-label">Needs your input</p><p class="stat-num" id="stat-attention">0</p><p class="stat-sub">items</p></div>
+  <!-- HISTORY VIEW -->
+  <div id="history-view" style="display:none;">
+    <button class="back-link" onclick="showMain()">← Back to dashboard</button>
+    <p class="page-title">Resolved history</p>
+    <p class="page-sub">A record of everything you've handled. Kept here so your dashboard stays clear.</p>
+    <div id="history-feed"></div>
   </div>
-
-  <div class="section-head">
-    <p class="section-label">What Proteva caught &amp; handled</p>
-  </div>
-  <div id="feed"></div>
-
-  <div class="section-head">
-    <p class="section-label">Protected family</p>
-    <button class="add-btn" onclick="openModal()">+ Add family member</button>
-  </div>
-  <div id="member-list"></div>
-
-  <p class="demo-note">Demo: <a onclick="simulateThreat()">simulate a threat Proteva catches</a></p>
 </div>
 
 <div class="modal-bg" id="modal">
@@ -230,9 +246,19 @@
   function showDashboard(email){
     document.getElementById('auth-screen').style.display='none';
     document.getElementById('dash-screen').style.display='block';
-    document.getElementById('user-email').textContent=email;
     document.getElementById('user-initial').textContent=email.charAt(0).toUpperCase();
+    showMain();
     loadAll();
+  }
+
+  function showMain(){
+    document.getElementById('main-view').style.display='block';
+    document.getElementById('history-view').style.display='none';
+  }
+  function showHistory(){
+    document.getElementById('main-view').style.display='none';
+    document.getElementById('history-view').style.display='block';
+    loadHistory();
   }
 
   async function loadAll(){
@@ -245,6 +271,9 @@
     if(diff<3600)return Math.floor(diff/60)+'m ago';
     if(diff<86400)return Math.floor(diff/3600)+'h ago';
     return Math.floor(diff/86400)+'d ago';
+  }
+  function fullDate(ts){
+    return new Date(ts).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
   }
 
   async function loadMembers(){
@@ -270,27 +299,42 @@
 
   async function loadFeed(){
     const feed=document.getElementById('feed');
-    const {data,error}=await sb.from('activity').select('*').order('created_at',{ascending:false}).limit(15);
+    // Main feed shows everything EXCEPT resolved items
+    const {data,error}=await sb.from('activity').select('*').eq('resolved',false).order('created_at',{ascending:false}).limit(15);
     if(error){feed.innerHTML='<div class="empty">Could not load activity.</div>';updateBanner(0,0);return;}
 
     const stopped=data.filter(a=>a.tag==='stopped').length;
-    const attention=data.filter(a=>a.tag==='attention'&&!a.resolved).length;
+    const attention=data.filter(a=>a.tag==='attention').length;
     document.getElementById('stat-stopped').textContent=stopped;
     document.getElementById('stat-attention').textContent=attention;
     updateBanner(stopped, attention);
 
     if(data.length===0){
-      feed.innerHTML='<div class="empty">Nothing to report yet. Proteva is watching quietly.<br>When it catches something, you\'ll see it here.</div>';
+      feed.innerHTML='<div class="empty">Nothing to report right now. Proteva is watching quietly.<br>When it catches something, you\'ll see it here.</div>';
       return;
     }
     feed.innerHTML='<div class="feed">'+data.map(a=>{
-      const needsAction = a.tag==='attention' && !a.resolved;
-      const tagHtml = a.resolved
-        ? '<span class="feed-tag stopped">✓ Resolved</span>'
-        : (a.tag==='stopped' ? '<span class="feed-tag stopped">Handled</span>' : '<span class="feed-tag attention">Your input</span>');
+      const needsAction = a.tag==='attention';
+      const tagHtml = a.tag==='stopped' ? '<span class="feed-tag stopped">Handled</span>' : '<span class="feed-tag attention">Your input</span>';
       let body='<p class="feed-text">'+escapeHtml(a.text)+'</p><p class="feed-meta">'+timeAgo(a.created_at)+(a.tag==='stopped'?' · handled automatically':'')+'</p>';
       if(needsAction){ body+='<button class="feed-resolve" onclick="resolveItem(\''+a.id+'\')">Mark as resolved</button>'; }
       return '<div class="feed-item"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+body+'</div>'+tagHtml+'</div>';
+    }).join('')+'</div>';
+  }
+
+  async function loadHistory(){
+    const feed=document.getElementById('history-feed');
+    feed.innerHTML='<div class="empty">Loading...</div>';
+    const {data,error}=await sb.from('activity').select('*').eq('resolved',true).order('created_at',{ascending:false}).limit(50);
+    if(error){feed.innerHTML='<div class="empty">Could not load history.</div>';return;}
+    if(data.length===0){
+      feed.innerHTML='<div class="empty">No resolved items yet.<br>When you mark something as resolved, it\'ll be archived here.</div>';
+      return;
+    }
+    feed.innerHTML='<div class="feed">'+data.map(a=>{
+      return '<div class="feed-item"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+
+        '<p class="feed-text">'+escapeHtml(a.text)+'</p><p class="feed-meta">'+fullDate(a.created_at)+'</p>'+
+        '</div><span class="feed-tag resolved">✓ Resolved</span></div>';
     }).join('')+'</div>';
   }
 
