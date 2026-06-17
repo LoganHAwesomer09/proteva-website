@@ -34,13 +34,13 @@
   .logout-btn { background: transparent; border: 1.5px solid #ddd; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #555; }
   .logout-btn:hover { border-color: #1D9E75; color: #1D9E75; }
   .banner { border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 14px; transition: background 0.3s; }
-  .banner.all-safe { background: #E1F5EE; }
-  .banner.needs-review { background: #FAEEDA; }
+  .banner.calm { background: #E1F5EE; }
+  .banner.active { background: #E6F1FB; }
   .banner-icon { font-size: 30px; }
-  .banner.all-safe h2 { color: #085041; }
-  .banner.all-safe p { color: #0F6E56; }
-  .banner.needs-review h2 { color: #633806; }
-  .banner.needs-review p { color: #854F0B; }
+  .banner.calm h2 { color: #085041; }
+  .banner.calm p { color: #0F6E56; }
+  .banner.active h2 { color: #0C447C; }
+  .banner.active p { color: #185FA5; }
   .banner h2 { font-size: 17px; margin: 0; }
   .banner p { font-size: 13px; margin: 2px 0 0; }
   .section-head { display: flex; justify-content: space-between; align-items: center; margin: 0 0 12px; }
@@ -54,7 +54,8 @@
   .m-detail { font-size: 13px; color: #888; margin: 2px 0 0; }
   .status-select { border: 1.5px solid #eee; border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 600; cursor: pointer; outline: none; background: #fff; }
   .status-select.safe { color: #0F6E56; border-color: #9FE1CB; background: #F4FBF8; }
-  .status-select.review { color: #854F0B; border-color: #FAC775; background: #FFFBF3; }
+  .status-select.looking { color: #185FA5; border-color: #85B7EB; background: #F3F8FE; }
+  .status-select.resolved { color: #5F5E5A; border-color: #D3D1C7; background: #FAFAF8; }
   .m-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 18px; padding: 0 4px; }
   .m-delete:hover { color: #A32D2D; }
   .empty { text-align: center; padding: 2.5rem 1rem; color: #999; font-size: 14px; background: #fff; border: 1px dashed #ddd; border-radius: 14px; }
@@ -99,7 +100,7 @@
     </div>
   </div>
 
-  <div class="banner all-safe" id="banner">
+  <div class="banner calm" id="banner">
     <span class="banner-icon" id="banner-icon">🛡️</span>
     <div>
       <h2 id="banner-title">Everyone is safe today</h2>
@@ -197,23 +198,29 @@
     const title=document.getElementById('banner-title');
     const sub=document.getElementById('banner-sub');
     const count=people.length;
-    const needsReview=people.filter(p=>p.status==='review').length;
+    const looking=people.filter(p=>p.status==='looking').length;
 
     if(count===0){
-      banner.className='banner all-safe'; icon.textContent='🛡️';
+      banner.className='banner calm'; icon.textContent='🛡️';
       title.textContent='Everyone is safe today';
       sub.textContent='Add your first family member to get started';
       return;
     }
-    if(needsReview>0){
-      banner.className='banner needs-review'; icon.textContent='⚠️';
-      title.textContent=needsReview+' family member'+(needsReview>1?'s need':' needs')+' a look';
-      sub.textContent='Tap their status to review · '+count+' protected total';
+    if(looking>0){
+      banner.className='banner active'; icon.textContent='👁️';
+      title.textContent="You're looking into "+looking+' item'+(looking>1?'s':'');
+      sub.textContent=count+' family member'+(count>1?'s':'')+' protected · '+looking+' in progress';
     }else{
-      banner.className='banner all-safe'; icon.textContent='🛡️';
+      banner.className='banner calm'; icon.textContent='🛡️';
       title.textContent='Everyone is safe today';
-      sub.textContent=count+' family member'+(count>1?'s':'')+' protected · last checked just now';
+      sub.textContent=count+' family member'+(count>1?'s':'')+' protected · all clear';
     }
+  }
+
+  function statusClass(st){
+    if(st==='looking')return 'looking';
+    if(st==='resolved')return 'resolved';
+    return 'safe';
   }
 
   async function loadMembers(){
@@ -232,9 +239,10 @@
       return '<div class="member">'+
         '<span class="m-avatar">'+initials+'</span>'+
         '<div class="m-info"><p class="m-name">'+escapeHtml(p.name)+'</p><p class="m-detail">'+escapeHtml(device)+'</p></div>'+
-        '<select class="status-select '+(st==='review'?'review':'safe')+'" onchange="updateStatus(\''+p.id+'\',this.value)">'+
+        '<select class="status-select '+statusClass(st)+'" onchange="updateStatus(\''+p.id+'\',this.value)">'+
           '<option value="safe"'+(st==='safe'?' selected':'')+'>✓ Safe</option>'+
-          '<option value="review"'+(st==='review'?' selected':'')+'>⚠ Needs review</option>'+
+          '<option value="looking"'+(st==='looking'?' selected':'')+'>👁 Looking into it</option>'+
+          '<option value="resolved"'+(st==='resolved'?' selected':'')+'>✓ Resolved</option>'+
         '</select>'+
         '<button class="m-delete" onclick="deleteMember(\''+p.id+'\')" title="Remove">×</button>'+
         '</div>';
