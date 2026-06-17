@@ -21,8 +21,10 @@
   .waitlist-form input:focus { border-color: #1D9E75; }
   .waitlist-form button { background: #1D9E75; color: #fff; border: none; padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
   .waitlist-form button:hover { background: #0F6E56; }
+  .waitlist-form button:disabled { background: #9FE1CB; cursor: not-allowed; }
   .form-note { font-size: 13px; color: #999; margin-bottom: 3rem; }
   .success-msg { display: none; background: #E1F5EE; color: #0F6E56; padding: 14px 24px; border-radius: 10px; font-size: 15px; font-weight: 500; margin-bottom: 2rem; }
+  .error-msg { display: none; background: #FCEBEB; color: #A32D2D; padding: 14px 24px; border-radius: 10px; font-size: 14px; font-weight: 500; margin-bottom: 2rem; }
   .story { background: #F8FFFE; border: 1.5px solid #B5EDD8; border-radius: 16px; padding: 2rem; margin: 0 2rem 4rem; max-width: 680px; margin-left: auto; margin-right: auto; }
   .story-inner { display: flex; gap: 1.25rem; align-items: flex-start; }
   .story-icon { font-size: 28px; flex-shrink: 0; margin-top: 2px; }
@@ -81,12 +83,15 @@
   <div class="hero-tag">Now accepting early access signups</div>
   <h1>A quiet shield around the people you <em>love most</em></h1>
   <p>Proteva protects elderly parents and loved ones from digital scams, phishing, and predatory apps — without invading their privacy or making them feel watched.</p>
-  <div class="waitlist-form">
+  <div class="waitlist-form" id="waitlist-form">
     <input type="email" id="email-input" placeholder="Enter your email address" />
-    <button onclick="joinWaitlist()">Join the waitlist</button>
+    <button id="join-btn" onclick="joinWaitlist()">Join the waitlist</button>
   </div>
   <div class="success-msg" id="success-msg">
     🎉 You're on the list! We'll be in touch soon.
+  </div>
+  <div class="error-msg" id="error-msg">
+    Something went wrong. Please try again.
   </div>
   <p class="form-note">Free for your first month. No credit card required.</p>
 </section>
@@ -220,16 +225,48 @@
   <p>© 2026 Proteva · getproteva.com · Built with love, for families everywhere.</p>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-function joinWaitlist() {
-  var email = document.getElementById('email-input').value;
-  if (!email || !email.includes('@')) {
-    alert('Please enter a valid email address.');
-    return;
+  const SUPABASE_URL = 'https://njjhioejdqjwpeblrewb.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qamhpb2VqZHFqd3BlYmxyZXdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTI4NTcsImV4cCI6MjA5NTQ4ODg1N30.QVR2gB5zOIg0NYjI78anipNYUFaorIrFMxw50768am4';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function joinWaitlist() {
+    const emailInput = document.getElementById('email-input');
+    const email = emailInput.value.trim();
+    const btn = document.getElementById('join-btn');
+    const errorMsg = document.getElementById('error-msg');
+
+    errorMsg.style.display = 'none';
+
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      errorMsg.textContent = 'Please enter a valid email address.';
+      errorMsg.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Joining...';
+
+    try {
+      const { error } = await supabaseClient
+        .from('waitlist')
+        .insert([{ email: email }]);
+
+      if (error) {
+        throw error;
+      }
+
+      document.getElementById('waitlist-form').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'block';
+    } catch (err) {
+      console.error('Waitlist error:', err);
+      errorMsg.textContent = 'Something went wrong. Please try again.';
+      errorMsg.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Join the waitlist';
+    }
   }
-  document.querySelector('.waitlist-form').style.display = 'none';
-  document.getElementById('success-msg').style.display = 'block';
-}
 </script>
 
 </body>
