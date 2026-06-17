@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Proteva — Caregiver Login</title>
+<title>Proteva — Caregiver Dashboard</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F4FBF8; color: #1a1a1a; min-height: 100vh; }
@@ -16,8 +16,8 @@
   .auth-sub { text-align: center; font-size: 14px; color: #777; margin-bottom: 1.75rem; }
   .field { margin-bottom: 1rem; }
   .field label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
-  .field input, .field select { width: 100%; padding: 13px 15px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 15px; outline: none; transition: border 0.2s; background: #fff; }
-  .field input:focus, .field select:focus { border-color: #1D9E75; }
+  .field input { width: 100%; padding: 13px 15px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 15px; outline: none; transition: border 0.2s; background: #fff; }
+  .field input:focus { border-color: #1D9E75; }
   .btn-primary { width: 100%; background: #1D9E75; color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
   .btn-primary:hover { background: #0F6E56; }
   .btn-primary:disabled { background: #9FE1CB; cursor: not-allowed; }
@@ -33,38 +33,58 @@
   .avatar { width: 32px; height: 32px; border-radius: 50%; background: #E1F5EE; color: #0F6E56; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
   .logout-btn { background: transparent; border: 1.5px solid #ddd; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #555; }
   .logout-btn:hover { border-color: #1D9E75; color: #1D9E75; }
-  .banner { border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 14px; transition: background 0.3s; }
+
+  .banner { border-radius: 16px; padding: 1.5rem 1.75rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 16px; transition: background 0.3s; }
   .banner.calm { background: #E1F5EE; }
   .banner.active { background: #E6F1FB; }
-  .banner-icon { font-size: 30px; }
+  .banner-icon { font-size: 34px; }
   .banner.calm h2 { color: #085041; }
   .banner.calm p { color: #0F6E56; }
   .banner.active h2 { color: #0C447C; }
   .banner.active p { color: #185FA5; }
-  .banner h2 { font-size: 17px; margin: 0; }
-  .banner p { font-size: 13px; margin: 2px 0 0; }
+  .banner h2 { font-size: 19px; margin: 0; }
+  .banner p { font-size: 14px; margin: 3px 0 0; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+  .stat { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 1.1rem; }
+  .stat-label { font-size: 13px; color: #888; }
+  .stat-num { font-size: 26px; font-weight: 700; margin: 4px 0 0; color: #0F6E56; }
+  .stat-sub { font-size: 12px; color: #999; }
+
   .section-head { display: flex; justify-content: space-between; align-items: center; margin: 0 0 12px; }
   .section-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin: 0; }
   .add-btn { background: #E1F5EE; color: #0F6E56; border: none; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .add-btn:hover { background: #9FE1CB; }
-  .member { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
-  .m-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; background: #E1F5EE; color: #0F6E56; }
+
+  .feed { background: #fff; border: 1px solid #eee; border-radius: 14px; overflow: hidden; margin-bottom: 1.5rem; }
+  .feed-item { padding: 1rem 1.25rem; display: flex; align-items: flex-start; gap: 12px; border-bottom: 1px solid #f2f2f2; }
+  .feed-item:last-child { border-bottom: none; }
+  .feed-icon { font-size: 20px; margin-top: 1px; flex-shrink: 0; }
+  .feed-body { flex: 1; }
+  .feed-text { font-size: 14px; margin: 0; }
+  .feed-meta { font-size: 12px; color: #999; margin: 3px 0 0; }
+  .feed-tag { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
+  .feed-tag.stopped { background: #E1F5EE; color: #0F6E56; }
+  .feed-tag.attention { background: #E6F1FB; color: #185FA5; }
+  .feed-resolve { background: #185FA5; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+
+  .member { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 0.85rem 1.1rem; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .m-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; background: #E1F5EE; color: #0F6E56; }
   .m-info { flex: 1; }
-  .m-name { font-size: 15px; font-weight: 600; margin: 0; }
-  .m-detail { font-size: 13px; color: #888; margin: 2px 0 0; }
-  .status-select { border: 1.5px solid #eee; border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 600; cursor: pointer; outline: none; background: #fff; }
-  .status-select.safe { color: #0F6E56; border-color: #9FE1CB; background: #F4FBF8; }
-  .status-select.looking { color: #185FA5; border-color: #85B7EB; background: #F3F8FE; }
-  .status-select.resolved { color: #5F5E5A; border-color: #D3D1C7; background: #FAFAF8; }
-  .m-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 18px; padding: 0 4px; }
+  .m-name { font-size: 14px; font-weight: 600; margin: 0; }
+  .m-detail { font-size: 12px; color: #999; margin: 1px 0 0; }
+  .m-badge { font-size: 12px; font-weight: 600; color: #0F6E56; background: #E1F5EE; padding: 4px 11px; border-radius: 999px; }
+  .m-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 17px; padding: 0 4px; }
   .m-delete:hover { color: #A32D2D; }
-  .empty { text-align: center; padding: 2.5rem 1rem; color: #999; font-size: 14px; background: #fff; border: 1px dashed #ddd; border-radius: 14px; }
+  .empty { text-align: center; padding: 2rem 1rem; color: #999; font-size: 14px; background: #fff; border: 1px dashed #ddd; border-radius: 12px; }
 
   .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; padding: 1.5rem; z-index: 10; }
   .modal { background: #fff; border-radius: 16px; padding: 2rem; width: 100%; max-width: 400px; }
   .modal h3 { font-size: 18px; margin: 0 0 1.25rem; }
   .modal-actions { display: flex; gap: 10px; margin-top: 1.25rem; }
   .btn-cancel { flex: 1; background: #fff; border: 1.5px solid #ddd; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; color: #555; }
+  .demo-note { font-size: 12px; color: #aaa; text-align: center; margin-top: 1rem; }
+  .demo-note a { color: #1D9E75; cursor: pointer; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -104,15 +124,28 @@
     <span class="banner-icon" id="banner-icon">🛡️</span>
     <div>
       <h2 id="banner-title">Everyone is safe today</h2>
-      <p id="banner-sub">Loading your family...</p>
+      <p id="banner-sub">Loading...</p>
     </div>
   </div>
+
+  <div class="stats">
+    <div class="stat"><p class="stat-label">Threats stopped</p><p class="stat-num" id="stat-stopped">0</p><p class="stat-sub">automatically</p></div>
+    <div class="stat"><p class="stat-label">People protected</p><p class="stat-num" id="stat-people">0</p><p class="stat-sub">in your family</p></div>
+    <div class="stat"><p class="stat-label">Needs your input</p><p class="stat-num" id="stat-attention">0</p><p class="stat-sub">items</p></div>
+  </div>
+
+  <div class="section-head">
+    <p class="section-label">What Proteva caught &amp; handled</p>
+  </div>
+  <div id="feed"></div>
 
   <div class="section-head">
     <p class="section-label">Protected family</p>
     <button class="add-btn" onclick="openModal()">+ Add family member</button>
   </div>
   <div id="member-list"></div>
+
+  <p class="demo-note">Demo: <a onclick="simulateThreat()">simulate a threat Proteva catches</a></p>
 </div>
 
 <div class="modal-bg" id="modal">
@@ -141,6 +174,16 @@
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let isSignupMode = false;
+
+  const THREATS = [
+    {icon:'🚫', text:'Blocked a fake "Microsoft support" pop-up', tag:'stopped'},
+    {icon:'📧', text:'Caught a phishing text pretending to be from the bank', tag:'stopped'},
+    {icon:'🔒', text:'Stopped an unauthorized remote-access attempt', tag:'stopped'},
+    {icon:'📱', text:'Blocked a predatory app from installing', tag:'stopped'},
+    {icon:'🎣', text:'Removed a fake "IRS refund" link from a text', tag:'stopped'},
+    {icon:'⚠️', text:'A new app is requesting unusual permissions', tag:'attention'},
+    {icon:'👁️', text:'An unfamiliar login was seen — confirming it was them', tag:'attention'}
+  ];
 
   function showError(t){const e=document.getElementById('msg-error');e.textContent=t;e.style.display='block';document.getElementById('msg-success').style.display='none';}
   function showSuccess(t){const e=document.getElementById('msg-success');e.textContent=t;e.style.display='block';document.getElementById('msg-error').style.display='none';}
@@ -189,71 +232,95 @@
     document.getElementById('dash-screen').style.display='block';
     document.getElementById('user-email').textContent=email;
     document.getElementById('user-initial').textContent=email.charAt(0).toUpperCase();
-    loadMembers();
+    loadAll();
   }
 
-  function updateBanner(people){
-    const banner=document.getElementById('banner');
-    const icon=document.getElementById('banner-icon');
-    const title=document.getElementById('banner-title');
-    const sub=document.getElementById('banner-sub');
-    const count=people.length;
-    const looking=people.filter(p=>p.status==='looking').length;
-
-    if(count===0){
-      banner.className='banner calm'; icon.textContent='🛡️';
-      title.textContent='Everyone is safe today';
-      sub.textContent='Add your first family member to get started';
-      return;
-    }
-    if(looking>0){
-      banner.className='banner active'; icon.textContent='👁️';
-      title.textContent="You're looking into "+looking+' item'+(looking>1?'s':'');
-      sub.textContent=count+' family member'+(count>1?'s':'')+' protected · '+looking+' in progress';
-    }else{
-      banner.className='banner calm'; icon.textContent='🛡️';
-      title.textContent='Everyone is safe today';
-      sub.textContent=count+' family member'+(count>1?'s':'')+' protected · all clear';
-    }
+  async function loadAll(){
+    await Promise.all([loadMembers(), loadFeed()]);
   }
 
-  function statusClass(st){
-    if(st==='looking')return 'looking';
-    if(st==='resolved')return 'resolved';
-    return 'safe';
+  function timeAgo(ts){
+    const diff=(Date.now()-new Date(ts).getTime())/1000;
+    if(diff<60)return 'just now';
+    if(diff<3600)return Math.floor(diff/60)+'m ago';
+    if(diff<86400)return Math.floor(diff/3600)+'h ago';
+    return Math.floor(diff/86400)+'d ago';
   }
 
   async function loadMembers(){
     const list=document.getElementById('member-list');
     const {data,error}=await sb.from('protected_people').select('*').order('created_at',{ascending:true});
-    if(error){list.innerHTML='<div class="empty">Could not load your family. Please refresh.</div>';return;}
-    updateBanner(data);
+    if(error){list.innerHTML='<div class="empty">Could not load your family.</div>';return;}
+    document.getElementById('stat-people').textContent=data.length;
     if(data.length===0){
-      list.innerHTML='<div class="empty">No family members yet.<br>Click "+ Add family member" to add someone you want to protect.</div>';
+      list.innerHTML='<div class="empty">No family members yet. Add someone you want to protect.</div>';
       return;
     }
     list.innerHTML=data.map(p=>{
       const initials=p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
       const device=p.device?p.device+' · protected':'protected';
-      const st=p.status||'safe';
       return '<div class="member">'+
         '<span class="m-avatar">'+initials+'</span>'+
         '<div class="m-info"><p class="m-name">'+escapeHtml(p.name)+'</p><p class="m-detail">'+escapeHtml(device)+'</p></div>'+
-        '<select class="status-select '+statusClass(st)+'" onchange="updateStatus(\''+p.id+'\',this.value)">'+
-          '<option value="safe"'+(st==='safe'?' selected':'')+'>✓ Safe</option>'+
-          '<option value="looking"'+(st==='looking'?' selected':'')+'>👁 Looking into it</option>'+
-          '<option value="resolved"'+(st==='resolved'?' selected':'')+'>✓ Resolved</option>'+
-        '</select>'+
+        '<span class="m-badge">✓ Protected</span>'+
         '<button class="m-delete" onclick="deleteMember(\''+p.id+'\')" title="Remove">×</button>'+
         '</div>';
     }).join('');
   }
 
+  async function loadFeed(){
+    const feed=document.getElementById('feed');
+    const {data,error}=await sb.from('activity').select('*').order('created_at',{ascending:false}).limit(15);
+    if(error){feed.innerHTML='<div class="empty">Could not load activity.</div>';updateBanner(0,0);return;}
+
+    const stopped=data.filter(a=>a.tag==='stopped').length;
+    const attention=data.filter(a=>a.tag==='attention'&&!a.resolved).length;
+    document.getElementById('stat-stopped').textContent=stopped;
+    document.getElementById('stat-attention').textContent=attention;
+    updateBanner(stopped, attention);
+
+    if(data.length===0){
+      feed.innerHTML='<div class="empty">Nothing to report yet. Proteva is watching quietly.<br>When it catches something, you\'ll see it here.</div>';
+      return;
+    }
+    feed.innerHTML='<div class="feed">'+data.map(a=>{
+      const needsAction = a.tag==='attention' && !a.resolved;
+      const tagHtml = a.resolved
+        ? '<span class="feed-tag stopped">✓ Resolved</span>'
+        : (a.tag==='stopped' ? '<span class="feed-tag stopped">Handled</span>' : '<span class="feed-tag attention">Your input</span>');
+      let body='<p class="feed-text">'+escapeHtml(a.text)+'</p><p class="feed-meta">'+timeAgo(a.created_at)+(a.tag==='stopped'?' · handled automatically':'')+'</p>';
+      if(needsAction){ body+='<button class="feed-resolve" onclick="resolveItem(\''+a.id+'\')">Mark as resolved</button>'; }
+      return '<div class="feed-item"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+body+'</div>'+tagHtml+'</div>';
+    }).join('')+'</div>';
+  }
+
+  function updateBanner(stopped, attention){
+    const banner=document.getElementById('banner');
+    const icon=document.getElementById('banner-icon');
+    const title=document.getElementById('banner-title');
+    const sub=document.getElementById('banner-sub');
+    if(attention>0){
+      banner.className='banner active'; icon.textContent='👁️';
+      title.textContent=attention+' item'+(attention>1?'s need':' needs')+' your input';
+      sub.textContent='Proteva handled everything else automatically';
+    }else{
+      banner.className='banner calm'; icon.textContent='🛡️';
+      title.textContent='Everyone is safe today';
+      sub.textContent = stopped>0 ? 'Proteva stopped '+stopped+' threat'+(stopped>1?'s':'')+' for you — nothing needs your attention' : 'Proteva is watching quietly over your family';
+    }
+  }
+
   function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-  async function updateStatus(id,status){
-    await sb.from('protected_people').update({status}).eq('id',id);
-    loadMembers();
+  async function resolveItem(id){
+    await sb.from('activity').update({resolved:true}).eq('id',id);
+    loadFeed();
+  }
+
+  async function simulateThreat(){
+    const t=THREATS[Math.floor(Math.random()*THREATS.length)];
+    await sb.from('activity').insert([{icon:t.icon, text:t.text, tag:t.tag}]);
+    loadFeed();
   }
 
   function openModal(){document.getElementById('modal').style.display='flex';document.getElementById('m-name').value='';document.getElementById('m-device').value='';document.getElementById('modal-error').style.display='none';}
