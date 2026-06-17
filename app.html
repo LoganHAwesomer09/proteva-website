@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proteva — Caregiver Login</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F4FBF8; color: #1a1a1a; min-height: 100vh; }
+  .logo { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .logo span { color: #1D9E75; }
+
+  .auth-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
+  .auth-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 18px; padding: 2.5rem; width: 100%; max-width: 420px; }
+  .auth-card .logo { text-align: center; margin-bottom: 0.5rem; }
+  .auth-sub { text-align: center; font-size: 14px; color: #777; margin-bottom: 1.75rem; }
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
+  .field input { width: 100%; padding: 13px 15px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 15px; outline: none; transition: border 0.2s; }
+  .field input:focus { border-color: #1D9E75; }
+  .btn-primary { width: 100%; background: #1D9E75; color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+  .btn-primary:hover { background: #0F6E56; }
+  .btn-primary:disabled { background: #9FE1CB; cursor: not-allowed; }
+  .auth-toggle { text-align: center; font-size: 14px; color: #777; margin-top: 1.25rem; }
+  .auth-toggle a { color: #1D9E75; font-weight: 600; text-decoration: none; cursor: pointer; }
+  .msg { padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 1rem; display: none; }
+  .msg.error { background: #FCEBEB; color: #A32D2D; }
+  .msg.success { background: #E1F5EE; color: #0F6E56; }
+
+  .dash-wrap { display: none; max-width: 760px; margin: 0 auto; padding: 1.5rem; }
+  .dash-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+  .dash-user { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: #E1F5EE; color: #0F6E56; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
+  .logout-btn { background: transparent; border: 1.5px solid #ddd; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #555; }
+  .logout-btn:hover { border-color: #1D9E75; color: #1D9E75; }
+  .banner { background: #E1F5EE; border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 14px; }
+  .banner-icon { font-size: 30px; }
+  .banner h2 { font-size: 17px; color: #085041; margin: 0; }
+  .banner p { font-size: 13px; color: #0F6E56; margin: 2px 0 0; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+  .stat { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 1.1rem; }
+  .stat-label { font-size: 13px; color: #888; }
+  .stat-num { font-size: 26px; font-weight: 700; margin: 4px 0 0; }
+  .stat-sub { font-size: 12px; color: #999; }
+  .section-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px; }
+  .member { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+  .m-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+  .m-info { flex: 1; }
+  .m-name { font-size: 15px; font-weight: 600; margin: 0; }
+  .m-detail { font-size: 13px; color: #888; margin: 2px 0 0; }
+  .badge { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
+  .badge.safe { background: #E1F5EE; color: #0F6E56; }
+  .badge.review { background: #FAEEDA; color: #854F0B; }
+</style>
+</head>
+<body>
+
+<div class="auth-wrap" id="auth-screen">
+  <div class="auth-card">
+    <div class="logo">Pro<span>teva</span></div>
+    <p class="auth-sub" id="auth-subtitle">Welcome back — sign in to your family dashboard</p>
+
+    <div class="msg error" id="msg-error"></div>
+    <div class="msg success" id="msg-success"></div>
+
+    <div class="field">
+      <label for="email">Email address</label>
+      <input type="email" id="email" placeholder="you@example.com" />
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="••••••••" />
+    </div>
+
+    <button class="btn-primary" id="auth-btn" onclick="handleAuth()">Sign in</button>
+
+    <p class="auth-toggle" id="toggle-text">
+      New to Proteva? <a onclick="toggleMode()">Create an account</a>
+    </p>
+  </div>
+</div>
+
+<div class="dash-wrap" id="dash-screen">
+  <div class="dash-top">
+    <div class="logo" style="font-size:20px;">Pro<span>teva</span></div>
+    <div class="dash-user">
+      <span class="avatar" id="user-initial">U</span>
+      <span style="font-size:13px;color:#777;" id="user-email">user@email.com</span>
+      <button class="logout-btn" onclick="handleLogout()">Log out</button>
+    </div>
+  </div>
+
+  <div class="banner">
+    <span class="banner-icon">🛡️</span>
+    <div>
+      <h2>Everyone is safe today</h2>
+      <p>3 family members protected · last checked 2 minutes ago</p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><p class="stat-label">Threats blocked</p><p class="stat-num">7</p><p class="stat-sub">this week</p></div>
+    <div class="stat"><p class="stat-label">Devices safe</p><p class="stat-num">4 / 4</p><p class="stat-sub">all protected</p></div>
+    <div class="stat"><p class="stat-label">Needs attention</p><p class="stat-num">1</p><p class="stat-sub">minor item</p></div>
+  </div>
+
+  <p class="section-label">Protected family</p>
+  <div class="member">
+    <span class="m-avatar" style="background:#FAEEDA;color:#854F0B;">RG</span>
+    <div class="m-info"><p class="m-name">Grandma Rose</p><p class="m-detail">iPad · iPhone · safe and protected</p></div>
+    <span class="badge safe">✓ Safe</span>
+  </div>
+  <div class="member">
+    <span class="m-avatar" style="background:#E6F1FB;color:#0C447C;">HG</span>
+    <div class="m-info"><p class="m-name">Grandpa Harold</p><p class="m-detail">Android phone · safe and protected</p></div>
+    <span class="badge safe">✓ Safe</span>
+  </div>
+  <div class="member">
+    <span class="m-avatar" style="background:#FBEAF0;color:#993556;">AM</span>
+    <div class="m-info"><p class="m-name">Aunt Mary</p><p class="m-detail">iPhone · 1 app needs review</p></div>
+    <span class="badge review">⚠ Review</span>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://njjhioejdqjwpeblrewb.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qamhpb2VqZHFqd3BlYmxyZXdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTI4NTcsImV4cCI6MjA5NTQ4ODg1N30.QVR2gB5zOIg0NYjI78anipNYUFaorIrFMxw50768am4';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let isSignupMode = false;
+
+  function showError(text) {
+    const el = document.getElementById('msg-error');
+    el.textContent = text; el.style.display = 'block';
+    document.getElementById('msg-success').style.display = 'none';
+  }
+  function showSuccess(text) {
+    const el = document.getElementById('msg-success');
+    el.textContent = text; el.style.display = 'block';
+    document.getElementById('msg-error').style.display = 'none';
+  }
+  function clearMsgs() {
+    document.getElementById('msg-error').style.display = 'none';
+    document.getElementById('msg-success').style.display = 'none';
+  }
+
+  function toggleMode() {
+    isSignupMode = !isSignupMode;
+    clearMsgs();
+    if (isSignupMode) {
+      document.getElementById('auth-subtitle').textContent = 'Create your account to protect your family';
+      document.getElementById('auth-btn').textContent = 'Create account';
+      document.getElementById('toggle-text').innerHTML = 'Already have an account? <a onclick="toggleMode()">Sign in</a>';
+    } else {
+      document.getElementById('auth-subtitle').textContent = 'Welcome back — sign in to your family dashboard';
+      document.getElementById('auth-btn').textContent = 'Sign in';
+      document.getElementById('toggle-text').innerHTML = 'New to Proteva? <a onclick="toggleMode()">Create an account</a>';
+    }
+  }
+
+  async function handleAuth() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn = document.getElementById('auth-btn');
+    clearMsgs();
+
+    if (!email || !email.includes('@')) { showError('Please enter a valid email address.'); return; }
+    if (password.length < 6) { showError('Password must be at least 6 characters.'); return; }
+
+    btn.disabled = true;
+    btn.textContent = isSignupMode ? 'Creating...' : 'Signing in...';
+
+    try {
+      if (isSignupMode) {
+        const { data, error } = await sb.auth.signUp({ email, password });
+        if (error) throw error;
+        if (data.session) {
+          showDashboard(email);
+        } else {
+          showSuccess('Account created! Check your email to confirm, then sign in.');
+          btn.disabled = false;
+          toggleMode();
+        }
+      } else {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        showDashboard(email);
+      }
+    } catch (err) {
+      showError(err.message || 'Something went wrong. Please try again.');
+      btn.disabled = false;
+      btn.textContent = isSignupMode ? 'Create account' : 'Sign in';
+    }
+  }
+
+  function showDashboard(email) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('dash-screen').style.display = 'block';
+    document.getElementById('user-email').textContent = email;
+    document.getElementById('user-initial').textContent = email.charAt(0).toUpperCase();
+  }
+
+  async function handleLogout() {
+    await sb.auth.signOut();
+    document.getElementById('dash-screen').style.display = 'none';
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('email').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('auth-btn').disabled = false;
+    document.getElementById('auth-btn').textContent = isSignupMode ? 'Create account' : 'Sign in';
+    clearMsgs();
+  }
+
+  async function checkSession() {
+    const { data } = await sb.auth.getSession();
+    if (data.session) {
+      showDashboard(data.session.user.email);
+    }
+  }
+  checkSession();
+</script>
+
+</body>
+</html>
