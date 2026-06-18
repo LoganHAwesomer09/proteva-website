@@ -16,8 +16,8 @@
   .auth-sub { text-align: center; font-size: 14px; color: #777; margin-bottom: 1.75rem; }
   .field { margin-bottom: 1rem; }
   .field label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
-  .field input { width: 100%; padding: 13px 15px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 15px; outline: none; transition: border 0.2s; background: #fff; }
-  .field input:focus { border-color: #1D9E75; }
+  .field input, .field select { width: 100%; padding: 13px 15px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 15px; outline: none; transition: border 0.2s; background: #fff; }
+  .field input:focus, .field select:focus { border-color: #1D9E75; }
   .btn-primary { width: 100%; background: #1D9E75; color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
   .btn-primary:hover { background: #0F6E56; }
   .btn-primary:disabled { background: #9FE1CB; cursor: not-allowed; }
@@ -64,6 +64,7 @@
   .feed-icon { font-size: 20px; margin-top: 1px; flex-shrink: 0; }
   .feed-body { flex: 1; }
   .feed-text { font-size: 14px; margin: 0; font-weight: 500; }
+  .feed-person { font-size: 12px; color: #0F6E56; font-weight: 600; margin: 2px 0 0; }
   .feed-meta { font-size: 12px; color: #999; margin: 3px 0 0; }
   .feed-tag { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
   .feed-tag.stopped { background: #E1F5EE; color: #0F6E56; }
@@ -83,7 +84,8 @@
   .date-header { font-size: 13px; font-weight: 700; color: #555; margin: 1.25rem 0 0.6rem; padding-bottom: 4px; border-bottom: 1px solid #e8e8e8; }
   .date-header:first-child { margin-top: 0; }
 
-  .member { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 0.85rem 1.1rem; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .member { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 0.85rem 1.1rem; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; cursor: pointer; transition: border 0.15s; }
+  .member:hover { border-color: #9FE1CB; }
   .m-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; background: #E1F5EE; color: #0F6E56; }
   .m-info { flex: 1; }
   .m-name { font-size: 14px; font-weight: 600; margin: 0; }
@@ -102,6 +104,10 @@
   .demo-note a { color: #1D9E75; cursor: pointer; font-weight: 600; }
   .page-title { font-size: 22px; font-weight: 700; margin: 0 0 0.25rem; }
   .page-sub { font-size: 14px; color: #888; margin: 0 0 1.5rem; }
+  .person-hero { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 14px; }
+  .person-hero .m-avatar { width: 48px; height: 48px; font-size: 16px; }
+  .person-hero h2 { font-size: 18px; margin: 0; }
+  .person-hero p { font-size: 13px; color: #888; margin: 2px 0 0; }
 </style>
 </head>
 <body>
@@ -166,6 +172,15 @@
     <p class="demo-note">Demo: <a onclick="simulateThreat()">simulate a threat Proteva catches</a></p>
   </div>
 
+  <div id="person-view" style="display:none;">
+    <button class="back-link" onclick="showMain()">← Back to dashboard</button>
+    <div class="person-hero" id="person-hero"></div>
+    <div class="section-head"><p class="section-label">Active for this person</p></div>
+    <div id="person-active"></div>
+    <div class="section-head"><p class="section-label">History for this person</p></div>
+    <div id="person-history"></div>
+  </div>
+
   <div id="history-view" style="display:none;">
     <button class="back-link" onclick="showMain()">← Back to dashboard</button>
     <p class="page-title">History</p>
@@ -193,6 +208,21 @@
   </div>
 </div>
 
+<div class="modal-bg" id="sim-modal">
+  <div class="modal">
+    <h3>Simulate a threat</h3>
+    <p style="font-size:13px;color:#888;margin:0 0 1rem;">Which family member's device did Proteva catch this on?</p>
+    <div class="field">
+      <label for="sim-person">Family member</label>
+      <select id="sim-person"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeSimModal()">Cancel</button>
+      <button class="btn-primary" onclick="confirmSimulate()">Simulate</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const SUPABASE_URL = 'https://njjhioejdqjwpeblrewb.supabase.co';
@@ -200,6 +230,8 @@
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let isSignupMode = false;
+  let membersCache = [];
+  let currentPersonId = null;
 
   const THREATS = [
     {icon:'🚫', text:'Blocked a fake "Microsoft support" pop-up', tag:'stopped',
@@ -282,8 +314,13 @@
     loadAll();
   }
 
-  function showMain(){document.getElementById('main-view').style.display='block';document.getElementById('history-view').style.display='none';}
-  function showHistory(){document.getElementById('main-view').style.display='none';document.getElementById('history-view').style.display='block';loadHistory();}
+  function hideAllViews(){
+    document.getElementById('main-view').style.display='none';
+    document.getElementById('history-view').style.display='none';
+    document.getElementById('person-view').style.display='none';
+  }
+  function showMain(){hideAllViews();document.getElementById('main-view').style.display='block';loadAll();}
+  function showHistory(){hideAllViews();document.getElementById('history-view').style.display='block';loadHistory();}
 
   async function loadAll(){ await Promise.all([loadMembers(), loadFeed()]); }
 
@@ -297,19 +334,29 @@
   function timeOnly(ts){return new Date(ts).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});}
   function dayLabel(ts){return new Date(ts).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'});}
 
+  function personName(id){ const m=membersCache.find(x=>x.id===id); return m?m.name:null; }
+
   async function loadMembers(){
     const list=document.getElementById('member-list');
     const {data,error}=await sb.from('protected_people').select('*').order('created_at',{ascending:true});
     if(error){list.innerHTML='<div class="empty">Could not load your family.</div>';return;}
+    membersCache=data;
     document.getElementById('stat-people').textContent=data.length;
+    // counts of active threats per person
+    const {data:acts}=await sb.from('activity').select('person_id').eq('resolved',false);
+    const counts={};
+    (acts||[]).forEach(a=>{ if(a.person_id){counts[a.person_id]=(counts[a.person_id]||0)+1;} });
+
     if(data.length===0){list.innerHTML='<div class="empty">No family members yet. Add someone you want to protect.</div>';return;}
     list.innerHTML=data.map(p=>{
       const initials=p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
-      const device=p.device?p.device+' · protected':'protected';
-      return '<div class="member"><span class="m-avatar">'+initials+'</span>'+
-        '<div class="m-info"><p class="m-name">'+escapeHtml(p.name)+'</p><p class="m-detail">'+escapeHtml(device)+'</p></div>'+
-        '<span class="m-badge">✓ Protected</span>'+
-        '<button class="m-delete" onclick="deleteMember(\''+p.id+'\')" title="Remove">×</button></div>';
+      const c=counts[p.id]||0;
+      const detail = c>0 ? c+' active item'+(c>1?'s':'') : (p.device?escapeHtml(p.device)+' · protected':'protected');
+      const badge = c>0 ? '<span class="m-badge" style="background:#E6F1FB;color:#185FA5;">'+c+' active</span>' : '<span class="m-badge">✓ Protected</span>';
+      return '<div class="member" onclick="showPerson(\''+p.id+'\')"><span class="m-avatar">'+initials+'</span>'+
+        '<div class="m-info"><p class="m-name">'+escapeHtml(p.name)+'</p><p class="m-detail">'+detail+'</p></div>'+
+        badge+
+        '<button class="m-delete" onclick="event.stopPropagation();deleteMember(\''+p.id+'\')" title="Remove">×</button></div>';
     }).join('');
   }
 
@@ -323,6 +370,19 @@
     return h;
   }
 
+  function activeItemHtml(a, showPersonName){
+    const tagHtml = a.tag==='stopped' ? '<span class="feed-tag stopped">Handled</span>' : '<span class="feed-tag attention">Your input</span>';
+    const hasDetail = a.detail_why || a.detail_did || a.detail_actions;
+    const pname = showPersonName ? personName(a.person_id) : null;
+    let inner='<p class="feed-text">'+escapeHtml(a.text)+'</p>';
+    if(pname){ inner+='<p class="feed-person">on '+escapeHtml(pname)+'\'s device</p>'; }
+    inner+='<p class="feed-meta">'+timeAgo(a.created_at)+(a.tag==='stopped'?' · handled automatically':'')+'</p>';
+    if(hasDetail){ inner+='<button class="expand-btn" onclick="toggleDetail(\''+a.id+'\',this)">See details ▾</button>'; }
+    inner+=detailHtml(a);
+    return '<div class="feed-item"><div class="feed-row"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+inner+'</div>'+
+      '<div class="right-stack">'+tagHtml+'<button class="feed-x" onclick="archiveItem(\''+a.id+'\')" title="Clear from dashboard">×</button></div></div></div>';
+  }
+
   async function loadFeed(){
     const feed=document.getElementById('feed');
     const {data,error}=await sb.from('activity').select('*').eq('resolved',false).order('created_at',{ascending:false}).limit(20);
@@ -333,15 +393,7 @@
     document.getElementById('stat-attention').textContent=attention;
     updateBanner(stopped, attention);
     if(data.length===0){feed.innerHTML='<div class="empty">Nothing to report right now. Proteva is watching quietly.<br>When it catches something, you\'ll see it here.</div>';return;}
-    feed.innerHTML='<div class="feed">'+data.map(a=>{
-      const tagHtml = a.tag==='stopped' ? '<span class="feed-tag stopped">Handled</span>' : '<span class="feed-tag attention">Your input</span>';
-      const hasDetail = a.detail_why || a.detail_did || a.detail_actions;
-      let inner='<p class="feed-text">'+escapeHtml(a.text)+'</p><p class="feed-meta">'+timeAgo(a.created_at)+(a.tag==='stopped'?' · handled automatically':'')+'</p>';
-      if(hasDetail){ inner+='<button class="expand-btn" onclick="toggleDetail(\''+a.id+'\',this)">See details ▾</button>'; }
-      inner+=detailHtml(a);
-      return '<div class="feed-item"><div class="feed-row"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+inner+'</div>'+
-        '<div class="right-stack">'+tagHtml+'<button class="feed-x" onclick="archiveItem(\''+a.id+'\')" title="Clear from dashboard">×</button></div></div></div>';
-    }).join('')+'</div>';
+    feed.innerHTML='<div class="feed">'+data.map(a=>activeItemHtml(a,true)).join('')+'</div>';
   }
 
   function toggleDetail(id, btn){
@@ -351,34 +403,49 @@
     btn.textContent = open ? 'Hide details ▴' : 'See details ▾';
   }
 
+  function historyItemHtml(a){
+    const hasDetail = a.detail_why || a.detail_did || a.detail_actions;
+    let inner='<p class="feed-text">'+escapeHtml(a.text)+'</p><p class="feed-meta">'+timeOnly(a.created_at)+'</p>';
+    if(hasDetail){ inner+='<button class="expand-btn" onclick="toggleDetail(\''+a.id+'\',this)">See details ▾</button>'+detailHtml(a); }
+    return '<div class="feed-item"><div class="feed-row"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+inner+'</div><span class="feed-tag resolved">Cleared</span></div></div>';
+  }
+
+  function groupByDay(data, feedEl, emptyMsg){
+    if(data.length===0){feedEl.innerHTML='<div class="empty">'+emptyMsg+'</div>';return;}
+    const groups={}; const order=[];
+    data.forEach(a=>{ const key=dayLabel(a.created_at); if(!groups[key]){groups[key]=[];order.push(key);} groups[key].push(a); });
+    let html='';
+    order.forEach(day=>{ html+='<div class="date-header">'+day+'</div><div class="feed">'+groups[day].map(historyItemHtml).join('')+'</div>'; });
+    feedEl.innerHTML=html;
+  }
+
   async function loadHistory(){
     const feed=document.getElementById('history-feed');
     feed.innerHTML='<div class="empty">Loading...</div>';
     const {data,error}=await sb.from('activity').select('*').eq('resolved',true).order('created_at',{ascending:false}).limit(100);
     if(error){feed.innerHTML='<div class="empty">Could not load history.</div>';return;}
-    if(data.length===0){feed.innerHTML='<div class="empty">No history yet.<br>When you clear an item with the × button, it\'ll be filed here by date.</div>';return;}
+    groupByDay(data, feed, 'No history yet.<br>When you clear an item with the × button, it\'ll be filed here by date.');
+  }
 
-    // group by day
-    const groups={};
-    const order=[];
-    data.forEach(a=>{
-      const key=dayLabel(a.created_at);
-      if(!groups[key]){groups[key]=[];order.push(key);}
-      groups[key].push(a);
-    });
+  async function showPerson(id){
+    currentPersonId=id;
+    hideAllViews();
+    document.getElementById('person-view').style.display='block';
+    const p=membersCache.find(x=>x.id===id);
+    const initials=p?p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase():'?';
+    document.getElementById('person-hero').innerHTML=
+      '<span class="m-avatar">'+initials+'</span><div><h2>'+escapeHtml(p?p.name:'')+'</h2><p>'+(p&&p.device?escapeHtml(p.device)+' · ':'')+'protected by Proteva</p></div>';
 
-    let html='';
-    order.forEach(day=>{
-      html+='<div class="date-header">'+day+'</div><div class="feed">';
-      html+=groups[day].map(a=>{
-        const hasDetail = a.detail_why || a.detail_did || a.detail_actions;
-        let inner='<p class="feed-text">'+escapeHtml(a.text)+'</p><p class="feed-meta">'+timeOnly(a.created_at)+'</p>';
-        if(hasDetail){ inner+='<button class="expand-btn" onclick="toggleDetail(\''+a.id+'\',this)">See details ▾</button>'+detailHtml(a); }
-        return '<div class="feed-item"><div class="feed-row"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+inner+'</div><span class="feed-tag resolved">Cleared</span></div></div>';
-      }).join('');
-      html+='</div>';
-    });
-    feed.innerHTML=html;
+    const act=document.getElementById('person-active');
+    const hist=document.getElementById('person-history');
+    act.innerHTML='<div class="empty">Loading...</div>'; hist.innerHTML='';
+
+    const {data:activeData}=await sb.from('activity').select('*').eq('person_id',id).eq('resolved',false).order('created_at',{ascending:false});
+    if(!activeData || activeData.length===0){ act.innerHTML='<div class="empty">Nothing active for '+escapeHtml(p?p.name:'this person')+' right now. All clear. ✓</div>'; }
+    else { act.innerHTML='<div class="feed">'+activeData.map(a=>activeItemHtml(a,false)).join('')+'</div>'; }
+
+    const {data:histData}=await sb.from('activity').select('*').eq('person_id',id).eq('resolved',true).order('created_at',{ascending:false}).limit(100);
+    groupByDay(histData||[], hist, 'No history yet for this person.');
   }
 
   function updateBanner(stopped, attention){
@@ -397,14 +464,28 @@
     }
   }
 
-  function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+  function escapeHtml(s){const d=document.createElement('div');d.textContent=s===null||s===undefined?'':s;return d.innerHTML;}
 
-  async function archiveItem(id){ await sb.from('activity').update({resolved:true}).eq('id',id); loadFeed(); }
+  async function archiveItem(id){
+    await sb.from('activity').update({resolved:true}).eq('id',id);
+    if(currentPersonId && document.getElementById('person-view').style.display==='block'){ showPerson(currentPersonId); }
+    else { loadFeed(); loadMembers(); }
+  }
 
-  async function simulateThreat(){
+  // ---- simulate with person picker ----
+  function simulateThreat(){
+    if(membersCache.length===0){ alert('Add a family member first, then simulate a threat on their device.'); return; }
+    const sel=document.getElementById('sim-person');
+    sel.innerHTML=membersCache.map(m=>'<option value="'+m.id+'">'+escapeHtml(m.name)+'</option>').join('');
+    document.getElementById('sim-modal').style.display='flex';
+  }
+  function closeSimModal(){document.getElementById('sim-modal').style.display='none';}
+  async function confirmSimulate(){
+    const personId=document.getElementById('sim-person').value;
     const t=THREATS[Math.floor(Math.random()*THREATS.length)];
-    await sb.from('activity').insert([{icon:t.icon, text:t.text, tag:t.tag, detail_why:t.why, detail_did:t.did, detail_actions:t.actions}]);
-    loadFeed();
+    await sb.from('activity').insert([{icon:t.icon, text:t.text, tag:t.tag, detail_why:t.why, detail_did:t.did, detail_actions:t.actions, person_id:personId}]);
+    closeSimModal();
+    loadFeed(); loadMembers();
   }
 
   function openModal(){document.getElementById('modal').style.display='flex';document.getElementById('m-name').value='';document.getElementById('m-device').value='';document.getElementById('modal-error').style.display='none';}
@@ -426,7 +507,7 @@
     btn.disabled=false; btn.textContent='Add';
   }
 
-  async function deleteMember(id){ await sb.from('protected_people').delete().eq('id',id); loadMembers(); }
+  async function deleteMember(id){ await sb.from('protected_people').delete().eq('id',id); loadMembers(); loadFeed(); }
 
   async function handleLogout(){
     await sb.auth.signOut();
