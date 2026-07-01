@@ -4,17 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="/assets/proteva-app-icon.png">
+<link rel="apple-touch-icon" href="/assets/proteva-app-icon.png">
 <title>Proteva — Caregiver Dashboard</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F4FBF8; color: #1a1a1a; min-height: 100vh; }
-  .logo { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .logo { display: inline-flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 700; letter-spacing: -0.5px; text-decoration: none; color: #1a1a1a; }
+  .logo-icon { width: 32px; height: 32px; border-radius: 8px; display: block; flex-shrink: 0; }
   .logo span { color: #1D9E75; }
 
   /* AUTH */
   .auth-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
   .auth-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 18px; padding: 2.5rem; width: 100%; max-width: 420px; }
-  .auth-card .logo { text-align: center; margin-bottom: 0.5rem; display:block; }
+  .auth-card .logo { text-align: center; margin-bottom: 0.5rem; display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .auth-card .logo-icon { width: 52px; height: 52px; border-radius: 12px; }
   .auth-sub { text-align: center; font-size: 14px; color: #777; margin-bottom: 1.75rem; }
   .field { margin-bottom: 1rem; }
   .field label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
@@ -182,7 +186,8 @@
   .onboarding { display: none; position: fixed; inset: 0; background: #F4FBF8; z-index: 50; overflow-y: auto; }
   .onboarding.open { display: flex; align-items: center; justify-content: center; padding: 2rem 1.25rem; }
   .onboarding-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 20px; padding: 2.5rem 2.25rem; width: 100%; max-width: 480px; box-shadow: 0 12px 40px rgba(0,0,0,0.06); }
-  .onboarding-card .logo { text-align: center; display: block; margin-bottom: 1.5rem; }
+  .onboarding-card .logo { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+  .onboarding-card .logo-icon { width: 52px; height: 52px; border-radius: 12px; }
   .ob-step { display: none; }
   .ob-step.active { display: block; }
   .ob-icon { font-size: 48px; text-align: center; margin-bottom: 1rem; }
@@ -234,7 +239,7 @@
 <!-- AUTH SCREEN -->
 <div class="auth-wrap" id="auth-screen">
   <div class="auth-card">
-    <span class="logo">Pro<span>teva</span></span>
+    <span class="logo"><img class="logo-icon" src="/assets/proteva-app-icon.png" alt=""><span>Pro<span>teva</span></span></span>
     <p class="auth-sub" id="auth-subtitle">Welcome back — sign in to your family dashboard</p>
     <div class="msg error" id="msg-error"></div>
     <div class="msg success" id="msg-success"></div>
@@ -289,7 +294,7 @@
   <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
 
   <aside class="sidebar" id="sidebar">
-    <span class="logo">Pro<span>teva</span></span>
+    <span class="logo"><img class="logo-icon" src="/assets/proteva-app-icon.png" alt=""><span>Pro<span>teva</span></span></span>
     <button class="nav-item active" id="nav-dashboard" onclick="go('dashboard')"><span class="ni-icon">🏠</span> Dashboard</button>
     <button class="nav-item" id="nav-family" onclick="go('family')"><span class="ni-icon">👪</span> Family</button>
     <button class="nav-item" id="nav-history" onclick="go('history')"><span class="ni-icon">🗂️</span> History</button>
@@ -438,7 +443,7 @@
 <!-- ONBOARDING -->
 <div class="onboarding" id="onboarding">
   <div class="onboarding-card">
-    <span class="logo">Pro<span>teva</span></span>
+    <span class="logo"><img class="logo-icon" src="/assets/proteva-app-icon.png" alt=""><span>Pro<span>teva</span></span></span>
     <div class="ob-progress" id="ob-progress">
       <span class="ob-dot current" data-step="0"></span>
       <span class="ob-dot" data-step="1"></span>

@@ -4,12 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="/assets/proteva-app-icon.png">
+<link rel="apple-touch-icon" href="/assets/proteva-app-icon.png">
 <title>Proteva — Protecting the people you love most</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #ffffff; color: #1a1a1a; }
   nav { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 2rem; border-bottom: 1px solid #f0f0f0; }
-  .logo { font-size: 22px; font-weight: 600; color: #1a1a1a; letter-spacing: -0.5px; }
+  .logo { display: inline-flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 600; color: #1a1a1a; letter-spacing: -0.5px; text-decoration: none; }
+  .logo-icon { width: 34px; height: 34px; border-radius: 8px; display: block; flex-shrink: 0; }
   .logo span { color: #1D9E75; }
   .nav-signin { display: inline-flex; align-items: center; background: #1D9E75; color: #fff; text-decoration: none; padding: 9px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; transition: background 0.2s; }
   .nav-signin:hover { background: #0F6E56; }
@@ -64,7 +67,7 @@
   .cta-box p { font-size: 16px; color: #0F6E56; margin-bottom: 2rem; line-height: 1.6; }
   .cta-box button { background: #1D9E75; color: #fff; border: none; padding: 15px 32px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
   footer { padding: 2rem; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-  .footer-logo { font-size: 16px; font-weight: 600; }
+  .footer-logo { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; }
   .footer-logo span { color: #1D9E75; }
   footer p { font-size: 13px; color: #aaa; }
   @media (max-width: 600px) {
@@ -78,7 +81,7 @@
 <script src="gate.js"></script>
 
 <nav>
-  <div class="logo">Pro<span>teva</span></div>
+  <a class="logo" href="/"><img class="logo-icon" src="/assets/proteva-app-icon.png" alt="">Pro<span>teva</span></a>
   <a class="nav-signin" href="/app.html">Sign in</a>
 </nav>
 
@@ -210,7 +213,7 @@
 </section>
 
 <footer>
-  <div class="footer-logo">Pro<span>teva</span></div>
+  <div class="footer-logo"><img class="logo-icon" style="width:28px;height:28px;" src="/assets/proteva-app-icon.png" alt="">Pro<span>teva</span></div>
   <p>© 2026 Proteva · getproteva.com · Built with love, for families everywhere.</p>
 </footer>
 
