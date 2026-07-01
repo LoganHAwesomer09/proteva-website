@@ -10,7 +10,8 @@
   nav { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 2rem; border-bottom: 1px solid #f0f0f0; }
   .logo { font-size: 22px; font-weight: 600; color: #1a1a1a; letter-spacing: -0.5px; }
   .logo span { color: #1D9E75; }
-  .nav-badge { font-size: 12px; background: #E1F5EE; color: #0F6E56; padding: 5px 12px; border-radius: 999px; font-weight: 500; }
+  .nav-account { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; background: #E1F5EE; color: #0F6E56; text-decoration: none; font-size: 18px; transition: background 0.2s; }
+  .nav-account:hover { background: #B5EDD8; }
   .hero { padding: 5rem 2rem 3rem; text-align: center; max-width: 700px; margin: 0 auto; }
   .hero-tag { display: inline-block; background: #E1F5EE; color: #0F6E56; font-size: 13px; padding: 6px 16px; border-radius: 999px; margin-bottom: 1.75rem; font-weight: 500; }
   .hero h1 { font-size: 42px; font-weight: 700; line-height: 1.15; letter-spacing: -1px; margin-bottom: 1.25rem; color: #1a1a1a; }
@@ -76,7 +77,7 @@
 
 <nav>
   <div class="logo">Pro<span>teva</span></div>
-  <div class="nav-badge">🛡️ Coming soon</div>
+  <a class="nav-account" href="/app.html" title="Sign in to your account" aria-label="Sign in">👤</a>
 </nav>
 
 <section class="hero">
@@ -95,16 +96,6 @@
   </div>
   <p class="form-note">Free for your first month. No credit card required.</p>
 </section>
-
-<div class="story">
-  <div class="story-inner">
-    <div class="story-icon">❤️</div>
-    <div>
-      <h3>Why we built Proteva</h3>
-      <p>Our grandmother lost her savings to a digital scammer. She never saw it coming — and neither did we. We are two brothers who turned that painful experience into a mission: to build the protection we wish she'd had. Proteva exists so no family has to go through what ours did.</p>
-    </div>
-  </div>
-</div>
 
 <section class="features">
   <p class="section-eyebrow">What Proteva does</p>
@@ -179,9 +170,10 @@
   <div class="plans">
     <div class="plan">
       <h3>Home</h3>
-      <div class="plan-price">$8<span>/mo</span></div>
-      <p class="plan-desc">Up to 5 devices. Perfect for protecting one elderly parent.</p>
+      <div class="plan-price">$10<span>/mo</span></div>
+      <p class="plan-desc">Protect up to 2 people. Perfect for one or two elderly parents.</p>
       <ul>
+        <li>Up to 2 protected people</li>
         <li>Full elder protection suite</li>
         <li>Caregiver dashboard</li>
         <li>Real-time alerts</li>
@@ -191,9 +183,10 @@
     <div class="plan best" style="position:relative;">
       <div class="best-badge">Most popular</div>
       <h3>Family</h3>
-      <div class="plan-price">$15<span>/mo</span></div>
-      <p class="plan-desc">Unlimited devices. AI features. Dark web monitoring.</p>
+      <div class="plan-price">$20<span>/mo</span></div>
+      <p class="plan-desc">Protect up to 5 people. For larger families and multiple loved ones.</p>
       <ul>
+        <li>Up to 5 protected people</li>
         <li>Everything in Home</li>
         <li>AI-powered alerts</li>
         <li>Dark web monitoring</li>
@@ -202,9 +195,10 @@
     </div>
     <div class="plan">
       <h3>Shield</h3>
-      <div class="plan-price">$25<span>/mo</span></div>
-      <p class="plan-desc">Everything, plus a dedicated safety concierge for your family.</p>
+      <div class="plan-price">$35<span>/mo</span></div>
+      <p class="plan-desc">Protect up to 10 people, with a dedicated safety concierge.</p>
       <ul>
+        <li>Up to 10 protected people</li>
         <li>Everything in Family</li>
         <li>Priority support</li>
         <li>Concierge onboarding</li>
