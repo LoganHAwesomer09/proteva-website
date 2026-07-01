@@ -22,7 +22,7 @@
   wrap.id = 'proteva-gate';
   wrap.innerHTML =
     '<div class="card">' +
-    '<div class="logo"><img src="/assets/proteva-app-icon.png" alt=""><span>Pro<span>teva</span></span></div>' +
+    '<div class="logo"><img src="/assets/proteva-icon.svg" alt=""><span>Pro<span>teva</span></span></div>' +
     '<p>Private preview — family only. Enter the password to continue.</p>' +
     '<div class="err" id="proteva-gate-err">Wrong password. Try again.</div>' +
     '<input type="password" id="proteva-gate-pw" placeholder="Password" autocomplete="current-password" />' +
