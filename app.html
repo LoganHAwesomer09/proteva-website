@@ -25,6 +25,10 @@
   .btn-primary:disabled { background: #9FE1CB; cursor: not-allowed; }
   .auth-toggle { text-align: center; font-size: 14px; color: #777; margin-top: 1.25rem; }
   .auth-toggle a { color: #1D9E75; font-weight: 600; text-decoration: none; cursor: pointer; }
+  .auth-signup-fields { display: none; }
+  .auth-signup-fields.visible { display: block; }
+  .auth-name-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 480px) { .auth-name-row { grid-template-columns: 1fr; } }
   .msg { padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 1rem; display: none; }
   .msg.error { background: #FCEBEB; color: #A32D2D; }
   .msg.success { background: #E1F5EE; color: #0F6E56; }
@@ -230,13 +234,33 @@
     <p class="auth-sub" id="auth-subtitle">Welcome back — sign in to your family dashboard</p>
     <div class="msg error" id="msg-error"></div>
     <div class="msg success" id="msg-success"></div>
+
+    <div class="auth-signup-fields" id="auth-signup-fields">
+      <div class="auth-name-row">
+        <div class="field">
+          <label for="first-name">First name</label>
+          <input type="text" id="first-name" placeholder="e.g. Logan" autocomplete="given-name" />
+        </div>
+        <div class="field">
+          <label for="last-name">Last name</label>
+          <input type="text" id="last-name" placeholder="e.g. Awesomer" autocomplete="family-name" />
+        </div>
+      </div>
+    </div>
+
     <div class="field">
       <label for="email">Email address</label>
-      <input type="email" id="email" placeholder="you@example.com" />
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
     </div>
     <div class="field">
       <label for="password">Password</label>
-      <input type="password" id="password" placeholder="••••••••" />
+      <input type="password" id="password" placeholder="At least 6 characters" autocomplete="current-password" />
+    </div>
+    <div class="auth-signup-fields" id="auth-confirm-wrap">
+      <div class="field">
+        <label for="confirm-password">Confirm password</label>
+        <input type="password" id="confirm-password" placeholder="Re-enter your password" autocomplete="new-password" />
+      </div>
     </div>
     <p class="auth-forgot" id="auth-forgot-wrap"><a onclick="handleForgotPassword()">Forgot password?</a></p>
     <button class="btn-primary" id="auth-btn" onclick="handleAuth()">Sign in</button>
@@ -334,7 +358,10 @@
         <p style="font-size:13px;color:#777;margin:0 0 1rem;line-height:1.6;">How you'd like to be addressed in the app.</p>
         <div class="msg error" id="name-error"></div>
         <div class="msg success" id="name-success"></div>
-        <div class="field"><label for="caregiver-name">Your name</label><input type="text" id="caregiver-name" placeholder="e.g. Logan" /></div>
+        <div class="auth-name-row">
+          <div class="field"><label for="settings-first-name">First name</label><input type="text" id="settings-first-name" placeholder="First name" autocomplete="given-name" /></div>
+          <div class="field"><label for="settings-last-name">Last name</label><input type="text" id="settings-last-name" placeholder="Last name" autocomplete="family-name" /></div>
+        </div>
         <button class="btn-outline" id="name-btn" onclick="saveCaregiverName()">Save name</button>
       </div>
       <div class="card">
@@ -587,6 +614,15 @@
   function showSuccess(t){const e=document.getElementById('msg-success');e.textContent=t;e.style.display='block';document.getElementById('msg-error').style.display='none';}
   function clearMsgs(){document.getElementById('msg-error').style.display='none';document.getElementById('msg-success').style.display='none';}
 
+  function setSignupFieldsVisible(show){
+    document.querySelectorAll('.auth-signup-fields').forEach(el=>el.classList.toggle('visible',show));
+    document.getElementById('password').autocomplete=show?'new-password':'current-password';
+  }
+
+  function clearSignupFields(){
+    ['first-name','last-name','confirm-password'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  }
+
   function toggleMode(){
     isSignupMode=!isSignupMode; clearMsgs();
     if(isSignupMode){
@@ -594,12 +630,31 @@
       document.getElementById('auth-btn').textContent='Create account';
       document.getElementById('toggle-text').innerHTML='Already have an account? <a onclick="toggleMode()">Sign in</a>';
       document.getElementById('auth-forgot-wrap').style.display='none';
+      setSignupFieldsVisible(true);
     }else{
       document.getElementById('auth-subtitle').textContent='Welcome back — sign in to your family dashboard';
       document.getElementById('auth-btn').textContent='Sign in';
       document.getElementById('toggle-text').innerHTML='New to Proteva? <a onclick="toggleMode()">Create an account</a>';
       document.getElementById('auth-forgot-wrap').style.display='block';
+      setSignupFieldsVisible(false);
+      clearSignupFields();
     }
+  }
+
+  function userFirstName(user){
+    return (user&&user.user_metadata&&user.user_metadata.first_name)||'';
+  }
+
+  function userLastName(user){
+    return (user&&user.user_metadata&&user.user_metadata.last_name)||'';
+  }
+
+  function caregiverName(user){
+    const first=userFirstName(user);
+    const last=userLastName(user);
+    const full=(first+' '+last).trim();
+    if(full) return full;
+    return (user&&user.user_metadata&&user.user_metadata.caregiver_name)||'';
   }
 
   async function handleForgotPassword(){
@@ -615,11 +670,9 @@
     }
   }
 
-  function caregiverName(user){
-    return (user&&user.user_metadata&&user.user_metadata.caregiver_name)||'';
-  }
-
   function accountInitial(user){
+    const first=userFirstName(user);
+    if(first) return first.charAt(0).toUpperCase();
     const name=caregiverName(user);
     if(name) return name.charAt(0).toUpperCase();
     return user.email.charAt(0).toUpperCase();
@@ -648,8 +701,10 @@
       document.getElementById('profile-since').textContent=since;
       document.getElementById('set-since').textContent=since;
     }
-    const nameInput=document.getElementById('caregiver-name');
-    if(nameInput) nameInput.value=displayName;
+    const firstInput=document.getElementById('settings-first-name');
+    const lastInput=document.getElementById('settings-last-name');
+    if(firstInput) firstInput.value=userFirstName(user);
+    if(lastInput) lastInput.value=userLastName(user);
   }
 
   async function handleAuth(){
@@ -659,13 +714,27 @@
     clearMsgs();
     if(!email||!email.includes('@')){showError('Please enter a valid email address.');return;}
     if(password.length<6){showError('Password must be at least 6 characters.');return;}
+    if(isSignupMode){
+      const firstName=document.getElementById('first-name').value.trim();
+      const lastName=document.getElementById('last-name').value.trim();
+      const confirmPassword=document.getElementById('confirm-password').value;
+      if(!firstName){showError('Please enter your first name.');return;}
+      if(!lastName){showError('Please enter your last name.');return;}
+      if(password!==confirmPassword){showError('Passwords do not match.');return;}
+    }
     btn.disabled=true; btn.textContent=isSignupMode?'Creating...':'Signing in...';
     try{
       if(isSignupMode){
-        const {data,error}=await sb.auth.signUp({email,password});
+        const firstName=document.getElementById('first-name').value.trim();
+        const lastName=document.getElementById('last-name').value.trim();
+        const fullName=(firstName+' '+lastName).trim();
+        const {data,error}=await sb.auth.signUp({
+          email,password,
+          options:{data:{first_name:firstName,last_name:lastName,caregiver_name:fullName}}
+        });
         if(error)throw error;
         if(data.session){enterApp(data.session.user);}
-        else{showSuccess('Account created! Check your email to confirm, then sign in.');btn.disabled=false;toggleMode();}
+        else{showSuccess('Account created! Check your email to confirm, then sign in.');btn.disabled=false;btn.textContent='Create account';toggleMode();}
       }else{
         const {data,error}=await sb.auth.signInWithPassword({email,password});
         if(error)throw error;
@@ -1149,14 +1218,17 @@
   }
 
   async function saveCaregiverName(){
-    const name=document.getElementById('caregiver-name').value.trim();
+    const firstName=document.getElementById('settings-first-name').value.trim();
+    const lastName=document.getElementById('settings-last-name').value.trim();
     const err=document.getElementById('name-error');
     const ok=document.getElementById('name-success');
     const btn=document.getElementById('name-btn');
     err.style.display='none'; ok.style.display='none';
-    if(!name){ err.textContent='Please enter your name.'; err.style.display='block'; return; }
+    if(!firstName){ err.textContent='Please enter your first name.'; err.style.display='block'; return; }
+    if(!lastName){ err.textContent='Please enter your last name.'; err.style.display='block'; return; }
     btn.disabled=true; btn.textContent='Saving...';
-    const {data,error}=await sb.auth.updateUser({data:{caregiver_name:name}});
+    const fullName=(firstName+' '+lastName).trim();
+    const {data,error}=await sb.auth.updateUser({data:{first_name:firstName,last_name:lastName,caregiver_name:fullName}});
     if(error){ err.textContent=error.message||'Could not save name.'; err.style.display='block'; }
     else{
       if(data.user) currentUser=data.user;
@@ -1184,8 +1256,16 @@
     currentUser=null;
     document.getElementById('app-shell').style.display='none';
     document.getElementById('auth-screen').style.display='flex';
-    document.getElementById('email').value='';document.getElementById('password').value='';
-    document.getElementById('auth-btn').disabled=false;document.getElementById('auth-btn').textContent=isSignupMode?'Create account':'Sign in';
+    document.getElementById('email').value='';
+    document.getElementById('password').value='';
+    clearSignupFields();
+    setSignupFieldsVisible(false);
+    isSignupMode=false;
+    document.getElementById('auth-btn').disabled=false;
+    document.getElementById('auth-btn').textContent='Sign in';
+    document.getElementById('auth-subtitle').textContent='Welcome back — sign in to your family dashboard';
+    document.getElementById('toggle-text').innerHTML='New to Proteva? <a onclick="toggleMode()">Create an account</a>';
+    document.getElementById('auth-forgot-wrap').style.display='block';
     clearMsgs();
   }
 
