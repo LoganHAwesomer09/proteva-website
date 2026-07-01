@@ -28,7 +28,10 @@
   .auth-signup-fields { display: none; }
   .auth-signup-fields.visible { display: block; }
   .auth-name-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  @media (max-width: 480px) { .auth-name-row { grid-template-columns: 1fr; } }
+  .auth-name-row.signup-names { grid-template-columns: 1fr 72px 1fr; }
+  .auth-mi-field input { text-align: center; text-transform: uppercase; }
+  .field-optional { font-weight: 400; color: #999; }
+  @media (max-width: 480px) { .auth-name-row { grid-template-columns: 1fr; } .auth-name-row.signup-names { grid-template-columns: 1fr 72px 1fr; } }
   .msg { padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 1rem; display: none; }
   .msg.error { background: #FCEBEB; color: #A32D2D; }
   .msg.success { background: #E1F5EE; color: #0F6E56; }
@@ -236,10 +239,14 @@
     <div class="msg success" id="msg-success"></div>
 
     <div class="auth-signup-fields" id="auth-signup-fields">
-      <div class="auth-name-row">
+      <div class="auth-name-row signup-names">
         <div class="field">
           <label for="first-name">First name</label>
           <input type="text" id="first-name" placeholder="e.g. Sarah" autocomplete="given-name" />
+        </div>
+        <div class="field auth-mi-field">
+          <label for="middle-initial">MI <span class="field-optional">(opt.)</span></label>
+          <input type="text" id="middle-initial" placeholder="J" maxlength="1" autocomplete="additional-name" />
         </div>
         <div class="field">
           <label for="last-name">Last name</label>
@@ -610,7 +617,15 @@
   }
 
   function clearSignupFields(){
-    ['first-name','last-name','confirm-password'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    ['first-name','middle-initial','last-name','confirm-password'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  }
+
+  function buildFullName(first, middle, last){
+    const mi=(middle||'').replace(/\./g,'').trim();
+    const parts=[first];
+    if(mi) parts.push(mi.length===1?mi.toUpperCase():mi);
+    if(last) parts.push(last);
+    return parts.join(' ').trim();
   }
 
   function toggleMode(){
@@ -639,10 +654,12 @@
     return (user&&user.user_metadata&&user.user_metadata.last_name)||'';
   }
 
+  function userMiddleInitial(user){
+    return (user&&user.user_metadata&&user.user_metadata.middle_initial)||'';
+  }
+
   function caregiverName(user){
-    const first=userFirstName(user);
-    const last=userLastName(user);
-    const full=(first+' '+last).trim();
+    const full=buildFullName(userFirstName(user), userMiddleInitial(user), userLastName(user));
     if(full) return full;
     return (user&&user.user_metadata&&user.user_metadata.caregiver_name)||'';
   }
@@ -668,25 +685,34 @@
     return user.email.charAt(0).toUpperCase();
   }
 
-  function accountLabel(user){
-    const name=caregiverName(user);
-    return name||user.email;
+  function accountShortLabel(user){
+    const first=userFirstName(user);
+    const last=userLastName(user);
+    if(first&&last) return first+' '+last.charAt(0).toUpperCase();
+    if(first) return first;
+    const full=caregiverName(user);
+    if(full){
+      const parts=full.trim().split(/\s+/);
+      if(parts.length>=2) return parts[0]+' '+parts[parts.length-1].charAt(0).toUpperCase();
+      return parts[0];
+    }
+    return user.email;
   }
 
   function updateAccountUI(user){
     const email=user.email;
     const initial=accountInitial(user);
-    const label=accountLabel(user);
+    const shortLabel=accountShortLabel(user);
+    const fullName=caregiverName(user);
     document.getElementById('user-initial').textContent=initial;
-    document.getElementById('account-email').textContent=label;
+    document.getElementById('account-email').textContent=shortLabel;
     document.getElementById('dd-email').textContent=email;
     document.getElementById('set-email').textContent=email;
-    document.getElementById('set-name').textContent=caregiverName(user)||'—';
+    document.getElementById('set-name').textContent=fullName||'—';
     document.getElementById('profile-email').textContent=email;
     document.getElementById('profile-email2').textContent=email;
     document.getElementById('profile-avatar').textContent=initial;
-    const displayName=caregiverName(user);
-    document.getElementById('profile-display-name').textContent=displayName||'Caregiver';
+    document.getElementById('profile-display-name').textContent=fullName||'Caregiver';
     if(user.created_at){
       const since=new Date(user.created_at).toLocaleDateString(undefined,{month:'long',year:'numeric'});
       document.getElementById('profile-since').textContent=since;
@@ -703,21 +729,26 @@
     if(password.length<6){showError('Password must be at least 6 characters.');return;}
     if(isSignupMode){
       const firstName=document.getElementById('first-name').value.trim();
+      const middleInitial=document.getElementById('middle-initial').value.trim().replace(/\./g,'');
       const lastName=document.getElementById('last-name').value.trim();
       const confirmPassword=document.getElementById('confirm-password').value;
       if(!firstName){showError('Please enter your first name.');return;}
       if(!lastName){showError('Please enter your last name.');return;}
+      if(middleInitial&&!/^[A-Za-z]$/.test(middleInitial)){showError('Middle initial must be a single letter.');return;}
       if(password!==confirmPassword){showError('Passwords do not match.');return;}
     }
     btn.disabled=true; btn.textContent=isSignupMode?'Creating...':'Signing in...';
     try{
       if(isSignupMode){
         const firstName=document.getElementById('first-name').value.trim();
+        const middleInitial=document.getElementById('middle-initial').value.trim().replace(/\./g,'').toUpperCase();
         const lastName=document.getElementById('last-name').value.trim();
-        const fullName=(firstName+' '+lastName).trim();
+        const fullName=buildFullName(firstName, middleInitial, lastName);
+        const meta={first_name:firstName,last_name:lastName,caregiver_name:fullName};
+        if(middleInitial) meta.middle_initial=middleInitial;
         const {data,error}=await sb.auth.signUp({
           email,password,
-          options:{data:{first_name:firstName,last_name:lastName,caregiver_name:fullName}}
+          options:{data:meta}
         });
         if(error)throw error;
         if(data.session){enterApp(data.session.user);}
