@@ -28,10 +28,10 @@
   .auth-signup-fields { display: none; }
   .auth-signup-fields.visible { display: block; }
   .auth-name-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .auth-name-row.signup-names { grid-template-columns: 1fr 72px 1fr; }
+  .auth-name-row.signup-names { grid-template-columns: 1fr 88px 1fr; }
   .auth-mi-field input { text-align: center; text-transform: uppercase; }
   .field-optional { font-weight: 400; color: #999; }
-  @media (max-width: 480px) { .auth-name-row { grid-template-columns: 1fr; } .auth-name-row.signup-names { grid-template-columns: 1fr 72px 1fr; } }
+  @media (max-width: 480px) { .auth-name-row { grid-template-columns: 1fr; } .auth-name-row.signup-names { grid-template-columns: 1fr 88px 1fr; } }
   .msg { padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 1rem; display: none; }
   .msg.error { background: #FCEBEB; color: #A32D2D; }
   .msg.success { background: #E1F5EE; color: #0F6E56; }
@@ -246,7 +246,7 @@
         </div>
         <div class="field auth-mi-field">
           <label for="middle-initial">MI <span class="field-optional">(opt.)</span></label>
-          <input type="text" id="middle-initial" placeholder="J" maxlength="1" autocomplete="additional-name" />
+          <input type="text" id="middle-initial" placeholder="e.g. J" maxlength="1" autocomplete="additional-name" />
         </div>
         <div class="field">
           <label for="last-name">Last name</label>
