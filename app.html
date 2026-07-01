@@ -28,10 +28,11 @@
   .auth-signup-fields { display: none; }
   .auth-signup-fields.visible { display: block; }
   .auth-name-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .auth-name-row.signup-names { grid-template-columns: 1fr 88px 1fr; }
-  .auth-mi-field input { text-align: center; text-transform: uppercase; }
+  .auth-name-row.signup-names { grid-template-columns: 1fr 52px 1fr; }
+  .auth-mi-field { margin-bottom: 1rem; }
+  .auth-mi-field input { text-align: center; text-transform: uppercase; padding-left: 8px; padding-right: 8px; }
   .field-optional { font-weight: 400; color: #999; }
-  @media (max-width: 480px) { .auth-name-row { grid-template-columns: 1fr; } .auth-name-row.signup-names { grid-template-columns: 1fr 88px 1fr; } }
+  @media (max-width: 480px) { .auth-name-row { grid-template-columns: 1fr; } .auth-name-row.signup-names { grid-template-columns: 1fr 52px 1fr; } }
   .msg { padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 1rem; display: none; }
   .msg.error { background: #FCEBEB; color: #A32D2D; }
   .msg.success { background: #E1F5EE; color: #0F6E56; }
@@ -242,15 +243,15 @@
       <div class="auth-name-row signup-names">
         <div class="field">
           <label for="first-name">First name</label>
-          <input type="text" id="first-name" placeholder="e.g. Sarah" autocomplete="given-name" />
+          <input type="text" id="first-name" placeholder="Sarah" autocomplete="given-name" />
         </div>
         <div class="field auth-mi-field">
           <label for="middle-initial">MI <span class="field-optional">(opt.)</span></label>
-          <input type="text" id="middle-initial" placeholder="e.g. J" maxlength="1" autocomplete="additional-name" />
+          <input type="text" id="middle-initial" placeholder="J" maxlength="1" autocomplete="additional-name" />
         </div>
         <div class="field">
           <label for="last-name">Last name</label>
-          <input type="text" id="last-name" placeholder="e.g. Mitchell" autocomplete="family-name" />
+          <input type="text" id="last-name" placeholder="Mitchell" autocomplete="family-name" />
         </div>
       </div>
     </div>
