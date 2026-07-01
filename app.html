@@ -144,6 +144,41 @@
   .demo-note { font-size: 12px; color: #aaa; text-align: center; margin-top: 1rem; }
   .demo-note a { color: #1D9E75; cursor: pointer; font-weight: 600; }
 
+  /* ONBOARDING */
+  .onboarding { display: none; position: fixed; inset: 0; background: #F4FBF8; z-index: 50; overflow-y: auto; }
+  .onboarding.open { display: flex; align-items: center; justify-content: center; padding: 2rem 1.25rem; }
+  .onboarding-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 20px; padding: 2.5rem 2.25rem; width: 100%; max-width: 480px; box-shadow: 0 12px 40px rgba(0,0,0,0.06); }
+  .onboarding-card .logo { text-align: center; display: block; margin-bottom: 1.5rem; }
+  .ob-step { display: none; }
+  .ob-step.active { display: block; }
+  .ob-icon { font-size: 48px; text-align: center; margin-bottom: 1rem; }
+  .ob-title { font-size: 22px; font-weight: 700; text-align: center; margin: 0 0 0.5rem; line-height: 1.3; }
+  .ob-sub { font-size: 15px; color: #666; text-align: center; line-height: 1.6; margin: 0 0 1.5rem; }
+  .ob-progress { display: flex; justify-content: center; gap: 8px; margin-bottom: 1.75rem; }
+  .ob-dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; transition: background 0.2s, transform 0.2s; }
+  .ob-dot.done { background: #9FE1CB; }
+  .ob-dot.current { background: #1D9E75; transform: scale(1.2); }
+  .ob-note { font-size: 13px; color: #0F6E56; background: #E1F5EE; border-radius: 10px; padding: 12px 14px; line-height: 1.55; margin: 1rem 0 0; }
+  .ob-principles { margin: 0 0 1.5rem; }
+  .ob-principle { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #f2f2f2; }
+  .ob-principle:last-child { border-bottom: none; }
+  .ob-principle-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+  .ob-principle-text { font-size: 14px; color: #444; line-height: 1.5; }
+  .ob-principle-text strong { display: block; color: #1a1a1a; font-size: 14px; margin-bottom: 2px; }
+  .ob-person-card { background: #F7FBF9; border: 1px solid #E1F0EA; border-radius: 14px; padding: 1.25rem; display: flex; align-items: center; gap: 14px; margin-bottom: 1.25rem; }
+  .ob-person-card .m-avatar { width: 52px; height: 52px; font-size: 18px; }
+  .ob-person-card h3 { font-size: 17px; margin: 0; }
+  .ob-person-card p { font-size: 13px; color: #888; margin: 2px 0 0; }
+  .ob-expect { margin: 0 0 1.5rem; padding: 0; list-style: none; }
+  .ob-expect li { font-size: 14px; color: #555; padding: 8px 0 8px 28px; position: relative; line-height: 1.5; }
+  .ob-expect li::before { content: '✓'; position: absolute; left: 0; color: #1D9E75; font-weight: 700; }
+  .ob-actions { display: flex; gap: 10px; margin-top: 1.5rem; }
+  .ob-actions .btn-primary { flex: 1; }
+  .ob-actions .btn-cancel { flex: 1; }
+  .ob-skip { text-align: center; margin-top: 1rem; }
+  .ob-skip a { font-size: 13px; color: #aaa; cursor: pointer; text-decoration: none; }
+  .ob-skip a:hover { color: #1D9E75; }
+
   .mobile-menu-btn { display:none; }
   @media (max-width: 720px) {
     .sidebar { transform: translateX(-100%); transition: transform 0.2s; }
@@ -313,6 +348,90 @@
   </main>
 </div>
 
+<!-- ONBOARDING -->
+<div class="onboarding" id="onboarding">
+  <div class="onboarding-card">
+    <span class="logo">Pro<span>teva</span></span>
+    <div class="ob-progress" id="ob-progress">
+      <span class="ob-dot current" data-step="0"></span>
+      <span class="ob-dot" data-step="1"></span>
+      <span class="ob-dot" data-step="2"></span>
+      <span class="ob-dot" data-step="3"></span>
+    </div>
+
+    <!-- Step 1: Welcome -->
+    <div class="ob-step active" id="ob-step-0">
+      <div class="ob-icon">🛡️</div>
+      <h2 class="ob-title">Welcome — let's protect someone you love</h2>
+      <p class="ob-sub">Proteva stands between your loved one and the digital threats they can't see. We'll set this up together — it only takes a couple of minutes.</p>
+      <button class="btn-primary" onclick="obNext()">Let's get started</button>
+    </div>
+
+    <!-- Step 2: Add first person -->
+    <div class="ob-step" id="ob-step-1">
+      <h2 class="ob-title">Who are you protecting?</h2>
+      <p class="ob-sub">Add the first person you'd like Proteva to watch over.</p>
+      <div class="msg error" id="ob-error"></div>
+      <div class="field"><label for="ob-name">Their name</label><input type="text" id="ob-name" placeholder="e.g. Grandma Rose" /></div>
+      <div class="field">
+        <label for="ob-device">Their device</label>
+        <select id="ob-device">
+          <option value="">Choose a device...</option>
+          <option value="iPhone">iPhone</option>
+          <option value="iPad">iPad</option>
+          <option value="Android phone">Android phone</option>
+          <option value="Android tablet">Android tablet</option>
+          <option value="Computer">Computer (Mac or PC)</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <p class="ob-note">You'll install Proteva on their device together — with their full knowledge. Protecting people with dignity is who we are.</p>
+      <div class="ob-actions">
+        <button class="btn-cancel" onclick="obBack()">Back</button>
+        <button class="btn-primary" id="ob-continue-btn" onclick="obSavePerson()">Continue</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Dignity principles -->
+    <div class="ob-step" id="ob-step-2">
+      <h2 class="ob-title">We protect WITH them, never over them</h2>
+      <p class="ob-sub">A few things that matter to us — and we hope to you, too.</p>
+      <div class="ob-principles">
+        <div class="ob-principle">
+          <span class="ob-principle-icon">👋</span>
+          <div class="ob-principle-text"><strong>They'll always know Proteva is there</strong>We set up together, with their awareness. No hidden monitoring.</div>
+        </div>
+        <div class="ob-principle">
+          <span class="ob-principle-icon">🔒</span>
+          <div class="ob-principle-text"><strong>We never read messages or spy</strong>Proteva watches what the device is doing — blocking scams and threats — not private conversations.</div>
+        </div>
+        <div class="ob-principle">
+          <span class="ob-principle-icon">🚪</span>
+          <div class="ob-principle-text"><strong>They can remove Proteva anytime</strong>If they ever want it gone, it's simple and immediate. We'll let you know calmly.</div>
+        </div>
+      </div>
+      <div class="ob-actions">
+        <button class="btn-cancel" onclick="obBack()">Back</button>
+        <button class="btn-primary" onclick="obNext()">Got it</button>
+      </div>
+    </div>
+
+    <!-- Step 4: All set -->
+    <div class="ob-step" id="ob-step-3">
+      <div class="ob-icon">✨</div>
+      <h2 class="ob-title" id="ob-done-title">You're all set</h2>
+      <p class="ob-sub" id="ob-done-sub">Proteva is ready to watch over your family.</p>
+      <div class="ob-person-card" id="ob-person-preview"></div>
+      <ul class="ob-expect">
+        <li>Proteva works quietly in the background — most threats are stopped automatically</li>
+        <li>Your dashboard stays calm; we'll only flag the rare situation that needs you</li>
+        <li>When something happens, we'll explain it in plain language — no tech jargon</li>
+      </ul>
+      <button class="btn-primary" onclick="finishOnboarding()">Go to my dashboard</button>
+    </div>
+  </div>
+</div>
+
 <!-- ADD MEMBER MODAL -->
 <div class="modal-bg" id="modal">
   <div class="modal">
@@ -344,6 +463,8 @@
   let membersCache = [];
   let currentPersonId = null;
   let currentUser = null;
+  let obStep = 0;
+  let obSavedPerson = null;
 
   const THREATS = [
     {icon:'🚫', text:'Blocked a fake "Microsoft support" pop-up', tag:'stopped',
@@ -432,7 +553,106 @@
     document.getElementById('profile-email2').textContent=email;
     document.getElementById('profile-avatar').textContent=initial;
     if(user.created_at){ document.getElementById('profile-since').textContent=new Date(user.created_at).toLocaleDateString(undefined,{month:'long',year:'numeric'}); }
+    checkAndStartOnboarding();
+  }
+
+  async function checkAndStartOnboarding(){
+    const completed = currentUser.user_metadata?.onboarding_completed;
+    const {data}=await sb.from('protected_people').select('id').limit(1);
+    if(!completed && (!data || data.length===0)){
+      showOnboarding();
+    }else{
+      hideOnboarding();
+      go('dashboard');
+    }
+  }
+
+  function showOnboarding(){
+    obStep=0;
+    obSavedPerson=null;
+    document.getElementById('ob-name').value='';
+    document.getElementById('ob-device').value='';
+    document.getElementById('ob-error').style.display='none';
+    document.getElementById('onboarding').classList.add('open');
+    updateObStep();
+  }
+
+  function hideOnboarding(){
+    document.getElementById('onboarding').classList.remove('open');
+  }
+
+  function updateObStep(){
+    for(let i=0;i<4;i++){
+      document.getElementById('ob-step-'+i).classList.toggle('active', i===obStep);
+      const dot=document.querySelector('.ob-dot[data-step="'+i+'"]');
+      if(dot){
+        dot.classList.toggle('current', i===obStep);
+        dot.classList.toggle('done', i<obStep);
+      }
+    }
+    if(obStep===3 && obSavedPerson){
+      const initials=obSavedPerson.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+      document.getElementById('ob-done-title').textContent=obSavedPerson.name+' is set up';
+      document.getElementById('ob-done-sub').textContent='Proteva will watch quietly on their '+(obSavedPerson.device||'device')+'.';
+      document.getElementById('ob-person-preview').innerHTML=
+        '<span class="m-avatar">'+initials+'</span><div><h3>'+escapeHtml(obSavedPerson.name)+'</h3><p>'+escapeHtml(obSavedPerson.device||'Device')+' · protected by Proteva</p></div>';
+    }
+    if(obStep===1 && obSavedPerson){
+      document.getElementById('ob-name').value=obSavedPerson.name;
+      document.getElementById('ob-device').value=obSavedPerson.device||'';
+    }
+  }
+
+  function obNext(){
+    if(obStep<3){ obStep++; updateObStep(); }
+  }
+
+  function obBack(){
+    if(obStep>0){ obStep--; updateObStep(); }
+  }
+
+  async function obSavePerson(){
+    const name=document.getElementById('ob-name').value.trim();
+    const device=document.getElementById('ob-device').value.trim();
+    const err=document.getElementById('ob-error');
+    const btn=document.getElementById('ob-continue-btn');
+    err.style.display='none';
+    if(!name){ err.textContent='Please enter their name.'; err.style.display='block'; return; }
+    if(!device){ err.textContent='Please choose their device.'; err.style.display='block'; return; }
+    btn.disabled=true; btn.textContent='Saving...';
+    try{
+      let data;
+      if(obSavedPerson){
+        const res=await sb.from('protected_people').update({name,device}).eq('id',obSavedPerson.id).select().single();
+        if(res.error) throw res.error;
+        data=res.data;
+        const idx=membersCache.findIndex(m=>m.id===data.id);
+        if(idx>=0) membersCache[idx]=data;
+      }else{
+        const res=await sb.from('protected_people').insert([{name,device}]).select().single();
+        if(res.error) throw res.error;
+        data=res.data;
+        membersCache.push(data);
+      }
+      obSavedPerson=data;
+      obStep=2;
+      updateObStep();
+    }catch(e){
+      err.textContent='Could not save. Please try again.';
+      err.style.display='block';
+    }
+    btn.disabled=false; btn.textContent='Continue';
+  }
+
+  async function finishOnboarding(){
+    const btn=document.querySelector('#ob-step-3 .btn-primary');
+    btn.disabled=true; btn.textContent='Finishing...';
+    await sb.auth.updateUser({data:{onboarding_completed:true}});
+    const {data}=await sb.auth.getUser();
+    if(data.user) currentUser=data.user;
+    hideOnboarding();
     go('dashboard');
+    btn.disabled=false; btn.textContent='Go to my dashboard';
   }
 
   // ---- navigation ----
