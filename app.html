@@ -354,18 +354,8 @@
       <p class="page-title">Settings</p>
       <p class="page-sub">Manage your account, family, and preferences.</p>
       <div class="card">
-        <h3>Your profile</h3>
-        <p style="font-size:13px;color:#777;margin:0 0 1rem;line-height:1.6;">How you'd like to be addressed in the app.</p>
-        <div class="msg error" id="name-error"></div>
-        <div class="msg success" id="name-success"></div>
-        <div class="auth-name-row">
-          <div class="field"><label for="settings-first-name">First name</label><input type="text" id="settings-first-name" placeholder="First name" autocomplete="given-name" /></div>
-          <div class="field"><label for="settings-last-name">Last name</label><input type="text" id="settings-last-name" placeholder="Last name" autocomplete="family-name" /></div>
-        </div>
-        <button class="btn-outline" id="name-btn" onclick="saveCaregiverName()">Save name</button>
-      </div>
-      <div class="card">
         <h3>Account</h3>
+        <div class="kv"><span class="k">Name</span><span class="v" id="set-name">—</span></div>
         <div class="kv"><span class="k">Email</span><span class="v" id="set-email">—</span></div>
         <div class="kv"><span class="k">Role</span><span class="v">Caregiver</span></div>
         <div class="kv"><span class="k">Plan</span><span class="v">Free trial</span></div>
@@ -691,6 +681,7 @@
     document.getElementById('account-email').textContent=label;
     document.getElementById('dd-email').textContent=email;
     document.getElementById('set-email').textContent=email;
+    document.getElementById('set-name').textContent=caregiverName(user)||'—';
     document.getElementById('profile-email').textContent=email;
     document.getElementById('profile-email2').textContent=email;
     document.getElementById('profile-avatar').textContent=initial;
@@ -701,10 +692,6 @@
       document.getElementById('profile-since').textContent=since;
       document.getElementById('set-since').textContent=since;
     }
-    const firstInput=document.getElementById('settings-first-name');
-    const lastInput=document.getElementById('settings-last-name');
-    if(firstInput) firstInput.value=userFirstName(user);
-    if(lastInput) lastInput.value=userLastName(user);
   }
 
   async function handleAuth(){
@@ -1215,28 +1202,6 @@
     await loadMembersData();
     if(currentUser) updateAccountUI(currentUser);
     document.getElementById('profile-count').textContent=membersCache.length;
-  }
-
-  async function saveCaregiverName(){
-    const firstName=document.getElementById('settings-first-name').value.trim();
-    const lastName=document.getElementById('settings-last-name').value.trim();
-    const err=document.getElementById('name-error');
-    const ok=document.getElementById('name-success');
-    const btn=document.getElementById('name-btn');
-    err.style.display='none'; ok.style.display='none';
-    if(!firstName){ err.textContent='Please enter your first name.'; err.style.display='block'; return; }
-    if(!lastName){ err.textContent='Please enter your last name.'; err.style.display='block'; return; }
-    btn.disabled=true; btn.textContent='Saving...';
-    const fullName=(firstName+' '+lastName).trim();
-    const {data,error}=await sb.auth.updateUser({data:{first_name:firstName,last_name:lastName,caregiver_name:fullName}});
-    if(error){ err.textContent=error.message||'Could not save name.'; err.style.display='block'; }
-    else{
-      if(data.user) currentUser=data.user;
-      updateAccountUI(currentUser);
-      ok.textContent='Name saved.';
-      ok.style.display='block';
-    }
-    btn.disabled=false; btn.textContent='Save name';
   }
 
   async function changePassword(){
