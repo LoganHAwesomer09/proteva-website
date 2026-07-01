@@ -3,3 +3,6 @@
 .env.*.local
 node_modules/
 .vercel
+docs/PRIVATE-*
+docs/family-test-notes.txt
+docs/competitor-notes.txt
