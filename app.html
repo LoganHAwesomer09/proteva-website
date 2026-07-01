@@ -132,7 +132,14 @@
   .btn-sm { background: #fff; border: 1.5px solid #ddd; color: #555; padding: 7px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .btn-sm:hover { border-color: #1D9E75; color: #0F6E56; }
   .btn-sm.danger:hover { border-color: #A32D2D; color: #A32D2D; }
+  .btn-handle { background: #E6F1FB; color: #185FA5; border: none; padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .btn-handle:hover { background: #c5dff5; }
   .modal-sub { font-size: 13px; color: #888; margin: -0.75rem 0 1.25rem; line-height: 1.5; }
+  .auth-forgot { text-align: right; margin: -0.5rem 0 1rem; }
+  .auth-forgot a { font-size: 13px; color: #1D9E75; font-weight: 600; cursor: pointer; text-decoration: none; }
+  .auth-forgot a:hover { text-decoration: underline; }
+  .empty-cta { margin-top: 12px; }
+  .feed-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
   .empty { text-align: center; padding: 2rem 1rem; color: #999; font-size: 14px; background: #fff; border: 1px dashed #ddd; border-radius: 12px; }
 
   .card { background:#fff; border:1px solid #eee; border-radius:14px; padding:1.5rem; margin-bottom:1rem; }
@@ -202,8 +209,14 @@
   @media (max-width: 720px) {
     .sidebar { transform: translateX(-100%); transition: transform 0.2s; }
     .sidebar.open { transform: translateX(0); }
-    .main { margin-left: 0; padding: 1rem; }
+    .main { margin-left: 0; padding: 1rem; padding-top: 3.25rem; }
     .mobile-menu-btn { display:inline-flex; position:fixed; top:12px; left:12px; z-index:25; background:#fff; border:1px solid #eee; border-radius:8px; padding:8px 12px; font-size:18px; cursor:pointer; }
+    .stats { grid-template-columns: 1fr; }
+    .person-hero { flex-wrap: wrap; }
+    .hero-actions { width: 100%; margin-left: 0; margin-top: 4px; }
+    .banner { flex-direction: column; align-items: flex-start; text-align: left; }
+    .feed-row { flex-wrap: wrap; }
+    .feed-actions { width: 100%; flex-direction: row; justify-content: flex-end; margin-top: 4px; }
   }
 </style>
 </head>
@@ -225,10 +238,17 @@
       <label for="password">Password</label>
       <input type="password" id="password" placeholder="••••••••" />
     </div>
+    <p class="auth-forgot" id="auth-forgot-wrap"><a onclick="handleForgotPassword()">Forgot password?</a></p>
     <button class="btn-primary" id="auth-btn" onclick="handleAuth()">Sign in</button>
     <p class="auth-toggle" id="toggle-text">
       New to Proteva? <a onclick="toggleMode()">Create an account</a>
     </p>
+    <div id="recovery-panel" style="display:none;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid #eee;">
+      <p style="font-size:14px;font-weight:600;margin:0 0 0.5rem;">Set a new password</p>
+      <p style="font-size:13px;color:#777;margin:0 0 1rem;">You're signed in from your reset link. Choose a new password below.</p>
+      <div class="field"><label for="recovery-pw">New password</label><input type="password" id="recovery-pw" placeholder="At least 6 characters" /></div>
+      <button class="btn-primary" id="recovery-btn" onclick="completePasswordRecovery()">Update password</button>
+    </div>
   </div>
 </div>
 
@@ -271,7 +291,7 @@
         <div><h2 id="banner-title">Everyone is safe today</h2><p id="banner-sub">Loading...</p></div>
       </div>
       <div class="stats">
-        <div class="stat"><p class="stat-label">Threats stopped</p><p class="stat-num" id="stat-stopped">0</p><p class="stat-sub">automatically</p></div>
+        <div class="stat"><p class="stat-label">Threats stopped</p><p class="stat-num" id="stat-stopped">0</p><p class="stat-sub" id="stat-stopped-sub">this week</p></div>
         <div class="stat"><p class="stat-label">People protected</p><p class="stat-num" id="stat-people">0</p><p class="stat-sub">in your family</p></div>
         <div class="stat"><p class="stat-label">Needs your input</p><p class="stat-num" id="stat-attention">0</p><p class="stat-sub">items</p></div>
       </div>
@@ -309,6 +329,14 @@
     <section class="view" id="view-settings" style="display:none;">
       <p class="page-title">Settings</p>
       <p class="page-sub">Manage your account, family, and preferences.</p>
+      <div class="card">
+        <h3>Your profile</h3>
+        <p style="font-size:13px;color:#777;margin:0 0 1rem;line-height:1.6;">How you'd like to be addressed in the app.</p>
+        <div class="msg error" id="name-error"></div>
+        <div class="msg success" id="name-success"></div>
+        <div class="field"><label for="caregiver-name">Your name</label><input type="text" id="caregiver-name" placeholder="e.g. Logan" /></div>
+        <button class="btn-outline" id="name-btn" onclick="saveCaregiverName()">Save name</button>
+      </div>
       <div class="card">
         <h3>Account</h3>
         <div class="kv"><span class="k">Email</span><span class="v" id="set-email">—</span></div>
@@ -351,7 +379,7 @@
       <div class="card">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:1rem;">
           <span class="avatar" id="profile-avatar" style="width:52px;height:52px;font-size:18px;">U</span>
-          <div><div style="font-size:16px;font-weight:700;" id="profile-email">—</div><div style="font-size:13px;color:#999;">Caregiver account</div></div>
+          <div><div style="font-size:16px;font-weight:700;" id="profile-display-name">—</div><div style="font-size:13px;color:#999;" id="profile-email">—</div></div>
         </div>
         <div class="kv"><span class="k">Email</span><span class="v" id="profile-email2">—</span></div>
         <div class="kv"><span class="k">People protected</span><span class="v" id="profile-count">0</span></div>
@@ -565,11 +593,63 @@
       document.getElementById('auth-subtitle').textContent='Create your account to protect your family';
       document.getElementById('auth-btn').textContent='Create account';
       document.getElementById('toggle-text').innerHTML='Already have an account? <a onclick="toggleMode()">Sign in</a>';
+      document.getElementById('auth-forgot-wrap').style.display='none';
     }else{
       document.getElementById('auth-subtitle').textContent='Welcome back — sign in to your family dashboard';
       document.getElementById('auth-btn').textContent='Sign in';
       document.getElementById('toggle-text').innerHTML='New to Proteva? <a onclick="toggleMode()">Create an account</a>';
+      document.getElementById('auth-forgot-wrap').style.display='block';
     }
+  }
+
+  async function handleForgotPassword(){
+    const email=document.getElementById('email').value.trim();
+    clearMsgs();
+    if(!email||!email.includes('@')){showError('Enter your email above, then tap Forgot password.');return;}
+    try{
+      const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});
+      if(error) throw error;
+      showSuccess('Password reset link sent — check your email.');
+    }catch(err){
+      showError(err.message||'Could not send reset email.');
+    }
+  }
+
+  function caregiverName(user){
+    return (user&&user.user_metadata&&user.user_metadata.caregiver_name)||'';
+  }
+
+  function accountInitial(user){
+    const name=caregiverName(user);
+    if(name) return name.charAt(0).toUpperCase();
+    return user.email.charAt(0).toUpperCase();
+  }
+
+  function accountLabel(user){
+    const name=caregiverName(user);
+    return name||user.email;
+  }
+
+  function updateAccountUI(user){
+    const email=user.email;
+    const initial=accountInitial(user);
+    const label=accountLabel(user);
+    document.getElementById('user-initial').textContent=initial;
+    document.getElementById('account-email').textContent=label;
+    document.getElementById('dd-email').textContent=email;
+    document.getElementById('set-email').textContent=email;
+    document.getElementById('profile-email').textContent=email;
+    document.getElementById('profile-email2').textContent=email;
+    document.getElementById('profile-avatar').textContent=initial;
+    const displayName=caregiverName(user);
+    document.getElementById('profile-display-name').textContent=displayName||'Caregiver';
+    if(user.created_at){
+      const since=new Date(user.created_at).toLocaleDateString(undefined,{month:'long',year:'numeric'});
+      document.getElementById('profile-since').textContent=since;
+      document.getElementById('set-since').textContent=since;
+    }
+    const nameInput=document.getElementById('caregiver-name');
+    if(nameInput) nameInput.value=displayName;
   }
 
   async function handleAuth(){
@@ -601,16 +681,7 @@
     currentUser = user;
     document.getElementById('auth-screen').style.display='none';
     document.getElementById('app-shell').style.display='block';
-    const email = user.email;
-    const initial = email.charAt(0).toUpperCase();
-    document.getElementById('user-initial').textContent=initial;
-    document.getElementById('account-email').textContent=email;
-    document.getElementById('dd-email').textContent=email;
-    document.getElementById('set-email').textContent=email;
-    document.getElementById('profile-email').textContent=email;
-    document.getElementById('profile-email2').textContent=email;
-    document.getElementById('profile-avatar').textContent=initial;
-    if(user.created_at){ document.getElementById('profile-since').textContent=new Date(user.created_at).toLocaleDateString(undefined,{month:'long',year:'numeric'}); }
+    updateAccountUI(user);
     checkAndStartOnboarding();
   }
 
@@ -777,6 +848,18 @@
     h+='</div>'; return h;
   }
 
+  function weekStartISO(){
+    const d=new Date();
+    d.setHours(0,0,0,0);
+    d.setDate(d.getDate()-d.getDay());
+    return d.toISOString();
+  }
+
+  async function loadWeeklyStoppedCount(){
+    const {count,error}=await sb.from('activity').select('*',{count:'exact',head:true}).eq('tag','stopped').gte('created_at',weekStartISO());
+    return error?0:(count||0);
+  }
+
   function activeItemHtml(a, showPersonName){
     const tagHtml = a.tag==='stopped' ? '<span class="feed-tag stopped">Handled</span>' : '<span class="feed-tag attention">Your input</span>';
     const hasDetail = a.detail_why || a.detail_did || a.detail_actions;
@@ -786,19 +869,29 @@
     inner+='<p class="feed-meta">'+timeAgo(a.created_at)+(a.tag==='stopped'?' · handled automatically':'')+'</p>';
     if(hasDetail){ inner+='<button class="expand-btn" onclick="toggleDetail(\''+a.id+'\',this)">See details ▾</button>'; }
     inner+=detailHtml(a);
-    return '<div class="feed-item"><div class="feed-row"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+inner+'</div>'+
-      '<div class="right-stack">'+tagHtml+'<button class="feed-x" onclick="archiveItem(\''+a.id+'\')" title="Clear from dashboard">×</button></div></div></div>';
+    let actions='<div class="feed-actions">';
+    if(a.tag==='attention'){ actions+='<button class="btn-handle" onclick="archiveItem(\''+a.id+'\')">Mark handled</button>'; }
+    actions+=tagHtml+'<button class="feed-x" onclick="archiveItem(\''+a.id+'\')" title="Clear from dashboard">×</button></div>';
+    return '<div class="feed-item"><div class="feed-row"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+inner+'</div>'+actions+'</div></div>';
   }
 
   async function loadFeed(){
     const feed=document.getElementById('feed');
+    await loadMembersData();
+    if(membersCache.length===0){
+      feed.innerHTML='<div class="empty">Add a family member to start protecting someone.<div class="empty-cta"><button class="add-btn" onclick="openModal()">+ Add family member</button></div></div>';
+      document.getElementById('stat-stopped').textContent='0';
+      document.getElementById('stat-attention').textContent='0';
+      updateBanner(0,0);
+      return;
+    }
     const {data,error}=await sb.from('activity').select('*').eq('resolved',false).order('created_at',{ascending:false}).limit(20);
     if(error){feed.innerHTML='<div class="empty">Could not load activity.</div>';updateBanner(0,0);return;}
-    const stopped=data.filter(a=>a.tag==='stopped').length;
     const attention=data.filter(a=>a.tag==='attention').length;
-    document.getElementById('stat-stopped').textContent=stopped;
+    const weeklyStopped=await loadWeeklyStoppedCount();
+    document.getElementById('stat-stopped').textContent=weeklyStopped;
     document.getElementById('stat-attention').textContent=attention;
-    updateBanner(stopped, attention);
+    updateBanner(weeklyStopped, attention);
     if(data.length===0){feed.innerHTML='<div class="empty">Nothing to report right now. Proteva is watching quietly.<br>When it catches something, you\'ll see it here.</div>';return;}
     feed.innerHTML='<div class="feed">'+data.map(a=>activeItemHtml(a,true)).join('')+'</div>';
   }
@@ -846,10 +939,10 @@
     groupByDay(histData||[], hist, 'No history yet for this person.');
   }
 
-  function updateBanner(stopped, attention){
+  function updateBanner(weeklyStopped, attention){
     const banner=document.getElementById('banner');const icon=document.getElementById('banner-icon');const title=document.getElementById('banner-title');const sub=document.getElementById('banner-sub');
     if(attention>0){banner.className='banner active';icon.textContent='👁️';title.textContent=attention+' item'+(attention>1?'s need':' needs')+' your input';sub.textContent='Proteva handled everything else automatically';}
-    else{banner.className='banner calm';icon.textContent='🛡️';title.textContent='Everyone is safe today';sub.textContent=stopped>0?'Proteva stopped '+stopped+' threat'+(stopped>1?'s':'')+' for you — nothing needs your attention':'Proteva is watching quietly over your family';}
+    else{banner.className='banner calm';icon.textContent='🛡️';title.textContent='Everyone is safe today';sub.textContent=weeklyStopped>0?'Proteva stopped '+weeklyStopped+' threat'+(weeklyStopped!==1?'s':'')+' for you this week — nothing needs your attention':'Proteva is watching quietly over your family';}
   }
 
   async function archiveItem(id){
@@ -1028,8 +1121,8 @@
   async function loadSettings(){
     await loadMembersData();
     if(currentUser){
+      updateAccountUI(currentUser);
       if(currentUser.created_at){
-        document.getElementById('set-since').textContent=new Date(currentUser.created_at).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'});
         const trialEnd=new Date(currentUser.created_at);
         trialEnd.setDate(trialEnd.getDate()+30);
         const daysLeft=Math.max(0, Math.ceil((trialEnd-Date.now())/(1000*60*60*24)));
@@ -1051,7 +1144,27 @@
 
   async function loadProfile(){
     await loadMembersData();
+    if(currentUser) updateAccountUI(currentUser);
     document.getElementById('profile-count').textContent=membersCache.length;
+  }
+
+  async function saveCaregiverName(){
+    const name=document.getElementById('caregiver-name').value.trim();
+    const err=document.getElementById('name-error');
+    const ok=document.getElementById('name-success');
+    const btn=document.getElementById('name-btn');
+    err.style.display='none'; ok.style.display='none';
+    if(!name){ err.textContent='Please enter your name.'; err.style.display='block'; return; }
+    btn.disabled=true; btn.textContent='Saving...';
+    const {data,error}=await sb.auth.updateUser({data:{caregiver_name:name}});
+    if(error){ err.textContent=error.message||'Could not save name.'; err.style.display='block'; }
+    else{
+      if(data.user) currentUser=data.user;
+      updateAccountUI(currentUser);
+      ok.textContent='Name saved.';
+      ok.style.display='block';
+    }
+    btn.disabled=false; btn.textContent='Save name';
   }
 
   async function changePassword(){
@@ -1076,7 +1189,32 @@
     clearMsgs();
   }
 
+  async function completePasswordRecovery(){
+    const pw=document.getElementById('recovery-pw').value;
+    const btn=document.getElementById('recovery-btn');
+    clearMsgs();
+    if(pw.length<6){showError('Password must be at least 6 characters.');return;}
+    btn.disabled=true; btn.textContent='Updating...';
+    const {error}=await sb.auth.updateUser({password:pw});
+    if(error){showError(error.message||'Could not update password.');btn.disabled=false;btn.textContent='Update password';return;}
+    document.getElementById('recovery-panel').style.display='none';
+    showSuccess('Password updated! Signing you in...');
+    const {data}=await sb.auth.getUser();
+    if(data.user) setTimeout(()=>enterApp(data.user),800);
+    btn.disabled=false; btn.textContent='Update password';
+  }
+
+  function showRecoveryPanel(){
+    document.getElementById('auth-screen').style.display='flex';
+    document.getElementById('app-shell').style.display='none';
+    document.getElementById('recovery-panel').style.display='block';
+    clearMsgs();
+  }
+
   async function checkSession(){const {data}=await sb.auth.getSession();if(data.session){enterApp(data.session.user);}}
+  sb.auth.onAuthStateChange((event)=>{
+    if(event==='PASSWORD_RECOVERY') showRecoveryPanel();
+  });
   checkSession();
 </script>
 
