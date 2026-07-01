@@ -3,7 +3,7 @@
   if (sessionStorage.getItem(GATE_KEY) === '1') return;
 
   // Change this password and share only with family (Kellen, dad).
-  var FAMILY_PASSWORD = 'protect2026';
+  var FAMILY_PASSWORD = 'Lizzy2Rex';
 
   var style = document.createElement('style');
   style.textContent =
