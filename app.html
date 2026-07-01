@@ -275,7 +275,7 @@
       </div>
       <div class="section-head"><p class="section-label">What Proteva caught &amp; handled</p></div>
       <div id="feed"></div>
-      <p class="demo-note">Demo: <a onclick="simulateThreat()">simulate a threat Proteva catches</a></p>
+      <p class="demo-note">Demo: <a onclick="simulateThreat()">simulate a threat Proteva catches</a> (AI-generated)</p>
     </section>
 
     <!-- FAMILY -->
@@ -500,9 +500,10 @@
 <div class="modal-bg" id="sim-modal">
   <div class="modal">
     <h3>Simulate a threat</h3>
-    <p style="font-size:13px;color:#888;margin:0 0 1rem;">Which family member's device did Proteva catch this on?</p>
+    <p style="font-size:13px;color:#888;margin:0 0 1rem;">Proteva will generate a realistic example threat using AI. Which family member's device was it on?</p>
+    <div class="msg error" id="sim-error" style="display:none;"></div>
     <div class="field"><label for="sim-person">Family member</label><select id="sim-person"></select></div>
-    <div class="modal-actions"><button class="btn-cancel" onclick="closeSimModal()">Cancel</button><button class="btn-primary" onclick="confirmSimulate()">Simulate</button></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeSimModal()">Cancel</button><button class="btn-primary" id="sim-btn" onclick="confirmSimulate()">Simulate</button></div>
   </div>
 </div>
 
@@ -861,12 +862,68 @@
     sel.innerHTML=membersCache.map(m=>'<option value="'+m.id+'">'+escapeHtml(m.name)+'</option>').join('');
     document.getElementById('sim-modal').style.display='flex';
   }
-  function closeSimModal(){document.getElementById('sim-modal').style.display='none';}
+  function closeSimModal(){
+    document.getElementById('sim-modal').style.display='none';
+    const err=document.getElementById('sim-error'); if(err) err.style.display='none';
+    const btn=document.getElementById('sim-btn');
+    if(btn){ btn.disabled=false; btn.textContent='Simulate'; }
+  }
+
+  function randomThreat(){
+    return THREATS[Math.floor(Math.random()*THREATS.length)];
+  }
+
+  function normalizeThreat(t){
+    return {
+      icon: t.icon || '🛡️',
+      text: t.text,
+      tag: t.tag === 'attention' ? 'attention' : 'stopped',
+      why: t.detail_why || t.why || '',
+      did: t.detail_did || t.did || '',
+      actions: t.detail_actions || t.actions || '',
+    };
+  }
+
+  async function fetchAiThreat(person){
+    const res=await fetch('/api/generate-threat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({personName:person?.name, device:person?.device}),
+    });
+    if(!res.ok) throw new Error('API '+res.status);
+    const data=await res.json();
+    if(!data.text) throw new Error('Invalid response');
+    return normalizeThreat(data);
+  }
+
   async function confirmSimulate(){
     const personId=document.getElementById('sim-person').value;
-    const t=THREATS[Math.floor(Math.random()*THREATS.length)];
-    await sb.from('activity').insert([{icon:t.icon, text:t.text, tag:t.tag, detail_why:t.why, detail_did:t.did, detail_actions:t.actions, person_id:personId}]);
-    closeSimModal(); loadFeed();
+    const person=membersCache.find(m=>m.id===personId);
+    const btn=document.getElementById('sim-btn');
+    const err=document.getElementById('sim-error');
+    err.style.display='none';
+    btn.disabled=true; btn.textContent='Generating...';
+    let t;
+    try{
+      t=await fetchAiThreat(person);
+    }catch(e){
+      t=normalizeThreat(randomThreat());
+      err.textContent='AI unavailable — used a built-in example instead.';
+      err.style.display='block';
+    }
+    try{
+      await sb.from('activity').insert([{
+        icon:t.icon, text:t.text, tag:t.tag,
+        detail_why:t.why, detail_did:t.did, detail_actions:t.actions,
+        person_id:personId,
+      }]);
+      closeSimModal();
+      loadFeed();
+    }catch(e){
+      err.textContent='Could not save. Please try again.';
+      err.style.display='block';
+      btn.disabled=false; btn.textContent='Simulate';
+    }
   }
 
   function setDeviceSelect(selId, device){
