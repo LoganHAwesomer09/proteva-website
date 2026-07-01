@@ -115,6 +115,23 @@
   .m-badge { font-size: 12px; font-weight: 600; color: #0F6E56; background: #E1F5EE; padding: 4px 11px; border-radius: 999px; }
   .m-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 17px; padding: 0 4px; }
   .m-delete:hover { color: #A32D2D; }
+  .m-edit { background: none; border: none; color: #ccc; cursor: pointer; font-size: 15px; padding: 0 4px; }
+  .m-edit:hover { color: #1D9E75; }
+  .member-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+  .settings-family { margin-top: 0.5rem; }
+  .settings-member { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f4f4f4; }
+  .settings-member:last-child { border-bottom: none; }
+  .settings-member .m-avatar { width: 32px; height: 32px; font-size: 12px; }
+  .settings-member-info { flex: 1; min-width: 0; }
+  .settings-member-info .m-name { font-size: 14px; }
+  .settings-member-info .m-detail { font-size: 12px; }
+  .settings-link { font-size: 13px; color: #1D9E75; font-weight: 600; cursor: pointer; background: none; border: none; padding: 0; }
+  .settings-link:hover { text-decoration: underline; }
+  .hero-actions { margin-left: auto; display: flex; gap: 8px; flex-shrink: 0; }
+  .btn-sm { background: #fff; border: 1.5px solid #ddd; color: #555; padding: 7px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-sm:hover { border-color: #1D9E75; color: #0F6E56; }
+  .btn-sm.danger:hover { border-color: #A32D2D; color: #A32D2D; }
+  .modal-sub { font-size: 13px; color: #888; margin: -0.75rem 0 1.25rem; line-height: 1.5; }
   .empty { text-align: center; padding: 2rem 1rem; color: #999; font-size: 14px; background: #fff; border: 1px dashed #ddd; border-radius: 12px; }
 
   .card { background:#fff; border:1px solid #eee; border-radius:14px; padding:1.5rem; margin-bottom:1rem; }
@@ -135,6 +152,7 @@
   .person-hero .m-avatar { width: 48px; height: 48px; font-size: 16px; }
   .person-hero h2 { font-size: 18px; margin: 0; }
   .person-hero p { font-size: 13px; color: #888; margin: 2px 0 0; }
+  .person-hero-text { flex: 1; min-width: 0; }
 
   .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; padding: 1.5rem; z-index: 40; }
   .modal { background: #fff; border-radius: 16px; padding: 2rem; width: 100%; max-width: 400px; }
@@ -288,12 +306,26 @@
     <!-- SETTINGS -->
     <section class="view" id="view-settings" style="display:none;">
       <p class="page-title">Settings</p>
-      <p class="page-sub">Manage your account and preferences.</p>
+      <p class="page-sub">Manage your account, family, and preferences.</p>
       <div class="card">
         <h3>Account</h3>
         <div class="kv"><span class="k">Email</span><span class="v" id="set-email">—</span></div>
         <div class="kv"><span class="k">Role</span><span class="v">Caregiver</span></div>
         <div class="kv"><span class="k">Plan</span><span class="v">Free trial</span></div>
+        <div class="kv"><span class="k">Trial</span><span class="v" id="set-trial">—</span></div>
+        <div class="kv"><span class="k">Member since</span><span class="v" id="set-since">—</span></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+          <h3 style="margin:0;">Protected family</h3>
+          <button class="settings-link" onclick="openModal()">+ Add person</button>
+        </div>
+        <p style="font-size:13px;color:#777;margin:0 0 1rem;line-height:1.6;">Update names and devices for the people you're protecting.</p>
+        <div class="settings-family" id="settings-family-list"></div>
+      </div>
+      <div class="card">
+        <h3>Notifications</h3>
+        <p style="font-size:13px;color:#777;margin:0;line-height:1.6;">Proteva handles most threats silently. We'll only notify you here when something genuinely needs your input — keeping things calm by design.</p>
       </div>
       <div class="card">
         <h3>Security</h3>
@@ -432,14 +464,35 @@
   </div>
 </div>
 
-<!-- ADD MEMBER MODAL -->
+<!-- ADD / EDIT MEMBER MODAL -->
 <div class="modal-bg" id="modal">
   <div class="modal">
-    <h3>Add a family member</h3>
+    <h3 id="modal-title">Add a family member</h3>
+    <p class="modal-sub" id="modal-sub">Someone you'll protect with Proteva — set up together, with their knowledge.</p>
     <div class="msg error" id="modal-error"></div>
     <div class="field"><label for="m-name">Their name</label><input type="text" id="m-name" placeholder="e.g. Grandma Rose" /></div>
-    <div class="field"><label for="m-device">Their device</label><input type="text" id="m-device" placeholder="e.g. iPhone, iPad" /></div>
-    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-primary" id="save-member-btn" onclick="addMember()">Add</button></div>
+    <div class="field">
+      <label for="m-device">Their device</label>
+      <select id="m-device">
+        <option value="">Choose a device...</option>
+        <option value="iPhone">iPhone</option>
+        <option value="iPad">iPad</option>
+        <option value="Android phone">Android phone</option>
+        <option value="Android tablet">Android tablet</option>
+        <option value="Computer">Computer (Mac or PC)</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-primary" id="save-member-btn" onclick="saveMember()">Add</button></div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-bg" id="delete-modal">
+  <div class="modal">
+    <h3>Remove family member?</h3>
+    <p class="modal-sub" id="delete-modal-text">They'll no longer appear in your dashboard. Their activity history will also be removed.</p>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button><button class="btn-primary" id="confirm-delete-btn" style="background:#A32D2D;" onclick="confirmDeleteMember()">Remove</button></div>
   </div>
 </div>
 
@@ -465,6 +518,8 @@
   let currentUser = null;
   let obStep = 0;
   let obSavedPerson = null;
+  let editingMemberId = null;
+  let pendingDeleteId = null;
 
   const THREATS = [
     {icon:'🚫', text:'Blocked a fake "Microsoft support" pop-up', tag:'stopped',
@@ -667,6 +722,7 @@
     if(view==='family') loadMembers();
     if(view==='history') loadHistory();
     if(view==='profile') loadProfile();
+    if(view==='settings') loadSettings();
   }
 
   function toggleDropdown(e){ e.stopPropagation(); document.getElementById('dropdown').classList.toggle('open'); }
@@ -703,7 +759,9 @@
       const badge = c>0 ? '<span class="m-badge" style="background:#E6F1FB;color:#185FA5;">'+c+' active</span>' : '<span class="m-badge">✓ Protected</span>';
       return '<div class="member" onclick="showPerson(\''+p.id+'\')"><span class="m-avatar">'+initials+'</span>'+
         '<div class="m-info"><p class="m-name">'+escapeHtml(p.name)+'</p><p class="m-detail">'+detail+'</p></div>'+badge+
-        '<button class="m-delete" onclick="event.stopPropagation();deleteMember(\''+p.id+'\')" title="Remove">×</button></div>';
+        '<div class="member-actions">'+
+        '<button class="m-edit" onclick="event.stopPropagation();openModal(\''+p.id+'\')" title="Edit">✎</button>'+
+        '<button class="m-delete" onclick="event.stopPropagation();promptDeleteMember(\''+p.id+'\')" title="Remove">×</button></div></div>';
     }).join('');
   }
 
@@ -770,7 +828,12 @@
     go('person');
     const p=membersCache.find(x=>x.id===id);
     const initials=p?p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase():'?';
-    document.getElementById('person-hero').innerHTML='<span class="m-avatar">'+initials+'</span><div><h2>'+escapeHtml(p?p.name:'')+'</h2><p>'+(p&&p.device?escapeHtml(p.device)+' · ':'')+'protected by Proteva</p></div>';
+    document.getElementById('person-hero').innerHTML=
+      '<span class="m-avatar">'+initials+'</span>'+
+      '<div class="person-hero-text"><h2>'+escapeHtml(p?p.name:'')+'</h2><p>'+(p&&p.device?escapeHtml(p.device)+' · ':'')+'protected by Proteva</p></div>'+
+      '<div class="hero-actions">'+
+      '<button class="btn-sm" onclick="openModal(\''+id+'\')">Edit info</button>'+
+      '<button class="btn-sm danger" onclick="promptDeleteMember(\''+id+'\')">Remove</button></div>';
     const act=document.getElementById('person-active'); const hist=document.getElementById('person-history');
     act.innerHTML='<div class="empty">Loading...</div>'; hist.innerHTML='';
     const {data:activeData}=await sb.from('activity').select('*').eq('person_id',id).eq('resolved',false).order('created_at',{ascending:false});
@@ -806,18 +869,126 @@
     closeSimModal(); loadFeed();
   }
 
-  function openModal(){document.getElementById('modal').style.display='flex';document.getElementById('m-name').value='';document.getElementById('m-device').value='';document.getElementById('modal-error').style.display='none';}
-  function closeModal(){document.getElementById('modal').style.display='none';}
-  async function addMember(){
-    const name=document.getElementById('m-name').value.trim();const device=document.getElementById('m-device').value.trim();
-    const btn=document.getElementById('save-member-btn');const err=document.getElementById('modal-error');err.style.display='none';
-    if(!name){err.textContent='Please enter a name.';err.style.display='block';return;}
-    btn.disabled=true;btn.textContent='Adding...';
-    try{const {error}=await sb.from('protected_people').insert([{name,device}]);if(error)throw error;closeModal();loadMembers();}
-    catch(e){err.textContent='Could not add. Please try again.';err.style.display='block';}
-    btn.disabled=false;btn.textContent='Add';
+  function setDeviceSelect(selId, device){
+    const sel=document.getElementById(selId);
+    const known=[...sel.options].map(o=>o.value).filter(Boolean);
+    [...sel.querySelectorAll('option[data-custom]')].forEach(o=>o.remove());
+    if(device && !known.includes(device)){
+      const opt=document.createElement('option');
+      opt.value=device; opt.textContent=device; opt.dataset.custom='1';
+      sel.appendChild(opt);
+    }
+    sel.value=device||'';
   }
-  async function deleteMember(id){await sb.from('protected_people').delete().eq('id',id);loadMembers();}
+
+  function openModal(id){
+    editingMemberId=id||null;
+    const isEdit=!!editingMemberId;
+    document.getElementById('modal-title').textContent=isEdit?'Edit family member':'Add a family member';
+    document.getElementById('modal-sub').textContent=isEdit?'Update their name or device if something changed.':'Someone you\'ll protect with Proteva — set up together, with their knowledge.';
+    document.getElementById('save-member-btn').textContent=isEdit?'Save changes':'Add';
+    document.getElementById('modal-error').style.display='none';
+    if(isEdit){
+      const p=membersCache.find(m=>m.id===editingMemberId);
+      document.getElementById('m-name').value=p?p.name:'';
+      setDeviceSelect('m-device', p?p.device:'');
+    }else{
+      document.getElementById('m-name').value='';
+      setDeviceSelect('m-device', '');
+    }
+    document.getElementById('modal').style.display='flex';
+  }
+
+  function closeModal(){
+    document.getElementById('modal').style.display='none';
+    editingMemberId=null;
+    const sel=document.getElementById('m-device');
+    [...sel.querySelectorAll('option[data-custom]')].forEach(o=>o.remove());
+  }
+
+  async function saveMember(){
+    const name=document.getElementById('m-name').value.trim();
+    const device=document.getElementById('m-device').value.trim();
+    const btn=document.getElementById('save-member-btn');
+    const err=document.getElementById('modal-error');
+    err.style.display='none';
+    if(!name){err.textContent='Please enter a name.';err.style.display='block';return;}
+    if(!device){err.textContent='Please choose their device.';err.style.display='block';return;}
+    const isEdit=!!editingMemberId;
+    btn.disabled=true; btn.textContent=isEdit?'Saving...':'Adding...';
+    try{
+      if(isEdit){
+        const {error}=await sb.from('protected_people').update({name,device}).eq('id',editingMemberId);
+        if(error) throw error;
+      }else{
+        const {error}=await sb.from('protected_people').insert([{name,device}]);
+        if(error) throw error;
+      }
+      closeModal();
+      await loadMembersData();
+      if(document.getElementById('view-family').style.display==='block') loadMembers();
+      if(document.getElementById('view-settings').style.display==='block') loadSettings();
+      if(currentPersonId && document.getElementById('view-person').style.display==='block') showPerson(currentPersonId);
+      if(document.getElementById('view-dashboard').style.display==='block') loadFeed();
+    }catch(e){
+      err.textContent='Could not save. Please try again.';
+      err.style.display='block';
+    }
+    btn.disabled=false; btn.textContent=isEdit?'Save changes':'Add';
+  }
+
+  function promptDeleteMember(id){
+    pendingDeleteId=id;
+    const p=membersCache.find(m=>m.id===id);
+    document.getElementById('delete-modal-text').textContent=p
+      ? 'Remove '+p.name+' from your protected family? Their activity history will also be deleted.'
+      : 'Remove this person from your protected family? Their activity history will also be deleted.';
+    document.getElementById('delete-modal').style.display='flex';
+  }
+
+  function closeDeleteModal(){
+    document.getElementById('delete-modal').style.display='none';
+    pendingDeleteId=null;
+  }
+
+  async function confirmDeleteMember(){
+    if(!pendingDeleteId) return;
+    const id=pendingDeleteId;
+    const btn=document.getElementById('confirm-delete-btn');
+    btn.disabled=true; btn.textContent='Removing...';
+    await sb.from('protected_people').delete().eq('id',id);
+    closeDeleteModal();
+    if(currentPersonId===id){ currentPersonId=null; go('family'); }
+    else {
+      loadMembers();
+      if(document.getElementById('view-settings').style.display==='block') loadSettings();
+    }
+    btn.disabled=false; btn.textContent='Remove';
+  }
+
+  async function loadSettings(){
+    await loadMembersData();
+    if(currentUser){
+      if(currentUser.created_at){
+        document.getElementById('set-since').textContent=new Date(currentUser.created_at).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'});
+        const trialEnd=new Date(currentUser.created_at);
+        trialEnd.setDate(trialEnd.getDate()+30);
+        const daysLeft=Math.max(0, Math.ceil((trialEnd-Date.now())/(1000*60*60*24)));
+        document.getElementById('set-trial').textContent=daysLeft>0?daysLeft+' day'+(daysLeft!==1?'s':'')+' left':'Trial ended';
+      }
+    }
+    const list=document.getElementById('settings-family-list');
+    if(membersCache.length===0){
+      list.innerHTML='<div class="empty" style="padding:1.25rem;">No one added yet. <button class="settings-link" onclick="openModal()">Add your first family member</button></div>';
+      return;
+    }
+    list.innerHTML=membersCache.map(p=>{
+      const initials=p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+      return '<div class="settings-member"><span class="m-avatar">'+initials+'</span>'+
+        '<div class="settings-member-info"><p class="m-name">'+escapeHtml(p.name)+'</p><p class="m-detail">'+escapeHtml(p.device||'No device set')+'</p></div>'+
+        '<button class="settings-link" onclick="openModal(\''+p.id+'\')">Edit</button></div>';
+    }).join('');
+  }
 
   async function loadProfile(){
     await loadMembersData();
