@@ -7,12 +7,13 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F4FBF8; color: #1a1a1a; min-height: 100vh; }
-  .logo { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .logo { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
   .logo span { color: #1D9E75; }
 
+  /* AUTH */
   .auth-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
   .auth-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 18px; padding: 2.5rem; width: 100%; max-width: 420px; }
-  .auth-card .logo { text-align: center; margin-bottom: 0.5rem; }
+  .auth-card .logo { text-align: center; margin-bottom: 0.5rem; display:block; }
   .auth-sub { text-align: center; font-size: 14px; color: #777; margin-bottom: 1.75rem; }
   .field { margin-bottom: 1rem; }
   .field label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
@@ -27,12 +28,31 @@
   .msg.error { background: #FCEBEB; color: #A32D2D; }
   .msg.success { background: #E1F5EE; color: #0F6E56; }
 
-  .dash-wrap { display: none; max-width: 760px; margin: 0 auto; padding: 1.5rem; }
-  .dash-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-  .avatar { width: 32px; height: 32px; border-radius: 50%; background: #E1F5EE; color: #0F6E56; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
-  .top-btn { background: transparent; border: 1.5px solid #ddd; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #555; }
-  .top-btn:hover { border-color: #1D9E75; color: #1D9E75; }
-  .top-actions { display: flex; gap: 8px; align-items: center; }
+  /* APP SHELL */
+  .app-shell { display: none; min-height: 100vh; }
+  .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 230px; background: #fff; border-right: 1px solid #eee; padding: 1.5rem 1rem; display: flex; flex-direction: column; z-index: 20; }
+  .sidebar .logo { padding: 0 0.75rem 1.5rem; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 10px; font-size: 14px; font-weight: 600; color: #555; cursor: pointer; margin-bottom: 4px; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item .ni-icon { font-size: 17px; }
+  .nav-item:hover { background: #F4FBF8; color: #0F6E56; }
+  .nav-item.active { background: #E1F5EE; color: #0F6E56; }
+  .sidebar-spacer { flex: 1; }
+  .sidebar-foot { font-size: 11px; color: #bbb; padding: 0 0.75rem; }
+
+  .main { margin-left: 230px; padding: 1.5rem 2rem; max-width: 900px; }
+  .topbar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 1.25rem; position: relative; }
+  .account-btn { display: flex; align-items: center; gap: 8px; background: #fff; border: 1.5px solid #eee; border-radius: 999px; padding: 5px 6px 5px 12px; cursor: pointer; }
+  .account-btn:hover { border-color: #9FE1CB; }
+  .account-btn .who { font-size: 13px; color: #555; font-weight: 600; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: #E1F5EE; color: #0F6E56; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .dropdown { position: absolute; top: 48px; right: 0; background: #fff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); width: 200px; padding: 6px; display: none; z-index: 30; }
+  .dropdown.open { display: block; }
+  .dd-head { padding: 10px 12px; border-bottom: 1px solid #f2f2f2; margin-bottom: 6px; }
+  .dd-head .dd-email { font-size: 13px; font-weight: 600; color: #1a1a1a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dd-head .dd-role { font-size: 12px; color: #999; }
+  .dd-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; font-size: 14px; color: #555; cursor: pointer; background: none; border: none; width: 100%; text-align: left; }
+  .dd-item:hover { background: #F4FBF8; color: #0F6E56; }
+  .dd-item.danger:hover { background: #FCEBEB; color: #A32D2D; }
 
   .banner { border-radius: 16px; padding: 1.5rem 1.75rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 16px; transition: background 0.3s; }
   .banner.calm { background: #E1F5EE; }
@@ -55,6 +75,8 @@
   .section-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin: 0; }
   .add-btn { background: #E1F5EE; color: #0F6E56; border: none; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .add-btn:hover { background: #9FE1CB; }
+  .page-title { font-size: 24px; font-weight: 700; margin: 0 0 0.25rem; }
+  .page-sub { font-size: 14px; color: #888; margin: 0 0 1.5rem; }
   .back-link { background: none; border: none; color: #1D9E75; font-size: 14px; font-weight: 600; cursor: pointer; padding: 0; margin-bottom: 1rem; }
 
   .feed { background: #fff; border: 1px solid #eee; border-radius: 14px; overflow: hidden; margin-bottom: 1.5rem; }
@@ -95,26 +117,48 @@
   .m-delete:hover { color: #A32D2D; }
   .empty { text-align: center; padding: 2rem 1rem; color: #999; font-size: 14px; background: #fff; border: 1px dashed #ddd; border-radius: 12px; }
 
-  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; padding: 1.5rem; z-index: 10; }
+  .card { background:#fff; border:1px solid #eee; border-radius:14px; padding:1.5rem; margin-bottom:1rem; }
+  .card h3 { font-size:15px; margin:0 0 1rem; }
+  .kv { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f4f4f4; font-size:14px; }
+  .kv:last-child { border-bottom:none; }
+  .kv .k { color:#888; }
+  .kv .v { color:#1a1a1a; font-weight:600; }
+  .btn-outline { background:#fff; border:1.5px solid #ddd; color:#555; padding:10px 16px; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; }
+  .btn-outline:hover { border-color:#1D9E75; color:#0F6E56; }
+  .faq { border-bottom:1px solid #f2f2f2; padding:0.9rem 0; }
+  .faq:last-child { border-bottom:none; }
+  .faq-q { font-size:14px; font-weight:600; color:#1a1a1a; cursor:pointer; display:flex; justify-content:space-between; gap:12px; }
+  .faq-a { font-size:13px; color:#666; line-height:1.6; margin-top:8px; display:none; }
+  .faq-a.open { display:block; }
+
+  .person-hero { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 14px; }
+  .person-hero .m-avatar { width: 48px; height: 48px; font-size: 16px; }
+  .person-hero h2 { font-size: 18px; margin: 0; }
+  .person-hero p { font-size: 13px; color: #888; margin: 2px 0 0; }
+
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; padding: 1.5rem; z-index: 40; }
   .modal { background: #fff; border-radius: 16px; padding: 2rem; width: 100%; max-width: 400px; }
   .modal h3 { font-size: 18px; margin: 0 0 1.25rem; }
   .modal-actions { display: flex; gap: 10px; margin-top: 1.25rem; }
   .btn-cancel { flex: 1; background: #fff; border: 1.5px solid #ddd; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; color: #555; }
   .demo-note { font-size: 12px; color: #aaa; text-align: center; margin-top: 1rem; }
   .demo-note a { color: #1D9E75; cursor: pointer; font-weight: 600; }
-  .page-title { font-size: 22px; font-weight: 700; margin: 0 0 0.25rem; }
-  .page-sub { font-size: 14px; color: #888; margin: 0 0 1.5rem; }
-  .person-hero { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 14px; }
-  .person-hero .m-avatar { width: 48px; height: 48px; font-size: 16px; }
-  .person-hero h2 { font-size: 18px; margin: 0; }
-  .person-hero p { font-size: 13px; color: #888; margin: 2px 0 0; }
+
+  .mobile-menu-btn { display:none; }
+  @media (max-width: 720px) {
+    .sidebar { transform: translateX(-100%); transition: transform 0.2s; }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; padding: 1rem; }
+    .mobile-menu-btn { display:inline-flex; position:fixed; top:12px; left:12px; z-index:25; background:#fff; border:1px solid #eee; border-radius:8px; padding:8px 12px; font-size:18px; cursor:pointer; }
+  }
 </style>
 </head>
 <body>
 
+<!-- AUTH SCREEN -->
 <div class="auth-wrap" id="auth-screen">
   <div class="auth-card">
-    <div class="logo">Pro<span>teva</span></div>
+    <span class="logo">Pro<span>teva</span></span>
     <p class="auth-sub" id="auth-subtitle">Welcome back — sign in to your family dashboard</p>
     <div class="msg error" id="msg-error"></div>
     <div class="msg success" id="msg-success"></div>
@@ -133,93 +177,160 @@
   </div>
 </div>
 
-<div class="dash-wrap" id="dash-screen">
-  <div class="dash-top">
-    <div class="logo" style="font-size:20px;">Pro<span>teva</span></div>
-    <div class="top-actions">
-      <button class="top-btn" onclick="showHistory()">🗂 History</button>
-      <span class="avatar" id="user-initial">U</span>
-      <button class="top-btn" onclick="handleLogout()">Log out</button>
-    </div>
-  </div>
+<!-- APP SHELL -->
+<div class="app-shell" id="app-shell">
+  <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
 
-  <div id="main-view">
-    <div class="banner calm" id="banner">
-      <span class="banner-icon" id="banner-icon">🛡️</span>
-      <div>
-        <h2 id="banner-title">Everyone is safe today</h2>
-        <p id="banner-sub">Loading...</p>
+  <aside class="sidebar" id="sidebar">
+    <span class="logo">Pro<span>teva</span></span>
+    <button class="nav-item active" id="nav-dashboard" onclick="go('dashboard')"><span class="ni-icon">🏠</span> Dashboard</button>
+    <button class="nav-item" id="nav-family" onclick="go('family')"><span class="ni-icon">👪</span> Family</button>
+    <button class="nav-item" id="nav-history" onclick="go('history')"><span class="ni-icon">🗂️</span> History</button>
+    <button class="nav-item" id="nav-settings" onclick="go('settings')"><span class="ni-icon">⚙️</span> Settings</button>
+    <button class="nav-item" id="nav-help" onclick="go('help')"><span class="ni-icon">❓</span> Help</button>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-foot">Proteva · protecting families</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="account-btn" onclick="toggleDropdown(event)">
+        <span class="who" id="account-email">user@email.com</span>
+        <span class="avatar" id="user-initial">U</span>
+      </button>
+      <div class="dropdown" id="dropdown">
+        <div class="dd-head">
+          <div class="dd-email" id="dd-email">user@email.com</div>
+          <div class="dd-role">Caregiver</div>
+        </div>
+        <button class="dd-item" onclick="go('profile'); closeDropdown()">👤 Profile</button>
+        <button class="dd-item" onclick="go('settings'); closeDropdown()">⚙️ Settings</button>
+        <button class="dd-item danger" onclick="handleLogout()">🚪 Log out</button>
       </div>
     </div>
 
-    <div class="stats">
-      <div class="stat"><p class="stat-label">Threats stopped</p><p class="stat-num" id="stat-stopped">0</p><p class="stat-sub">automatically</p></div>
-      <div class="stat"><p class="stat-label">People protected</p><p class="stat-num" id="stat-people">0</p><p class="stat-sub">in your family</p></div>
-      <div class="stat"><p class="stat-label">Needs your input</p><p class="stat-num" id="stat-attention">0</p><p class="stat-sub">items</p></div>
-    </div>
+    <!-- DASHBOARD -->
+    <section class="view" id="view-dashboard">
+      <div class="banner calm" id="banner">
+        <span class="banner-icon" id="banner-icon">🛡️</span>
+        <div><h2 id="banner-title">Everyone is safe today</h2><p id="banner-sub">Loading...</p></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><p class="stat-label">Threats stopped</p><p class="stat-num" id="stat-stopped">0</p><p class="stat-sub">automatically</p></div>
+        <div class="stat"><p class="stat-label">People protected</p><p class="stat-num" id="stat-people">0</p><p class="stat-sub">in your family</p></div>
+        <div class="stat"><p class="stat-label">Needs your input</p><p class="stat-num" id="stat-attention">0</p><p class="stat-sub">items</p></div>
+      </div>
+      <div class="section-head"><p class="section-label">What Proteva caught &amp; handled</p></div>
+      <div id="feed"></div>
+      <p class="demo-note">Demo: <a onclick="simulateThreat()">simulate a threat Proteva catches</a></p>
+    </section>
 
-    <div class="section-head">
-      <p class="section-label">What Proteva caught &amp; handled</p>
-    </div>
-    <div id="feed"></div>
+    <!-- FAMILY -->
+    <section class="view" id="view-family" style="display:none;">
+      <p class="page-title">Protected family</p>
+      <p class="page-sub">Everyone you're protecting with Proteva. Tap a person to see their activity.</p>
+      <div class="section-head"><p class="section-label">Family members</p><button class="add-btn" onclick="openModal()">+ Add family member</button></div>
+      <div id="member-list"></div>
+    </section>
 
-    <div class="section-head">
-      <p class="section-label">Protected family</p>
-      <button class="add-btn" onclick="openModal()">+ Add family member</button>
-    </div>
-    <div id="member-list"></div>
+    <!-- PERSON DETAIL -->
+    <section class="view" id="view-person" style="display:none;">
+      <button class="back-link" onclick="go('family')">← Back to family</button>
+      <div class="person-hero" id="person-hero"></div>
+      <div class="section-head"><p class="section-label">Active for this person</p></div>
+      <div id="person-active"></div>
+      <div class="section-head"><p class="section-label">History for this person</p></div>
+      <div id="person-history"></div>
+    </section>
 
-    <p class="demo-note">Demo: <a onclick="simulateThreat()">simulate a threat Proteva catches</a></p>
-  </div>
+    <!-- HISTORY -->
+    <section class="view" id="view-history" style="display:none;">
+      <p class="page-title">History</p>
+      <p class="page-sub">A record of everything you've cleared, organized by day.</p>
+      <div id="history-feed"></div>
+    </section>
 
-  <div id="person-view" style="display:none;">
-    <button class="back-link" onclick="showMain()">← Back to dashboard</button>
-    <div class="person-hero" id="person-hero"></div>
-    <div class="section-head"><p class="section-label">Active for this person</p></div>
-    <div id="person-active"></div>
-    <div class="section-head"><p class="section-label">History for this person</p></div>
-    <div id="person-history"></div>
-  </div>
+    <!-- SETTINGS -->
+    <section class="view" id="view-settings" style="display:none;">
+      <p class="page-title">Settings</p>
+      <p class="page-sub">Manage your account and preferences.</p>
+      <div class="card">
+        <h3>Account</h3>
+        <div class="kv"><span class="k">Email</span><span class="v" id="set-email">—</span></div>
+        <div class="kv"><span class="k">Role</span><span class="v">Caregiver</span></div>
+        <div class="kv"><span class="k">Plan</span><span class="v">Free trial</span></div>
+      </div>
+      <div class="card">
+        <h3>Security</h3>
+        <p style="font-size:13px;color:#777;margin:0 0 1rem;line-height:1.6;">Change the password you use to sign in to Proteva.</p>
+        <div class="msg error" id="pw-error"></div>
+        <div class="msg success" id="pw-success"></div>
+        <div class="field"><label for="new-pw">New password</label><input type="password" id="new-pw" placeholder="At least 6 characters" /></div>
+        <button class="btn-outline" id="pw-btn" onclick="changePassword()">Update password</button>
+      </div>
+      <div class="card">
+        <h3>Session</h3>
+        <p style="font-size:13px;color:#777;margin:0 0 1rem;">Sign out of Proteva on this device.</p>
+        <button class="btn-outline" onclick="handleLogout()">Log out</button>
+      </div>
+    </section>
 
-  <div id="history-view" style="display:none;">
-    <button class="back-link" onclick="showMain()">← Back to dashboard</button>
-    <p class="page-title">History</p>
-    <p class="page-sub">A record of everything you've cleared, organized by day. Kept here so your dashboard stays clear.</p>
-    <div id="history-feed"></div>
-  </div>
+    <!-- PROFILE -->
+    <section class="view" id="view-profile" style="display:none;">
+      <p class="page-title">Profile</p>
+      <p class="page-sub">Your caregiver account.</p>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:1rem;">
+          <span class="avatar" id="profile-avatar" style="width:52px;height:52px;font-size:18px;">U</span>
+          <div><div style="font-size:16px;font-weight:700;" id="profile-email">—</div><div style="font-size:13px;color:#999;">Caregiver account</div></div>
+        </div>
+        <div class="kv"><span class="k">Email</span><span class="v" id="profile-email2">—</span></div>
+        <div class="kv"><span class="k">People protected</span><span class="v" id="profile-count">0</span></div>
+        <div class="kv"><span class="k">Member since</span><span class="v" id="profile-since">—</span></div>
+      </div>
+    </section>
+
+    <!-- HELP -->
+    <section class="view" id="view-help" style="display:none;">
+      <p class="page-title">Help &amp; support</p>
+      <p class="page-sub">Answers to common questions, and how to reach us.</p>
+      <div class="card">
+        <h3>How Proteva works</h3>
+        <p style="font-size:13px;color:#666;line-height:1.7;margin:0;">Proteva quietly watches over your loved one's device and stops most digital threats — scam pop-ups, phishing links, predatory apps, and remote-access attempts — automatically, before they ever reach you. For the rare situation Proteva can't fully resolve on its own, it flags it here on your dashboard with a plain-language explanation and what you can do. You're always informed, never overwhelmed.</p>
+      </div>
+      <div class="card">
+        <h3>Frequently asked questions</h3>
+        <div class="faq"><div class="faq-q" onclick="toggleFaq(this)"><span>Does Proteva read my loved one's messages?</span><span>＋</span></div><div class="faq-a">No. Proteva is noninvasive by design. It watches what the device is doing — like blocking a scam pop-up — not what your loved one is saying. It never reads private messages or tracks conversations.</div></div>
+        <div class="faq"><div class="faq-q" onclick="toggleFaq(this)"><span>Does my loved one know Proteva is installed?</span><span>＋</span></div><div class="faq-a">Yes, always. Proteva is set up together with your loved one, with their full awareness. Protecting people with dignity — never behind their back — is core to who we are.</div></div>
+        <div class="faq"><div class="faq-q" onclick="toggleFaq(this)"><span>Can Proteva be removed?</span><span>＋</span></div><div class="faq-a">Absolutely. If your loved one ever wants Proteva removed, the process is simple and immediate, and you'll be notified with calm, neutral language. We never make removal difficult.</div></div>
+        <div class="faq"><div class="faq-q" onclick="toggleFaq(this)"><span>How many people can I protect?</span><span>＋</span></div><div class="faq-a">It depends on your plan: Home covers up to 2 people, Family up to 5, and Shield up to 10. You can change plans anytime as your family's needs grow.</div></div>
+      </div>
+      <div class="card">
+        <h3>Contact us</h3>
+        <p style="font-size:13px;color:#666;line-height:1.7;margin:0;">Need a hand? Email us at <strong>hello@getproteva.com</strong> and a real person will get back to you. We're here to help your family feel safe.</p>
+      </div>
+    </section>
+  </main>
 </div>
 
+<!-- ADD MEMBER MODAL -->
 <div class="modal-bg" id="modal">
   <div class="modal">
     <h3>Add a family member</h3>
     <div class="msg error" id="modal-error"></div>
-    <div class="field">
-      <label for="m-name">Their name</label>
-      <input type="text" id="m-name" placeholder="e.g. Grandma Rose" />
-    </div>
-    <div class="field">
-      <label for="m-device">Their device</label>
-      <input type="text" id="m-device" placeholder="e.g. iPhone, iPad" />
-    </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-primary" id="save-member-btn" onclick="addMember()">Add</button>
-    </div>
+    <div class="field"><label for="m-name">Their name</label><input type="text" id="m-name" placeholder="e.g. Grandma Rose" /></div>
+    <div class="field"><label for="m-device">Their device</label><input type="text" id="m-device" placeholder="e.g. iPhone, iPad" /></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-primary" id="save-member-btn" onclick="addMember()">Add</button></div>
   </div>
 </div>
 
+<!-- SIMULATE MODAL -->
 <div class="modal-bg" id="sim-modal">
   <div class="modal">
     <h3>Simulate a threat</h3>
     <p style="font-size:13px;color:#888;margin:0 0 1rem;">Which family member's device did Proteva catch this on?</p>
-    <div class="field">
-      <label for="sim-person">Family member</label>
-      <select id="sim-person"></select>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeSimModal()">Cancel</button>
-      <button class="btn-primary" onclick="confirmSimulate()">Simulate</button>
-    </div>
+    <div class="field"><label for="sim-person">Family member</label><select id="sim-person"></select></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeSimModal()">Cancel</button><button class="btn-primary" onclick="confirmSimulate()">Simulate</button></div>
   </div>
 </div>
 
@@ -232,6 +343,7 @@
   let isSignupMode = false;
   let membersCache = [];
   let currentPersonId = null;
+  let currentUser = null;
 
   const THREATS = [
     {icon:'🚫', text:'Blocked a fake "Microsoft support" pop-up', tag:'stopped',
@@ -293,12 +405,12 @@
       if(isSignupMode){
         const {data,error}=await sb.auth.signUp({email,password});
         if(error)throw error;
-        if(data.session){showDashboard(email);}
+        if(data.session){enterApp(data.session.user);}
         else{showSuccess('Account created! Check your email to confirm, then sign in.');btn.disabled=false;toggleMode();}
       }else{
         const {data,error}=await sb.auth.signInWithPassword({email,password});
         if(error)throw error;
-        showDashboard(email);
+        enterApp(data.user);
       }
     }catch(err){
       showError(err.message||'Something went wrong.');
@@ -306,56 +418,71 @@
     }
   }
 
-  function showDashboard(email){
+  function enterApp(user){
+    currentUser = user;
     document.getElementById('auth-screen').style.display='none';
-    document.getElementById('dash-screen').style.display='block';
-    document.getElementById('user-initial').textContent=email.charAt(0).toUpperCase();
-    showMain();
-    loadAll();
+    document.getElementById('app-shell').style.display='block';
+    const email = user.email;
+    const initial = email.charAt(0).toUpperCase();
+    document.getElementById('user-initial').textContent=initial;
+    document.getElementById('account-email').textContent=email;
+    document.getElementById('dd-email').textContent=email;
+    document.getElementById('set-email').textContent=email;
+    document.getElementById('profile-email').textContent=email;
+    document.getElementById('profile-email2').textContent=email;
+    document.getElementById('profile-avatar').textContent=initial;
+    if(user.created_at){ document.getElementById('profile-since').textContent=new Date(user.created_at).toLocaleDateString(undefined,{month:'long',year:'numeric'}); }
+    go('dashboard');
   }
 
-  function hideAllViews(){
-    document.getElementById('main-view').style.display='none';
-    document.getElementById('history-view').style.display='none';
-    document.getElementById('person-view').style.display='none';
+  // ---- navigation ----
+  const VIEWS = ['dashboard','family','person','history','settings','profile','help'];
+  function go(view){
+    VIEWS.forEach(v=>{ const el=document.getElementById('view-'+v); if(el) el.style.display = (v===view)?'block':'none'; });
+    ['dashboard','family','history','settings','help'].forEach(v=>{
+      const nav=document.getElementById('nav-'+v); if(nav) nav.classList.toggle('active', v===view);
+    });
+    document.getElementById('sidebar').classList.remove('open');
+    if(view==='dashboard') loadAll();
+    if(view==='family') loadMembers();
+    if(view==='history') loadHistory();
+    if(view==='profile') loadProfile();
   }
-  function showMain(){hideAllViews();document.getElementById('main-view').style.display='block';loadAll();}
-  function showHistory(){hideAllViews();document.getElementById('history-view').style.display='block';loadHistory();}
 
-  async function loadAll(){ await Promise.all([loadMembers(), loadFeed()]); }
+  function toggleDropdown(e){ e.stopPropagation(); document.getElementById('dropdown').classList.toggle('open'); }
+  function closeDropdown(){ document.getElementById('dropdown').classList.remove('open'); }
+  document.addEventListener('click', ()=>closeDropdown());
 
-  function timeAgo(ts){
-    const diff=(Date.now()-new Date(ts).getTime())/1000;
-    if(diff<60)return 'just now';
-    if(diff<3600)return Math.floor(diff/60)+'m ago';
-    if(diff<86400)return Math.floor(diff/3600)+'h ago';
-    return Math.floor(diff/86400)+'d ago';
-  }
+  function toggleFaq(el){ const a=el.nextElementSibling; a.classList.toggle('open'); el.querySelector('span:last-child').textContent = a.classList.contains('open')?'－':'＋'; }
+
+  async function loadAll(){ await Promise.all([loadMembersData(), loadFeed()]); }
+
+  function timeAgo(ts){const diff=(Date.now()-new Date(ts).getTime())/1000;if(diff<60)return 'just now';if(diff<3600)return Math.floor(diff/60)+'m ago';if(diff<86400)return Math.floor(diff/3600)+'h ago';return Math.floor(diff/86400)+'d ago';}
   function timeOnly(ts){return new Date(ts).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});}
   function dayLabel(ts){return new Date(ts).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'});}
+  function personName(id){const m=membersCache.find(x=>x.id===id);return m?m.name:null;}
+  function escapeHtml(s){const d=document.createElement('div');d.textContent=(s===null||s===undefined)?'':s;return d.innerHTML;}
 
-  function personName(id){ const m=membersCache.find(x=>x.id===id); return m?m.name:null; }
+  async function loadMembersData(){
+    const {data}=await sb.from('protected_people').select('*').order('created_at',{ascending:true});
+    membersCache=data||[];
+    document.getElementById('stat-people').textContent=membersCache.length;
+    return membersCache;
+  }
 
   async function loadMembers(){
+    await loadMembersData();
     const list=document.getElementById('member-list');
-    const {data,error}=await sb.from('protected_people').select('*').order('created_at',{ascending:true});
-    if(error){list.innerHTML='<div class="empty">Could not load your family.</div>';return;}
-    membersCache=data;
-    document.getElementById('stat-people').textContent=data.length;
-    // counts of active threats per person
     const {data:acts}=await sb.from('activity').select('person_id').eq('resolved',false);
-    const counts={};
-    (acts||[]).forEach(a=>{ if(a.person_id){counts[a.person_id]=(counts[a.person_id]||0)+1;} });
-
-    if(data.length===0){list.innerHTML='<div class="empty">No family members yet. Add someone you want to protect.</div>';return;}
-    list.innerHTML=data.map(p=>{
+    const counts={}; (acts||[]).forEach(a=>{ if(a.person_id){counts[a.person_id]=(counts[a.person_id]||0)+1;} });
+    if(membersCache.length===0){list.innerHTML='<div class="empty">No family members yet. Add someone you want to protect.</div>';return;}
+    list.innerHTML=membersCache.map(p=>{
       const initials=p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
       const c=counts[p.id]||0;
       const detail = c>0 ? c+' active item'+(c>1?'s':'') : (p.device?escapeHtml(p.device)+' · protected':'protected');
       const badge = c>0 ? '<span class="m-badge" style="background:#E6F1FB;color:#185FA5;">'+c+' active</span>' : '<span class="m-badge">✓ Protected</span>';
       return '<div class="member" onclick="showPerson(\''+p.id+'\')"><span class="m-avatar">'+initials+'</span>'+
-        '<div class="m-info"><p class="m-name">'+escapeHtml(p.name)+'</p><p class="m-detail">'+detail+'</p></div>'+
-        badge+
+        '<div class="m-info"><p class="m-name">'+escapeHtml(p.name)+'</p><p class="m-detail">'+detail+'</p></div>'+badge+
         '<button class="m-delete" onclick="event.stopPropagation();deleteMember(\''+p.id+'\')" title="Remove">×</button></div>';
     }).join('');
   }
@@ -366,8 +493,7 @@
     if(a.detail_why){h+='<div class="detail-block"><p class="detail-label">What happened</p><p class="detail-text">'+escapeHtml(a.detail_why)+'</p></div>';}
     if(a.detail_did){h+='<div class="detail-block"><p class="detail-label">What Proteva did</p><p class="detail-text">'+escapeHtml(a.detail_did)+'</p></div>';}
     if(a.detail_actions){h+='<div class="detail-block"><p class="detail-label">What you can do</p><p class="detail-text">'+escapeHtml(a.detail_actions)+'</p></div>';}
-    h+='</div>';
-    return h;
+    h+='</div>'; return h;
   }
 
   function activeItemHtml(a, showPersonName){
@@ -396,12 +522,7 @@
     feed.innerHTML='<div class="feed">'+data.map(a=>activeItemHtml(a,true)).join('')+'</div>';
   }
 
-  function toggleDetail(id, btn){
-    const d=document.getElementById('detail-'+id);
-    if(!d)return;
-    const open=d.classList.toggle('open');
-    btn.textContent = open ? 'Hide details ▴' : 'See details ▾';
-  }
+  function toggleDetail(id, btn){const d=document.getElementById('detail-'+id);if(!d)return;const open=d.classList.toggle('open');btn.textContent=open?'Hide details ▴':'See details ▾';}
 
   function historyItemHtml(a){
     const hasDetail = a.detail_why || a.detail_did || a.detail_actions;
@@ -409,16 +530,13 @@
     if(hasDetail){ inner+='<button class="expand-btn" onclick="toggleDetail(\''+a.id+'\',this)">See details ▾</button>'+detailHtml(a); }
     return '<div class="feed-item"><div class="feed-row"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+inner+'</div><span class="feed-tag resolved">Cleared</span></div></div>';
   }
-
   function groupByDay(data, feedEl, emptyMsg){
-    if(data.length===0){feedEl.innerHTML='<div class="empty">'+emptyMsg+'</div>';return;}
+    if(!data || data.length===0){feedEl.innerHTML='<div class="empty">'+emptyMsg+'</div>';return;}
     const groups={}; const order=[];
-    data.forEach(a=>{ const key=dayLabel(a.created_at); if(!groups[key]){groups[key]=[];order.push(key);} groups[key].push(a); });
-    let html='';
-    order.forEach(day=>{ html+='<div class="date-header">'+day+'</div><div class="feed">'+groups[day].map(historyItemHtml).join('')+'</div>'; });
+    data.forEach(a=>{const key=dayLabel(a.created_at);if(!groups[key]){groups[key]=[];order.push(key);}groups[key].push(a);});
+    let html=''; order.forEach(day=>{html+='<div class="date-header">'+day+'</div><div class="feed">'+groups[day].map(historyItemHtml).join('')+'</div>';});
     feedEl.innerHTML=html;
   }
-
   async function loadHistory(){
     const feed=document.getElementById('history-feed');
     feed.innerHTML='<div class="empty">Loading...</div>';
@@ -429,52 +547,33 @@
 
   async function showPerson(id){
     currentPersonId=id;
-    hideAllViews();
-    document.getElementById('person-view').style.display='block';
+    go('person');
     const p=membersCache.find(x=>x.id===id);
     const initials=p?p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase():'?';
-    document.getElementById('person-hero').innerHTML=
-      '<span class="m-avatar">'+initials+'</span><div><h2>'+escapeHtml(p?p.name:'')+'</h2><p>'+(p&&p.device?escapeHtml(p.device)+' · ':'')+'protected by Proteva</p></div>';
-
-    const act=document.getElementById('person-active');
-    const hist=document.getElementById('person-history');
+    document.getElementById('person-hero').innerHTML='<span class="m-avatar">'+initials+'</span><div><h2>'+escapeHtml(p?p.name:'')+'</h2><p>'+(p&&p.device?escapeHtml(p.device)+' · ':'')+'protected by Proteva</p></div>';
+    const act=document.getElementById('person-active'); const hist=document.getElementById('person-history');
     act.innerHTML='<div class="empty">Loading...</div>'; hist.innerHTML='';
-
     const {data:activeData}=await sb.from('activity').select('*').eq('person_id',id).eq('resolved',false).order('created_at',{ascending:false});
-    if(!activeData || activeData.length===0){ act.innerHTML='<div class="empty">Nothing active for '+escapeHtml(p?p.name:'this person')+' right now. All clear. ✓</div>'; }
-    else { act.innerHTML='<div class="feed">'+activeData.map(a=>activeItemHtml(a,false)).join('')+'</div>'; }
-
+    if(!activeData||activeData.length===0){act.innerHTML='<div class="empty">Nothing active for '+escapeHtml(p?p.name:'this person')+' right now. All clear. ✓</div>';}
+    else{act.innerHTML='<div class="feed">'+activeData.map(a=>activeItemHtml(a,false)).join('')+'</div>';}
     const {data:histData}=await sb.from('activity').select('*').eq('person_id',id).eq('resolved',true).order('created_at',{ascending:false}).limit(100);
     groupByDay(histData||[], hist, 'No history yet for this person.');
   }
 
   function updateBanner(stopped, attention){
-    const banner=document.getElementById('banner');
-    const icon=document.getElementById('banner-icon');
-    const title=document.getElementById('banner-title');
-    const sub=document.getElementById('banner-sub');
-    if(attention>0){
-      banner.className='banner active'; icon.textContent='👁️';
-      title.textContent=attention+' item'+(attention>1?'s need':' needs')+' your input';
-      sub.textContent='Proteva handled everything else automatically';
-    }else{
-      banner.className='banner calm'; icon.textContent='🛡️';
-      title.textContent='Everyone is safe today';
-      sub.textContent = stopped>0 ? 'Proteva stopped '+stopped+' threat'+(stopped>1?'s':'')+' for you — nothing needs your attention' : 'Proteva is watching quietly over your family';
-    }
+    const banner=document.getElementById('banner');const icon=document.getElementById('banner-icon');const title=document.getElementById('banner-title');const sub=document.getElementById('banner-sub');
+    if(attention>0){banner.className='banner active';icon.textContent='👁️';title.textContent=attention+' item'+(attention>1?'s need':' needs')+' your input';sub.textContent='Proteva handled everything else automatically';}
+    else{banner.className='banner calm';icon.textContent='🛡️';title.textContent='Everyone is safe today';sub.textContent=stopped>0?'Proteva stopped '+stopped+' threat'+(stopped>1?'s':'')+' for you — nothing needs your attention':'Proteva is watching quietly over your family';}
   }
-
-  function escapeHtml(s){const d=document.createElement('div');d.textContent=s===null||s===undefined?'':s;return d.innerHTML;}
 
   async function archiveItem(id){
     await sb.from('activity').update({resolved:true}).eq('id',id);
-    if(currentPersonId && document.getElementById('person-view').style.display==='block'){ showPerson(currentPersonId); }
-    else { loadFeed(); loadMembers(); }
+    if(currentPersonId && document.getElementById('view-person').style.display==='block'){showPerson(currentPersonId);}
+    else {loadFeed();}
   }
 
-  // ---- simulate with person picker ----
   function simulateThreat(){
-    if(membersCache.length===0){ alert('Add a family member first, then simulate a threat on their device.'); return; }
+    if(membersCache.length===0){ alert('Add a family member first (Family tab), then simulate a threat on their device.'); return; }
     const sel=document.getElementById('sim-person');
     sel.innerHTML=membersCache.map(m=>'<option value="'+m.id+'">'+escapeHtml(m.name)+'</option>').join('');
     document.getElementById('sim-modal').style.display='flex';
@@ -484,45 +583,50 @@
     const personId=document.getElementById('sim-person').value;
     const t=THREATS[Math.floor(Math.random()*THREATS.length)];
     await sb.from('activity').insert([{icon:t.icon, text:t.text, tag:t.tag, detail_why:t.why, detail_did:t.did, detail_actions:t.actions, person_id:personId}]);
-    closeSimModal();
-    loadFeed(); loadMembers();
+    closeSimModal(); loadFeed();
   }
 
   function openModal(){document.getElementById('modal').style.display='flex';document.getElementById('m-name').value='';document.getElementById('m-device').value='';document.getElementById('modal-error').style.display='none';}
   function closeModal(){document.getElementById('modal').style.display='none';}
-
   async function addMember(){
-    const name=document.getElementById('m-name').value.trim();
-    const device=document.getElementById('m-device').value.trim();
-    const btn=document.getElementById('save-member-btn');
-    const err=document.getElementById('modal-error');
-    err.style.display='none';
+    const name=document.getElementById('m-name').value.trim();const device=document.getElementById('m-device').value.trim();
+    const btn=document.getElementById('save-member-btn');const err=document.getElementById('modal-error');err.style.display='none';
     if(!name){err.textContent='Please enter a name.';err.style.display='block';return;}
-    btn.disabled=true; btn.textContent='Adding...';
-    try{
-      const {error}=await sb.from('protected_people').insert([{name,device}]);
-      if(error)throw error;
-      closeModal(); loadMembers();
-    }catch(e){ err.textContent='Could not add. Please try again.'; err.style.display='block'; }
-    btn.disabled=false; btn.textContent='Add';
+    btn.disabled=true;btn.textContent='Adding...';
+    try{const {error}=await sb.from('protected_people').insert([{name,device}]);if(error)throw error;closeModal();loadMembers();}
+    catch(e){err.textContent='Could not add. Please try again.';err.style.display='block';}
+    btn.disabled=false;btn.textContent='Add';
+  }
+  async function deleteMember(id){await sb.from('protected_people').delete().eq('id',id);loadMembers();}
+
+  async function loadProfile(){
+    await loadMembersData();
+    document.getElementById('profile-count').textContent=membersCache.length;
   }
 
-  async function deleteMember(id){ await sb.from('protected_people').delete().eq('id',id); loadMembers(); loadFeed(); }
+  async function changePassword(){
+    const pw=document.getElementById('new-pw').value;
+    const err=document.getElementById('pw-error');const ok=document.getElementById('pw-success');const btn=document.getElementById('pw-btn');
+    err.style.display='none';ok.style.display='none';
+    if(pw.length<6){err.textContent='Password must be at least 6 characters.';err.style.display='block';return;}
+    btn.disabled=true;btn.textContent='Updating...';
+    const {error}=await sb.auth.updateUser({password:pw});
+    if(error){err.textContent=error.message||'Could not update password.';err.style.display='block';}
+    else{ok.textContent='Password updated successfully.';ok.style.display='block';document.getElementById('new-pw').value='';}
+    btn.disabled=false;btn.textContent='Update password';
+  }
 
   async function handleLogout(){
     await sb.auth.signOut();
-    document.getElementById('dash-screen').style.display='none';
+    currentUser=null;
+    document.getElementById('app-shell').style.display='none';
     document.getElementById('auth-screen').style.display='flex';
-    document.getElementById('email').value=''; document.getElementById('password').value='';
-    document.getElementById('auth-btn').disabled=false;
-    document.getElementById('auth-btn').textContent=isSignupMode?'Create account':'Sign in';
+    document.getElementById('email').value='';document.getElementById('password').value='';
+    document.getElementById('auth-btn').disabled=false;document.getElementById('auth-btn').textContent=isSignupMode?'Create account':'Sign in';
     clearMsgs();
   }
 
-  async function checkSession(){
-    const {data}=await sb.auth.getSession();
-    if(data.session){showDashboard(data.session.user.email);}
-  }
+  async function checkSession(){const {data}=await sb.auth.getSession();if(data.session){enterApp(data.session.user);}}
   checkSession();
 </script>
 
