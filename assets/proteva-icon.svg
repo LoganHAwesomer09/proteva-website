@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Proteva">
   <rect width="512" height="512" rx="96" fill="#F5F4EF"/>
-  <path fill="#1D9E75" d="M148 120h104c76 0 128 52 128 116s-52 116-128 116h-36v-40h36c48 0 76-32 76-76s-28-76-76-76H148v176l64-24-64-24V120z"/>
-  <path fill="#111111" d="M148 272l64-24 12 152H148V272z"/>
+  <path fill="#1D9E75" d="M172,108 L220,108 C340,108 404,164 404,244 C404,324 340,380 220,380 L220,320 L264,298 L172,320 Z"/>
+  <path fill="#1A1A1A" d="M172,320 L264,298 L220,444 L172,444 Z"/>
 </svg>

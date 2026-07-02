@@ -9,7 +9,7 @@
   style.textContent =
     '#proteva-gate{position:fixed;inset:0;background:#F4FBF8;display:flex;align-items:center;justify-content:center;padding:1.5rem;z-index:99999;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}' +
     '#proteva-gate .card{background:#fff;border:1px solid #e8e8e8;border-radius:18px;padding:2rem;width:100%;max-width:380px;box-shadow:0 12px 40px rgba(0,0,0,.06)}' +
-    '#proteva-gate .logo{display:flex;flex-direction:column;align-items:center;gap:10px;font-size:22px;font-weight:700;margin-bottom:.5rem}#proteva-gate .logo img{width:48px;height:48px;border-radius:12px}#proteva-gate .logo span{color:#1D9E75}' +
+    '#proteva-gate .logo{display:flex;flex-direction:column;align-items:center;gap:10px;font-size:22px;font-weight:700;margin-bottom:.5rem}#proteva-gate .logo img{width:48px;height:48px;border-radius:12px}#proteva-gate .logo-pro{color:#1a1a1a}#proteva-gate .logo-teva{color:#1D9E75}' +
     '#proteva-gate p{font-size:14px;color:#666;line-height:1.6;margin:0 0 1.25rem}' +
     '#proteva-gate input{width:100%;padding:13px 15px;border:1.5px solid #ddd;border-radius:10px;font-size:15px;margin-bottom:1rem;box-sizing:border-box}' +
     '#proteva-gate input:focus{outline:none;border-color:#1D9E75}' +
@@ -22,7 +22,7 @@
   wrap.id = 'proteva-gate';
   wrap.innerHTML =
     '<div class="card">' +
-    '<div class="logo"><img src="/assets/proteva-icon.svg" alt=""><span>Pro<span>teva</span></span></div>' +
+    '<div class="logo"><img src="/assets/proteva-icon.svg" alt=""><span><span class="logo-pro">Pro</span><span class="logo-teva">teva</span></span></div>' +
     '<p>Private preview — family only. Enter the password to continue.</p>' +
     '<div class="err" id="proteva-gate-err">Wrong password. Try again.</div>' +
     '<input type="password" id="proteva-gate-pw" placeholder="Password" autocomplete="current-password" />' +
