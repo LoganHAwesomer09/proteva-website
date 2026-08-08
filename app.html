@@ -39,7 +39,8 @@
   .sidebar-spacer { flex: 1; }
   .sidebar-foot { font-size: 11px; color: #bbb; padding: 0 0.75rem; }
 
-  .main { margin-left: 230px; padding: 1.5rem 2rem; max-width: 900px; }
+  .main { margin-left: 230px; padding: 1.5rem 2rem; }
+  .main-inner { max-width: 880px; margin: 0 auto; width: 100%; }
   .topbar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 1.25rem; position: relative; }
   .account-btn { display: flex; align-items: center; gap: 8px; background: #fff; border: 1.5px solid #eee; border-radius: 999px; padding: 5px 6px 5px 12px; cursor: pointer; }
   .account-btn:hover { border-color: #9FE1CB; }
@@ -192,7 +193,7 @@
     <div class="sidebar-foot">Proteva · protecting families</div>
   </aside>
 
-  <main class="main">
+  <main class="main"><div class="main-inner">
     <div class="topbar">
       <button class="account-btn" onclick="toggleDropdown(event)">
         <span class="who" id="account-email">user@email.com</span>
@@ -310,7 +311,7 @@
         <p style="font-size:13px;color:#666;line-height:1.7;margin:0;">Need a hand? Email us at <strong>hello@getproteva.com</strong> and a real person will get back to you. We're here to help your family feel safe.</p>
       </div>
     </section>
-  </main>
+  </div></main>
 </div>
 
 <!-- ADD MEMBER MODAL -->
