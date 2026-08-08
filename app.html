@@ -155,9 +155,94 @@
     .main { margin-left: 0; padding: 1rem; }
     .mobile-menu-btn { display:inline-flex; position:fixed; top:12px; left:12px; z-index:25; background:#fff; border:1px solid #eee; border-radius:8px; padding:8px 12px; font-size:18px; cursor:pointer; }
   }
+
+  /* ONBOARDING */
+  #onboarding { position: fixed; inset: 0; background: linear-gradient(160deg,#E1F5EE 0%, #F4FBF8 60%); z-index: 60; overflow-y: auto; }
+  .ob-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+  .ob-card { background: #fff; border: 1px solid #e5efe9; border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 460px; box-shadow: 0 12px 40px rgba(15,110,86,0.08); }
+  .ob-progress { display: flex; gap: 8px; justify-content: center; margin-bottom: 1.75rem; }
+  .ob-dot { width: 8px; height: 8px; border-radius: 50%; background: #D9E9E2; transition: background 0.2s, width 0.2s; }
+  .ob-dot.active { background: #1D9E75; width: 22px; border-radius: 999px; }
+  .ob-emoji { font-size: 44px; text-align: center; margin-bottom: 0.75rem; }
+  .ob-step h2 { font-size: 22px; text-align: center; margin: 0 0 0.75rem; color: #1a1a1a; }
+  .ob-step p { font-size: 15px; text-align: center; color: #444; line-height: 1.6; margin: 0 0 0.75rem; }
+  .ob-step p em { color: #0F6E56; font-style: normal; font-weight: 600; }
+  .ob-step .ob-sub { font-size: 14px; color: #777; }
+  .ob-step .btn-primary { margin-top: 1rem; }
+  .ob-actions { display: flex; gap: 10px; margin-top: 1.25rem; }
+  .ob-actions .btn-primary { margin-top: 0; }
+  .ob-back { flex: 0 0 auto; width: auto; padding-left: 22px; padding-right: 22px; }
+  .ob-actions .btn-primary { flex: 1; }
+  .ob-step .field { text-align: left; }
+  .ob-skip { font-size: 13px; color: #999; text-align: center; cursor: pointer; margin-top: 1rem; text-decoration: underline; }
+  .ob-skip:hover { color: #0F6E56; }
+
 </style>
 </head>
 <body>
+
+<!-- ONBOARDING OVERLAY -->
+<div id="onboarding" style="display:none;">
+  <div class="ob-wrap">
+    <div class="ob-card">
+      <div class="ob-progress"><span class="ob-dot" data-step="0"></span><span class="ob-dot" data-step="1"></span><span class="ob-dot" data-step="2"></span><span class="ob-dot" data-step="3"></span></div>
+
+      <!-- Step 0: Welcome -->
+      <div class="ob-step" id="ob-step-0">
+        <div class="ob-emoji">🛡️</div>
+        <h2>Welcome to Proteva</h2>
+        <p>You've just taken a real step toward protecting someone you love. We're glad you're here.</p>
+        <p class="ob-sub">Let's get you set up in just a minute — it's simple, and we'll walk through it together.</p>
+        <button class="btn-primary" onclick="obNext()">Get started</button>
+      </div>
+
+      <!-- Step 1: The dignity principle -->
+      <div class="ob-step" id="ob-step-1" style="display:none;">
+        <div class="ob-emoji">🤝</div>
+        <h2>Set up together, always</h2>
+        <p>Proteva is different. We protect people <em>with</em> their family — never behind their back.</p>
+        <p class="ob-sub">When you're ready, set up Proteva side-by-side with your loved one, so they know it's there and why. It's their dignity, their device, and their peace of mind too. That's a promise at the heart of who we are.</p>
+        <div class="ob-actions">
+          <button class="btn-cancel ob-back" onclick="obPrev()">Back</button>
+          <button class="btn-primary" onclick="obNext()">I understand</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Add first person -->
+      <div class="ob-step" id="ob-step-2" style="display:none;">
+        <div class="ob-emoji">👪</div>
+        <h2>Who would you like to protect first?</h2>
+        <p class="ob-sub">Add the first person you're looking after. You can add more anytime.</p>
+        <div class="msg error" id="ob-error"></div>
+        <div class="field"><label for="ob-name">Their name</label><input type="text" id="ob-name" placeholder="e.g. Rose Hagen" /></div>
+        <div class="field"><label for="ob-relationship">Relationship to you</label>
+          <select id="ob-relationship" onchange="obRelChange()">
+            <option value="">Select…</option>
+            <option>Mother</option><option>Father</option><option>Grandmother</option><option>Grandfather</option>
+            <option>Aunt</option><option>Uncle</option><option>Spouse</option><option>Sibling</option><option>Friend</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field" id="ob-rel-other-wrap" style="display:none;"><label for="ob-relationship-other">Please specify</label><input type="text" id="ob-relationship-other" placeholder="e.g. Neighbor" /></div>
+        <div class="field"><label for="ob-devices">Their device(s)</label><input type="text" id="ob-devices" placeholder="e.g. iPhone, iPad" /></div>
+        <div class="ob-actions">
+          <button class="btn-cancel ob-back" onclick="obPrev()">Back</button>
+          <button class="btn-primary" id="ob-add-btn" onclick="obAddPerson()">Add &amp; continue</button>
+        </div>
+        <p class="ob-skip" onclick="obFinish(true)">I'll add someone later</p>
+      </div>
+
+      <!-- Step 3: Done -->
+      <div class="ob-step" id="ob-step-3" style="display:none;">
+        <div class="ob-emoji">💚</div>
+        <h2>You're all set</h2>
+        <p id="ob-done-msg">Proteva is now watching quietly over your family. You can rest a little easier.</p>
+        <p class="ob-sub">From here, your dashboard shows you everything Proteva catches and handles. We'll only ask for your help on the rare occasion something truly needs it.</p>
+        <button class="btn-primary" onclick="obFinish(false)">Go to my dashboard</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <!-- AUTH SCREEN -->
 <div class="auth-wrap" id="auth-screen">
@@ -324,12 +409,13 @@
     <div class="msg error" id="modal-error"></div>
     <div class="field"><label for="m-name">Their name</label><input type="text" id="m-name" placeholder="e.g. Rose Hagen" /></div>
     <div class="field"><label for="m-relationship">Relationship to you</label>
-      <select id="m-relationship">
+      <select id="m-relationship" onchange="onRelationshipChange()">
         <option value="">Select…</option>
         <option>Mother</option><option>Father</option><option>Grandmother</option><option>Grandfather</option>
         <option>Aunt</option><option>Uncle</option><option>Spouse</option><option>Sibling</option><option>Friend</option><option>Other</option>
       </select>
     </div>
+    <div class="field" id="m-relationship-other-wrap" style="display:none;"><label for="m-relationship-other">Please specify</label><input type="text" id="m-relationship-other" placeholder="e.g. Neighbor, Family friend" /></div>
     <div class="field"><label for="m-birthyear">Birth year <span style="color:#bbb;font-weight:400;">(optional)</span></label><input type="number" id="m-birthyear" placeholder="e.g. 1944" min="1900" max="2025" /></div>
     <div class="field"><label for="m-devices">Their devices</label><input type="text" id="m-devices" placeholder="e.g. iPhone, iPad" /></div>
     <div class="field"><label for="m-protection">Protection level</label>
@@ -454,6 +540,16 @@
     document.getElementById('profile-avatar').textContent=initial;
     if(user.created_at){ document.getElementById('profile-since').textContent=new Date(user.created_at).toLocaleDateString(undefined,{month:'long',year:'numeric'}); }
     go('dashboard');
+    maybeOnboard();
+  }
+
+  async function maybeOnboard(){
+    let onboarded=false;
+    try{ onboarded = localStorage.getItem('proteva_onboarded')==='1'; }catch(e){}
+    if(onboarded) return;
+    const {data}=await sb.from('protected_people').select('id').limit(1);
+    if(!data || data.length===0){ obShow(); }
+    else { try{ localStorage.setItem('proteva_onboarded','1'); }catch(e){} }
   }
 
   // ---- navigation ----
@@ -626,9 +722,20 @@
   }
 
   let editingId = null;
+  function onRelationshipChange(){
+    const sel=document.getElementById('m-relationship');
+    const wrap=document.getElementById('m-relationship-other-wrap');
+    wrap.style.display = (sel.value==='Other') ? 'block' : 'none';
+  }
+  const REL_PRESETS = ['Mother','Father','Grandmother','Grandfather','Aunt','Uncle','Spouse','Sibling','Friend'];
   function fillForm(p){
     document.getElementById('m-name').value = p ? (p.name||'') : '';
-    document.getElementById('m-relationship').value = p ? (p.relationship||'') : '';
+    const rel = p ? (p.relationship||'') : '';
+    const relSel=document.getElementById('m-relationship');
+    const otherWrap=document.getElementById('m-relationship-other-wrap');
+    const otherInput=document.getElementById('m-relationship-other');
+    if(rel && !REL_PRESETS.includes(rel)){ relSel.value='Other'; otherWrap.style.display='block'; otherInput.value=rel; }
+    else { relSel.value=rel; otherWrap.style.display='none'; otherInput.value=''; }
     document.getElementById('m-birthyear').value = p ? (p.birth_year||'') : '';
     document.getElementById('m-devices').value = p ? (p.devices||p.device||'') : '';
     document.getElementById('m-protection').value = p ? (p.protection_level||'standard') : 'standard';
@@ -654,7 +761,8 @@
   function closeModal(){document.getElementById('modal').style.display='none';}
   async function saveMember(){
     const name=document.getElementById('m-name').value.trim();
-    const relationship=document.getElementById('m-relationship').value||null;
+    let relationship=document.getElementById('m-relationship').value||null;
+    if(relationship==='Other'){ const custom=document.getElementById('m-relationship-other').value.trim(); relationship = custom || 'Other'; }
     const byRaw=document.getElementById('m-birthyear').value.trim();
     const birth_year=byRaw?parseInt(byRaw,10):null;
     const devices=document.getElementById('m-devices').value.trim()||null;
@@ -703,6 +811,47 @@
     document.getElementById('email').value='';document.getElementById('password').value='';
     document.getElementById('auth-btn').disabled=false;document.getElementById('auth-btn').textContent=isSignupMode?'Create account':'Sign in';
     clearMsgs();
+  }
+
+
+  // ---------- ONBOARDING ----------
+  let obStep = 0;
+  let obFirstName = '';
+  function obShow(){
+    obStep=0; obRender();
+    document.getElementById('onboarding').style.display='block';
+  }
+  function obRender(){
+    for(let i=0;i<4;i++){ const el=document.getElementById('ob-step-'+i); if(el) el.style.display=(i===obStep)?'block':'none'; }
+    document.querySelectorAll('.ob-dot').forEach((d,i)=>d.classList.toggle('active', i===obStep));
+  }
+  function obNext(){ if(obStep<3){obStep++;obRender();} }
+  function obPrev(){ if(obStep>0){obStep--;obRender();} }
+  function obRelChange(){
+    const sel=document.getElementById('ob-relationship');
+    document.getElementById('ob-rel-other-wrap').style.display=(sel.value==='Other')?'block':'none';
+  }
+  async function obAddPerson(){
+    const name=document.getElementById('ob-name').value.trim();
+    let relationship=document.getElementById('ob-relationship').value||null;
+    if(relationship==='Other'){ const c=document.getElementById('ob-relationship-other').value.trim(); relationship=c||'Other'; }
+    const devices=document.getElementById('ob-devices').value.trim()||null;
+    const btn=document.getElementById('ob-add-btn');const err=document.getElementById('ob-error');err.style.display='none';
+    if(!name){err.textContent='Please enter their name.';err.style.display='block';return;}
+    btn.disabled=true;btn.textContent='Adding...';
+    try{
+      const {error}=await sb.from('protected_people').insert([{name,relationship,devices,protection_level:'standard'}]);
+      if(error)throw error;
+      obFirstName=name.split(' ')[0];
+      document.getElementById('ob-done-msg').textContent='Proteva is now watching quietly over '+obFirstName+'. You can rest a little easier.';
+      obStep=3; obRender();
+    }catch(e){ err.textContent='Could not add. Please try again.';err.style.display='block'; }
+    btn.disabled=false;btn.textContent='Add & continue';
+  }
+  function obFinish(skipped){
+    document.getElementById('onboarding').style.display='none';
+    try{ localStorage.setItem('proteva_onboarded', '1'); }catch(e){}
+    go('dashboard');
   }
 
   async function checkSession(){const {data}=await sb.auth.getSession();if(data.session){enterApp(data.session.user);}}
