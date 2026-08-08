@@ -18,7 +18,8 @@
   .field { margin-bottom: 1rem; }
   .field label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
   .field input, .field select { width: 100%; padding: 13px 15px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 15px; outline: none; transition: border 0.2s; background: #fff; }
-  .field input:focus, .field select:focus { border-color: #1D9E75; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: #1D9E75; }
+  .field textarea:focus { outline:none; }
   .btn-primary { width: 100%; background: #1D9E75; color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
   .btn-primary:hover { background: #0F6E56; }
   .btn-primary:disabled { background: #9FE1CB; cursor: not-allowed; }
@@ -116,6 +117,8 @@
   .m-badge { font-size: 12px; font-weight: 600; color: #0F6E56; background: #E1F5EE; padding: 4px 11px; border-radius: 999px; }
   .m-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 17px; padding: 0 4px; }
   .m-delete:hover { color: #A32D2D; }
+  .m-edit { background: none; border: none; color: #bbb; cursor: pointer; font-size: 15px; padding: 0 4px; }
+  .m-edit:hover { color: #0F6E56; }
   .empty { text-align: center; padding: 2rem 1rem; color: #999; font-size: 14px; background: #fff; border: 1px dashed #ddd; border-radius: 12px; }
 
   .card { background:#fff; border:1px solid #eee; border-radius:14px; padding:1.5rem; margin-bottom:1rem; }
@@ -314,14 +317,31 @@
   </div></main>
 </div>
 
-<!-- ADD MEMBER MODAL -->
+<!-- ADD / EDIT MEMBER MODAL -->
 <div class="modal-bg" id="modal">
-  <div class="modal">
-    <h3>Add a family member</h3>
+  <div class="modal" style="max-width:440px;">
+    <h3 id="modal-title">Add a family member</h3>
     <div class="msg error" id="modal-error"></div>
-    <div class="field"><label for="m-name">Their name</label><input type="text" id="m-name" placeholder="e.g. Grandma Rose" /></div>
-    <div class="field"><label for="m-device">Their device</label><input type="text" id="m-device" placeholder="e.g. iPhone, iPad" /></div>
-    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-primary" id="save-member-btn" onclick="addMember()">Add</button></div>
+    <div class="field"><label for="m-name">Their name</label><input type="text" id="m-name" placeholder="e.g. Rose Hagen" /></div>
+    <div class="field"><label for="m-relationship">Relationship to you</label>
+      <select id="m-relationship">
+        <option value="">Select…</option>
+        <option>Mother</option><option>Father</option><option>Grandmother</option><option>Grandfather</option>
+        <option>Aunt</option><option>Uncle</option><option>Spouse</option><option>Sibling</option><option>Friend</option><option>Other</option>
+      </select>
+    </div>
+    <div class="field"><label for="m-birthyear">Birth year <span style="color:#bbb;font-weight:400;">(optional)</span></label><input type="number" id="m-birthyear" placeholder="e.g. 1944" min="1900" max="2025" /></div>
+    <div class="field"><label for="m-devices">Their devices</label><input type="text" id="m-devices" placeholder="e.g. iPhone, iPad" /></div>
+    <div class="field"><label for="m-protection">Protection level</label>
+      <select id="m-protection">
+        <option value="standard">Standard — balanced protection</option>
+        <option value="extra">Extra-cautious — flags more, blocks aggressively</option>
+      </select>
+    </div>
+    <div class="field"><label for="m-notes">Notes <span style="color:#bbb;font-weight:400;">(optional)</span></label>
+      <textarea id="m-notes" placeholder="e.g. Gets confused by pop-ups. Fell for a scam last year." style="width:100%;padding:13px 15px;border:1.5px solid #ddd;border-radius:10px;font-size:15px;outline:none;font-family:inherit;resize:vertical;min-height:70px;"></textarea>
+    </div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-primary" id="save-member-btn" onclick="saveMember()">Add</button></div>
   </div>
 </div>
 
@@ -480,10 +500,19 @@
     list.innerHTML=membersCache.map(p=>{
       const initials=p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
       const c=counts[p.id]||0;
-      const detail = c>0 ? c+' active item'+(c>1?'s':'') : (p.device?escapeHtml(p.device)+' · protected':'protected');
+      let sub;
+      if(c>0){ sub = c+' active item'+(c>1?'s':''); }
+      else {
+        const bits=[];
+        if(p.relationship) bits.push(escapeHtml(p.relationship));
+        const dev = p.devices || p.device;
+        if(dev) bits.push(escapeHtml(dev));
+        sub = bits.length ? bits.join(' · ') : 'protected';
+      }
       const badge = c>0 ? '<span class="m-badge" style="background:#E6F1FB;color:#185FA5;">'+c+' active</span>' : '<span class="m-badge">✓ Protected</span>';
       return '<div class="member" onclick="showPerson(\''+p.id+'\')"><span class="m-avatar">'+initials+'</span>'+
-        '<div class="m-info"><p class="m-name">'+escapeHtml(p.name)+'</p><p class="m-detail">'+detail+'</p></div>'+badge+
+        '<div class="m-info"><p class="m-name">'+escapeHtml(p.name)+'</p><p class="m-detail">'+sub+'</p></div>'+badge+
+        '<button class="m-edit" onclick="event.stopPropagation();openEdit(\''+p.id+'\')" title="Edit">✎</button>'+
         '<button class="m-delete" onclick="event.stopPropagation();deleteMember(\''+p.id+'\')" title="Remove">×</button></div>';
     }).join('');
   }
@@ -551,7 +580,16 @@
     go('person');
     const p=membersCache.find(x=>x.id===id);
     const initials=p?p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase():'?';
-    document.getElementById('person-hero').innerHTML='<span class="m-avatar">'+initials+'</span><div><h2>'+escapeHtml(p?p.name:'')+'</h2><p>'+(p&&p.device?escapeHtml(p.device)+' · ':'')+'protected by Proteva</p></div>';
+    let heroBits=[];
+    if(p&&p.relationship) heroBits.push(escapeHtml(p.relationship));
+    if(p&&p.birth_year){ const age=new Date().getFullYear()-p.birth_year; heroBits.push(age+' years old'); }
+    const dev = p&&(p.devices||p.device);
+    if(dev) heroBits.push(escapeHtml(dev));
+    const protchip = (p&&p.protection_level==='extra') ? '<span class="m-badge" style="background:#FAEEDA;color:#854F0B;margin-left:8px;">Extra-cautious</span>' : '<span class="m-badge" style="margin-left:8px;">Standard</span>';
+    let heroHtml='<span class="m-avatar">'+initials+'</span><div style="flex:1;"><h2>'+escapeHtml(p?p.name:'')+protchip+'</h2><p>'+(heroBits.length?heroBits.join(' · '):'protected by Proteva')+'</p>';
+    if(p&&p.notes){ heroHtml+='<p style="margin-top:8px;font-size:13px;color:#666;background:#F7FBF9;border:1px solid #E1F0EA;border-radius:8px;padding:8px 12px;"><strong style="color:#0F6E56;">Note:</strong> '+escapeHtml(p.notes)+'</p>'; }
+    heroHtml+='<button class="btn-outline" style="margin-top:10px;padding:6px 12px;font-size:13px;" onclick="openEdit(\''+id+'\')">Edit details</button></div>';
+    document.getElementById('person-hero').innerHTML=heroHtml;
     const act=document.getElementById('person-active'); const hist=document.getElementById('person-history');
     act.innerHTML='<div class="empty">Loading...</div>'; hist.innerHTML='';
     const {data:activeData}=await sb.from('activity').select('*').eq('person_id',id).eq('resolved',false).order('created_at',{ascending:false});
@@ -587,16 +625,56 @@
     closeSimModal(); loadFeed();
   }
 
-  function openModal(){document.getElementById('modal').style.display='flex';document.getElementById('m-name').value='';document.getElementById('m-device').value='';document.getElementById('modal-error').style.display='none';}
+  let editingId = null;
+  function fillForm(p){
+    document.getElementById('m-name').value = p ? (p.name||'') : '';
+    document.getElementById('m-relationship').value = p ? (p.relationship||'') : '';
+    document.getElementById('m-birthyear').value = p ? (p.birth_year||'') : '';
+    document.getElementById('m-devices').value = p ? (p.devices||p.device||'') : '';
+    document.getElementById('m-protection').value = p ? (p.protection_level||'standard') : 'standard';
+    document.getElementById('m-notes').value = p ? (p.notes||'') : '';
+  }
+  function openModal(){
+    editingId=null;
+    document.getElementById('modal-title').textContent='Add a family member';
+    document.getElementById('save-member-btn').textContent='Add';
+    fillForm(null);
+    document.getElementById('modal-error').style.display='none';
+    document.getElementById('modal').style.display='flex';
+  }
+  function openEdit(id){
+    const p=membersCache.find(x=>x.id===id); if(!p)return;
+    editingId=id;
+    document.getElementById('modal-title').textContent='Edit family member';
+    document.getElementById('save-member-btn').textContent='Save changes';
+    fillForm(p);
+    document.getElementById('modal-error').style.display='none';
+    document.getElementById('modal').style.display='flex';
+  }
   function closeModal(){document.getElementById('modal').style.display='none';}
-  async function addMember(){
-    const name=document.getElementById('m-name').value.trim();const device=document.getElementById('m-device').value.trim();
+  async function saveMember(){
+    const name=document.getElementById('m-name').value.trim();
+    const relationship=document.getElementById('m-relationship').value||null;
+    const byRaw=document.getElementById('m-birthyear').value.trim();
+    const birth_year=byRaw?parseInt(byRaw,10):null;
+    const devices=document.getElementById('m-devices').value.trim()||null;
+    const protection_level=document.getElementById('m-protection').value||'standard';
+    const notes=document.getElementById('m-notes').value.trim()||null;
     const btn=document.getElementById('save-member-btn');const err=document.getElementById('modal-error');err.style.display='none';
     if(!name){err.textContent='Please enter a name.';err.style.display='block';return;}
-    btn.disabled=true;btn.textContent='Adding...';
-    try{const {error}=await sb.from('protected_people').insert([{name,device}]);if(error)throw error;closeModal();loadMembers();}
-    catch(e){err.textContent='Could not add. Please try again.';err.style.display='block';}
-    btn.disabled=false;btn.textContent='Add';
+    if(birth_year!==null && (isNaN(birth_year)||birth_year<1900||birth_year>new Date().getFullYear())){err.textContent='Please enter a valid birth year.';err.style.display='block';return;}
+    btn.disabled=true;btn.textContent=editingId?'Saving...':'Adding...';
+    const payload={name,relationship,birth_year,devices,protection_level,notes};
+    try{
+      let error;
+      if(editingId){ ({error}=await sb.from('protected_people').update(payload).eq('id',editingId)); }
+      else { ({error}=await sb.from('protected_people').insert([payload])); }
+      if(error)throw error;
+      closeModal();
+      if(editingId && document.getElementById('view-person').style.display==='block'){ await loadMembersData(); showPerson(editingId); }
+      else { loadMembers(); }
+    }catch(e){ err.textContent='Could not save. Please try again.';err.style.display='block'; }
+    btn.disabled=false;btn.textContent=editingId?'Save changes':'Add';
   }
   async function deleteMember(id){await sb.from('protected_people').delete().eq('id',id);loadMembers();}
 
