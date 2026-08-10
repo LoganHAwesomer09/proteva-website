@@ -198,6 +198,32 @@
   .digest-stat .dlabel { font-size: 12px; color: #427a6b; margin-top: 2px; }
   .digest-empty { font-size: 14px; color: #0F6E56; line-height: 1.6; margin: 0; }
 
+
+  /* SCAM CHECKER */
+  .checker-intro { font-size: 14px; color: #666; line-height: 1.6; margin: 0 0 1.25rem; }
+  .checker-box { width: 100%; min-height: 130px; padding: 14px 16px; border: 1.5px solid #ddd; border-radius: 12px; font-size: 15px; font-family: inherit; outline: none; resize: vertical; line-height: 1.5; }
+  .checker-box:focus { border-color: #1D9E75; }
+  .checker-btn { margin-top: 1rem; }
+  .checker-result { margin-top: 1.5rem; display: none; }
+  .checker-result.show { display: block; }
+  .verdict { border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .verdict.danger { background: #FCEBEB; border: 1px solid #F3C0C0; }
+  .verdict.caution { background: #FBF3E1; border: 1px solid #EFD9A8; }
+  .verdict.safe { background: #E1F5EE; border: 1px solid #B5E6D3; }
+  .verdict-label { font-size: 17px; font-weight: 700; margin: 0 0 0.5rem; display:flex; align-items:center; gap:8px; }
+  .verdict.danger .verdict-label { color: #A32D2D; }
+  .verdict.caution .verdict-label { color: #8A6100; }
+  .verdict.safe .verdict-label { color: #0F6E56; }
+  .verdict p { font-size: 14px; color: #444; line-height: 1.65; margin: 0; }
+  .result-block { background:#fff; border:1px solid #eee; border-radius:12px; padding:1.1rem 1.3rem; margin-bottom:0.8rem; }
+  .result-block h4 { font-size:13px; text-transform:uppercase; letter-spacing:0.04em; color:#0F6E56; margin:0 0 0.4rem; }
+  .result-block p { font-size:14px; color:#444; line-height:1.6; margin:0; }
+  .checker-thinking { display:none; align-items:center; gap:10px; margin-top:1.25rem; color:#0F6E56; font-size:14px; font-weight:600; }
+  .checker-thinking.show { display:flex; }
+  .spinner { width:18px; height:18px; border:2.5px solid #C9EADD; border-top-color:#1D9E75; border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .checker-disclaimer { font-size:12px; color:#aaa; margin-top:1.25rem; line-height:1.5; }
+
 </style>
 </head>
 <body>
@@ -296,6 +322,7 @@
     <button class="nav-item active" id="nav-dashboard" onclick="go('dashboard')"><span class="ni-icon">🏠</span> Dashboard</button>
     <button class="nav-item" id="nav-family" onclick="go('family')"><span class="ni-icon">👪</span> Family</button>
     <button class="nav-item" id="nav-history" onclick="go('history')"><span class="ni-icon">🗂️</span> History</button>
+    <button class="nav-item" id="nav-checker" onclick="go('checker')"><span class="ni-icon">🔍</span> Scam checker</button>
     <button class="nav-item" id="nav-settings" onclick="go('settings')"><span class="ni-icon">⚙️</span> Settings</button>
     <button class="nav-item" id="nav-help" onclick="go('help')"><span class="ni-icon">❓</span> Help</button>
     <div class="sidebar-spacer"></div>
@@ -420,6 +447,17 @@
         <h3>Contact us</h3>
         <p style="font-size:13px;color:#666;line-height:1.7;margin:0;">Need a hand? Email us at <strong>hello@getproteva.com</strong> and a real person will get back to you. We're here to help your family feel safe.</p>
       </div>
+    </section>
+
+    <!-- SCAM CHECKER -->
+    <section class="view" id="view-checker" style="display:none;">
+      <p class="page-title">Is this a scam?</p>
+      <p class="checker-intro">Got a suspicious text, email, or message? Paste it below and Proteva will check it for you -- in plain language, with what to do next. Works for anything: strange texts, "your account is locked" emails, prize notifications, calls asking for money, and more.</p>
+      <textarea class="checker-box" id="checker-input" placeholder="Paste the suspicious message here..."></textarea>
+      <button class="btn-primary checker-btn" id="checker-btn" style="width:auto;padding-left:28px;padding-right:28px;" onclick="checkScam()">Check this message</button>
+      <div class="checker-thinking" id="checker-thinking"><span class="spinner"></span> Proteva is looking at this closely...</div>
+      <div class="checker-result" id="checker-result"></div>
+      <p class="checker-disclaimer">Proteva's scam checker offers guidance to help you decide -- it's a helpful second opinion, not a guarantee. When in doubt, don't click links, don't send money, and check with someone you trust.</p>
     </section>
   </div></main>
 </div>
@@ -575,10 +613,10 @@
   }
 
   // ---- navigation ----
-  const VIEWS = ['dashboard','family','person','history','settings','profile','help'];
+  const VIEWS = ['dashboard','family','person','history','settings','profile','help','checker'];
   function go(view){
     VIEWS.forEach(v=>{ const el=document.getElementById('view-'+v); if(el) el.style.display = (v===view)?'block':'none'; });
-    ['dashboard','family','history','settings','help'].forEach(v=>{
+    ['dashboard','family','history','settings','help','checker'].forEach(v=>{
       const nav=document.getElementById('nav-'+v); if(nav) nav.classList.toggle('active', v===view);
     });
     document.getElementById('sidebar').classList.remove('open');
@@ -911,6 +949,51 @@
     document.getElementById('onboarding').style.display='none';
     try{ localStorage.setItem('proteva_onboarded', '1'); }catch(e){}
     go('dashboard');
+  }
+
+
+  // ---------- SCAM CHECKER (AI) ----------
+  async function checkScam(){
+    var input=document.getElementById('checker-input').value.trim();
+    var btn=document.getElementById('checker-btn');
+    var thinking=document.getElementById('checker-thinking');
+    var resultEl=document.getElementById('checker-result');
+    resultEl.classList.remove('show'); resultEl.innerHTML='';
+    if(input.length<3){ resultEl.classList.add('show'); resultEl.innerHTML='<div class="verdict caution"><p>Please paste a message first so Proteva can check it.</p></div>'; return; }
+    btn.disabled=true; thinking.classList.add('show');
+
+    var prompt = 'You are Proteva, a warm, trustworthy assistant that helps protect elderly people and their families from digital scams. Analyze the following message that someone received and decide whether it is likely a scam.\n\nMessage:\n"""'+input+'"""\n\nRespond ONLY with a JSON object (no markdown, no backticks) in exactly this format:\n{"verdict":"danger" or "caution" or "safe","headline":"a short plain-language verdict, max 10 words","why":"2-3 short sentences in simple, warm, senior-friendly language explaining the signs you noticed","whatToDo":"2-3 short sentences of clear, calm advice on what to do next"}\n\nGuidance: danger = almost certainly a scam. caution = suspicious or needs care. safe = looks legitimate, no scam signs. Be reassuring, never alarming. Avoid jargon. Speak as if to a kind grandparent.';
+
+    try{
+      var response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+      });
+      var data = await response.json();
+      var text = (data.content||[]).filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('').trim();
+      text = text.replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+      var parsed;
+      try { parsed = JSON.parse(text); }
+      catch(e){ parsed = { verdict:'caution', headline:'Please double-check this one', why:text||'Proteva had trouble reading this message clearly.', whatToDo:"When unsure, don't click any links or send money, and check with someone you trust." }; }
+      renderScamResult(parsed);
+    }catch(err){
+      resultEl.classList.add('show');
+      resultEl.innerHTML='<div class="verdict caution"><p class="verdict-label">Couldn\'t check right now</p><p>Something went wrong reaching Proteva\'s checker. Please try again in a moment. In the meantime, if a message asks you to click a link, send money, or share personal details, it\'s safest to treat it as suspicious.</p></div>';
+    }
+    btn.disabled=false; thinking.classList.remove('show');
+  }
+
+  function renderScamResult(r){
+    var resultEl=document.getElementById('checker-result');
+    var v=(r.verdict||'caution').toLowerCase();
+    var icon = v==='danger' ? '\u26A0\uFE0F' : (v==='safe' ? '\u2705' : '\uD83D\uDD0E');
+    var label = r.headline || (v==='danger'?'This looks like a scam':(v==='safe'?'This looks okay':'Be careful with this one'));
+    var cls = v==='danger'?'danger':(v==='safe'?'safe':'caution');
+    var html='<div class="verdict '+cls+'"><p class="verdict-label">'+icon+' '+escapeHtml(label)+'</p></div>';
+    if(r.why){ html+='<div class="result-block"><h4>Why Proteva thinks this</h4><p>'+escapeHtml(r.why)+'</p></div>'; }
+    if(r.whatToDo){ html+='<div class="result-block"><h4>What you can do</h4><p>'+escapeHtml(r.whatToDo)+'</p></div>'; }
+    resultEl.innerHTML=html; resultEl.classList.add('show');
   }
 
   async function checkSession(){const {data}=await sb.auth.getSession();if(data.session){enterApp(data.session.user);}}
