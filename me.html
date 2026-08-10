@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proteva — Looking out for you</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-64.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#1D9E75">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(170deg, #E1F5EE 0%, #F4FBF8 55%); color: #1a1a1a; min-height: 100vh; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  .top { text-align: center; padding: 1rem 0 0.5rem; }
+  .logo { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .logo span { color: #1D9E75; }
+
+  .hero { text-align: center; padding: 2.5rem 1.5rem; }
+  .hero-shield { font-size: 64px; margin-bottom: 1rem; }
+  .hero h1 { font-size: 30px; font-weight: 700; color: #085041; margin-bottom: 0.85rem; line-height: 1.2; letter-spacing: -0.5px; }
+  .hero p { font-size: 19px; color: #0F6E56; line-height: 1.6; }
+
+  .card { background: #fff; border: 1px solid #e3efe9; border-radius: 18px; padding: 1.75rem; margin-bottom: 1.25rem; }
+  .card h2 { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 0.75rem; }
+  .card p { font-size: 16px; color: #444; line-height: 1.65; }
+
+  .points { list-style: none; display: flex; flex-direction: column; gap: 1rem; margin-top: 0.5rem; }
+  .point { display: flex; gap: 14px; align-items: flex-start; }
+  .point .pic { font-size: 26px; flex-shrink: 0; line-height: 1.2; }
+  .point .ptext { font-size: 16px; color: #333; line-height: 1.55; }
+  .point .ptext strong { color: #0F6E56; }
+
+  .reassure { background: #E1F5EE; border-radius: 18px; padding: 1.75rem; margin-bottom: 1.25rem; text-align: center; }
+  .reassure p { font-size: 17px; color: #085041; line-height: 1.6; }
+  .reassure strong { font-weight: 700; }
+
+  .remove { text-align: center; margin-top: 1.5rem; }
+  .remove-toggle { background: none; border: none; color: #0F6E56; font-size: 15px; font-weight: 600; text-decoration: underline; cursor: pointer; }
+  .remove-panel { display: none; background: #fff; border: 1px solid #e3efe9; border-radius: 16px; padding: 1.5rem; margin-top: 1rem; text-align: left; }
+  .remove-panel.open { display: block; }
+  .remove-panel h3 { font-size: 16px; color: #1a1a1a; margin-bottom: 0.75rem; }
+  .remove-panel p { font-size: 15px; color: #555; line-height: 1.6; margin-bottom: 0.75rem; }
+  .remove-panel .step { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 0.6rem; font-size: 15px; color: #444; }
+  .remove-panel .step .n { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: #E1F5EE; color: #0F6E56; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+  footer { text-align: center; margin-top: 2rem; font-size: 14px; color: #7fae9e; line-height: 1.6; }
+  footer a { color: #0F6E56; text-decoration: none; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top"><span class="logo">Pro<span>teva</span></span></div>
+
+  <div class="hero">
+    <div class="hero-shield">🛡️</div>
+    <h1>Someone who loves you is looking out for you.</h1>
+    <p>Proteva is here to help keep you safe from online scams — quietly, in the background, so you don't have to worry about a thing.</p>
+  </div>
+
+  <div class="card">
+    <h2>What Proteva does for you</h2>
+    <ul class="points">
+      <li class="point"><span class="pic">🚫</span><span class="ptext"><strong>Stops scams before they reach you.</strong> If a fake message or dangerous pop-up shows up, Proteva quietly blocks it.</span></li>
+      <li class="point"><span class="pic">🔒</span><span class="ptext"><strong>Keeps strangers out.</strong> If someone tries to sneak into your device, Proteva stops them.</span></li>
+      <li class="point"><span class="pic">💚</span><span class="ptext"><strong>Gives your family peace of mind.</strong> They know you're protected, so everyone can relax a little.</span></li>
+    </ul>
+  </div>
+
+  <div class="reassure">
+    <p><strong>Proteva does not read your messages or watch what you do.</strong><br>It only steps in to block scams and dangerous links — nothing else. Your privacy is yours.</p>
+  </div>
+
+  <div class="card">
+    <h2>You're always in control</h2>
+    <p>Proteva was set up together with you, and it's your choice to keep it. If you ever want to remove it, that's completely okay — it's your device, and we've made it simple.</p>
+    <div class="remove">
+      <button class="remove-toggle" onclick="toggleRemove()">How to remove Proteva →</button>
+      <div class="remove-panel" id="remove-panel">
+        <h3>Removing Proteva</h3>
+        <p>You can remove Proteva anytime, and it takes just a moment. The easiest way:</p>
+        <div class="step"><span class="n">1</span><span>Talk to the family member who set it up with you — they can remove it for you right away.</span></div>
+        <div class="step"><span class="n">2</span><span>Or open your device's <strong>Settings</strong>, find <strong>Proteva</strong> in your list of apps, and choose <strong>Remove</strong> or <strong>Uninstall</strong>.</span></div>
+        <div class="step"><span class="n">3</span><span>Need a hand? Email us at <strong>hello@getproteva.com</strong> and a real person will help.</span></div>
+        <p style="margin-top:1rem;">No hard feelings, ever. We only want what's best for you.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Proteva · protecting the people we love<br>
+    Questions? <a href="mailto:hello@getproteva.com">hello@getproteva.com</a>
+  </footer>
+
+</div>
+
+<script>
+  function toggleRemove(){
+    document.getElementById('remove-panel').classList.toggle('open');
+  }
+</script>
+</body>
+</html>
