@@ -962,16 +962,15 @@
     if(input.length<3){ resultEl.classList.add('show'); resultEl.innerHTML='<div class="verdict caution"><p>Please paste a message first so Proteva can check it.</p></div>'; return; }
     btn.disabled=true; thinking.classList.add('show');
 
-    var prompt = 'You are Proteva, a warm, trustworthy assistant that helps protect elderly people and their families from digital scams. Analyze the following message that someone received and decide whether it is likely a scam.\n\nMessage:\n"""'+input+'"""\n\nRespond ONLY with a JSON object (no markdown, no backticks) in exactly this format:\n{"verdict":"danger" or "caution" or "safe","headline":"a short plain-language verdict, max 10 words","why":"2-3 short sentences in simple, warm, senior-friendly language explaining the signs you noticed","whatToDo":"2-3 short sentences of clear, calm advice on what to do next"}\n\nGuidance: danger = almost certainly a scam. caution = suspicious or needs care. safe = looks legitimate, no scam signs. Be reassuring, never alarming. Avoid jargon. Speak as if to a kind grandparent.';
-
     try{
-      var response = await fetch("https://api.anthropic.com/v1/messages", {
+      var response = await fetch("/api/check-scam", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+        body: JSON.stringify({ message: input })
       });
       var data = await response.json();
-      var text = (data.content||[]).filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('').trim();
+      if(!response.ok){ throw new Error(data && data.error ? data.error : 'request failed'); }
+      var text = (data.text||'').trim();
       text = text.replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
       var parsed;
       try { parsed = JSON.parse(text); }
