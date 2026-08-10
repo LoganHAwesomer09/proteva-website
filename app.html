@@ -12,9 +12,58 @@
 
 <title>Proteva — Caregiver Dashboard</title>
 <style>
+  :root {
+    --bg: #F4FBF8;
+    --text: #1a1a1a;
+    --card-bg: #ffffff;
+    --card-border: #eeeeee;
+    --sidebar-bg: #ffffff;
+    --sidebar-border: #eeeeee;
+    --muted: #888888;
+    --muted-2: #999999;
+    --hover-bg: #F4FBF8;
+    --input-bg: #ffffff;
+    --input-border: #dddddd;
+    --feed-bg: #ffffff;
+    --feed-border: #eeeeee;
+    --feed-divider: #f2f2f2;
+    --logo-ink: #1a1a1a;
+    --brand: #1D9E75;
+    --brand-deep: #0F6E56;
+    --pill-bg: #ffffff;
+    --pill-border: #eeeeee;
+  }
+  [data-theme="dark"] {
+    --bg: #0F1714;
+    --text: #E8F0EC;
+    --card-bg: #17211D;
+    --card-border: #26332D;
+    --sidebar-bg: #131C18;
+    --sidebar-border: #26332D;
+    --muted: #8FA69B;
+    --muted-2: #7C918700;
+    --muted-2: #7C9187;
+    --hover-bg: #1C2822;
+    --input-bg: #17211D;
+    --input-border: #33453C;
+    --feed-bg: #17211D;
+    --feed-border: #26332D;
+    --feed-divider: #222E28;
+    --logo-ink: #E8F0EC;
+    --brand: #37C79A;
+    --brand-deep: #37C79A;
+    --pill-bg: #17211D;
+    --pill-border: #2B3A33;
+  }
+  /* Smooth theme transition */
+  body, .sidebar, .main, .card, .feed, .feed-item, .member, .stat, .account-btn,
+  .dropdown, .modal, .banner, .checker-box, .nav-item, .digest, .auth-card, input, select, textarea {
+    transition: background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F4FBF8; color: #1a1a1a; min-height: 100vh; }
-  .logo { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .logo { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; color: var(--logo-ink); }
   .logo span { color: #1D9E75; }
 
   /* AUTH */
@@ -24,7 +73,7 @@
   .auth-sub { text-align: center; font-size: 14px; color: #777; margin-bottom: 1.75rem; }
   .field { margin-bottom: 1rem; }
   .field label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
-  .field input, .field select { width: 100%; padding: 13px 15px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 15px; outline: none; transition: border 0.2s; background: #fff; }
+  .field input, .field select { width: 100%; padding: 13px 15px; border: 1.5px solid var(--input-border); border-radius: 10px; font-size: 15px; outline: none; transition: border 0.2s; background: var(--input-bg); color: var(--text); }
   .field input:focus, .field select:focus, .field textarea:focus { border-color: #1D9E75; }
   .field textarea:focus { outline:none; }
   .btn-primary { width: 100%; background: #1D9E75; color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
@@ -38,11 +87,11 @@
 
   /* APP SHELL */
   .app-shell { display: none; min-height: 100vh; }
-  .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 230px; background: #fff; border-right: 1px solid #eee; padding: 1.5rem 1rem; display: flex; flex-direction: column; z-index: 20; }
+  .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 230px; background: var(--sidebar-bg); border-right: 1px solid var(--sidebar-border); padding: 1.5rem 1rem; display: flex; flex-direction: column; z-index: 20; }
   .sidebar .logo { padding: 0 0.75rem 1.5rem; }
-  .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 10px; font-size: 14px; font-weight: 600; color: #555; cursor: pointer; margin-bottom: 4px; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; margin-bottom: 4px; border: none; background: none; width: 100%; text-align: left; }
   .nav-item .ni-icon { font-size: 17px; }
-  .nav-item:hover { background: #F4FBF8; color: #0F6E56; }
+  .nav-item:hover { background: var(--hover-bg); color: var(--brand); }
   .nav-item.active { background: #E1F5EE; color: #0F6E56; }
   .sidebar-spacer { flex: 1; }
   .sidebar-foot { font-size: 11px; color: #bbb; padding: 0 0.75rem; }
@@ -50,17 +99,17 @@
   .main { margin-left: 230px; padding: 1.5rem 2rem; }
   .main-inner { max-width: 880px; margin: 0 auto; width: 100%; }
   .topbar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 1.25rem; position: relative; }
-  .account-btn { display: flex; align-items: center; gap: 8px; background: #fff; border: 1.5px solid #eee; border-radius: 999px; padding: 5px 6px 5px 12px; cursor: pointer; }
+  .account-btn { display: flex; align-items: center; gap: 8px; background: var(--pill-bg); border: 1.5px solid var(--pill-border); border-radius: 999px; padding: 5px 6px 5px 12px; cursor: pointer; }
   .account-btn:hover { border-color: #9FE1CB; }
-  .account-btn .who { font-size: 13px; color: #555; font-weight: 600; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .account-btn .who { font-size: 13px; color: var(--text); font-weight: 600; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .avatar { width: 30px; height: 30px; border-radius: 50%; background: #E1F5EE; color: #0F6E56; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
-  .dropdown { position: absolute; top: 48px; right: 0; background: #fff; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); width: 200px; padding: 6px; display: none; z-index: 30; }
+  .dropdown { position: absolute; top: 48px; right: 0; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.28); width: 200px; padding: 6px; display: none; z-index: 30; }
   .dropdown.open { display: block; }
   .dd-head { padding: 10px 12px; border-bottom: 1px solid #f2f2f2; margin-bottom: 6px; }
   .dd-head .dd-email { font-size: 13px; font-weight: 600; color: #1a1a1a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dd-head .dd-role { font-size: 12px; color: #999; }
-  .dd-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; font-size: 14px; color: #555; cursor: pointer; background: none; border: none; width: 100%; text-align: left; }
-  .dd-item:hover { background: #F4FBF8; color: #0F6E56; }
+  .dd-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; font-size: 14px; color: var(--text); cursor: pointer; background: none; border: none; width: 100%; text-align: left; }
+  .dd-item:hover { background: var(--hover-bg); color: var(--brand); }
   .dd-item.danger:hover { background: #FCEBEB; color: #A32D2D; }
 
   .banner { border-radius: 16px; padding: 1.5rem 1.75rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 16px; transition: background 0.3s; }
@@ -75,7 +124,7 @@
   .banner p { font-size: 14px; margin: 3px 0 0; }
 
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
-  .stat { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 1.1rem; }
+  .stat { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 1.1rem; }
   .stat-label { font-size: 13px; color: #888; }
   .stat-num { font-size: 26px; font-weight: 700; margin: 4px 0 0; color: #0F6E56; }
   .stat-sub { font-size: 12px; color: #999; }
@@ -84,12 +133,12 @@
   .section-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin: 0; }
   .add-btn { background: #E1F5EE; color: #0F6E56; border: none; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .add-btn:hover { background: #9FE1CB; }
-  .page-title { font-size: 24px; font-weight: 700; margin: 0 0 0.25rem; }
+  .page-title { font-size: 24px; font-weight: 700; margin: 0 0 0.25rem; color: var(--text); }
   .page-sub { font-size: 14px; color: #888; margin: 0 0 1.5rem; }
   .back-link { background: none; border: none; color: #1D9E75; font-size: 14px; font-weight: 600; cursor: pointer; padding: 0; margin-bottom: 1rem; }
 
-  .feed { background: #fff; border: 1px solid #eee; border-radius: 14px; overflow: hidden; margin-bottom: 1.5rem; }
-  .feed-item { padding: 1rem 1.25rem; border-bottom: 1px solid #f2f2f2; }
+  .feed { background: var(--feed-bg); border: 1px solid var(--feed-border); border-radius: 14px; overflow: hidden; margin-bottom: 1.5rem; }
+  .feed-item { padding: 1rem 1.25rem; border-bottom: 1px solid var(--feed-divider); }
   .feed-item:last-child { border-bottom: none; }
   .feed-row { display: flex; align-items: flex-start; gap: 12px; }
   .feed-icon { font-size: 20px; margin-top: 1px; flex-shrink: 0; }
@@ -115,7 +164,7 @@
   .date-header { font-size: 13px; font-weight: 700; color: #555; margin: 1.25rem 0 0.6rem; padding-bottom: 4px; border-bottom: 1px solid #e8e8e8; }
   .date-header:first-child { margin-top: 0; }
 
-  .member { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 0.85rem 1.1rem; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; cursor: pointer; transition: border 0.15s; }
+  .member { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 0.85rem 1.1rem; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; cursor: pointer; transition: border 0.15s; }
   .member:hover { border-color: #9FE1CB; }
   .m-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; background: #E1F5EE; color: #0F6E56; }
   .m-info { flex: 1; }
@@ -128,7 +177,7 @@
   .m-edit:hover { color: #0F6E56; }
   .empty { text-align: center; padding: 2rem 1rem; color: #999; font-size: 14px; background: #fff; border: 1px dashed #ddd; border-radius: 12px; }
 
-  .card { background:#fff; border:1px solid #eee; border-radius:14px; padding:1.5rem; margin-bottom:1rem; }
+  .card { background:var(--card-bg); border:1px solid var(--card-border); border-radius:14px; padding:1.5rem; margin-bottom:1rem; }
   .card h3 { font-size:15px; margin:0 0 1rem; }
   .kv { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f4f4f4; font-size:14px; }
   .kv:last-child { border-bottom:none; }
@@ -201,7 +250,7 @@
 
   /* SCAM CHECKER */
   .checker-intro { font-size: 14px; color: #666; line-height: 1.6; margin: 0 0 1.25rem; }
-  .checker-box { width: 100%; min-height: 130px; padding: 14px 16px; border: 1.5px solid #ddd; border-radius: 12px; font-size: 15px; font-family: inherit; outline: none; resize: vertical; line-height: 1.5; }
+  .checker-box { width: 100%; min-height: 130px; padding: 14px 16px; border: 1.5px solid var(--input-border); border-radius: 12px; font-size: 15px; font-family: inherit; outline: none; resize: vertical; line-height: 1.5; background: var(--input-bg); color: var(--text); }
   .checker-box:focus { border-color: #1D9E75; }
   .checker-btn { margin-top: 1rem; }
   .checker-result { margin-top: 1.5rem; display: none; }
@@ -223,6 +272,28 @@
   .spinner { width:18px; height:18px; border:2.5px solid #C9EADD; border-top-color:#1D9E75; border-radius:50%; animation:spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .checker-disclaimer { font-size:12px; color:#aaa; margin-top:1.25rem; line-height:1.5; }
+
+
+  /* DARK MODE TOGGLE */
+  .theme-row { display:flex; align-items:center; justify-content:space-between; }
+  .theme-copy h3 { margin:0 0 2px; }
+  .theme-copy p { font-size:13px; color:var(--muted); margin:0; }
+  .switch { position: relative; width: 64px; height: 34px; flex-shrink:0; cursor:pointer; }
+  .switch input { opacity:0; width:0; height:0; }
+  .slider { position:absolute; inset:0; border-radius:999px;
+    background: linear-gradient(135deg,#BFE9DA,#8FD9C1);
+    transition: background 0.4s ease; overflow:hidden; }
+  .slider:before { content:""; position:absolute; height:26px; width:26px; left:4px; top:4px;
+    background:#fff; border-radius:50%; transition: transform 0.4s cubic-bezier(.4,1.3,.5,1), background 0.4s ease;
+    box-shadow:0 2px 6px rgba(0,0,0,0.25); z-index:2; }
+  .switch input:checked + .slider { background: linear-gradient(135deg,#1D9E75,#0B5A46); }
+  .switch input:checked + .slider:before { transform: translateX(30px); background:#0F1714; }
+  /* sun / moon icons inside the slider */
+  .slider .ico { position:absolute; top:50%; transform:translateY(-50%); font-size:14px; transition:opacity 0.4s ease; z-index:1; }
+  .slider .sun { left:8px; opacity:1; }
+  .slider .moon { right:8px; opacity:0; }
+  .switch input:checked + .slider .sun { opacity:0; }
+  .switch input:checked + .slider .moon { opacity:1; }
 
 </style>
 </head>
@@ -392,6 +463,18 @@
     <section class="view" id="view-settings" style="display:none;">
       <p class="page-title">Settings</p>
       <p class="page-sub">Manage your account and preferences.</p>
+      <div class="card">
+        <div class="theme-row">
+          <div class="theme-copy">
+            <h3>Dark mode</h3>
+            <p>Easier on the eyes in low light.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="theme-toggle" onchange="toggleTheme()" />
+            <span class="slider"><span class="ico sun">☀️</span><span class="ico moon">🌙</span></span>
+          </label>
+        </div>
+      </div>
       <div class="card">
         <h3>Account</h3>
         <div class="kv"><span class="k">Email</span><span class="v" id="set-email">—</span></div>
@@ -994,6 +1077,23 @@
     if(r.whatToDo){ html+='<div class="result-block"><h4>What you can do</h4><p>'+escapeHtml(r.whatToDo)+'</p></div>'; }
     resultEl.innerHTML=html; resultEl.classList.add('show');
   }
+
+
+  // ---------- DARK MODE ----------
+  function applyTheme(dark){
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    var t=document.getElementById('theme-toggle'); if(t) t.checked=dark;
+    try{ localStorage.setItem('proteva_theme', dark ? 'dark':'light'); }catch(e){}
+  }
+  function toggleTheme(){
+    var t=document.getElementById('theme-toggle');
+    applyTheme(t && t.checked);
+  }
+  (function initTheme(){
+    var saved='light';
+    try{ saved=localStorage.getItem('proteva_theme')||'light'; }catch(e){}
+    applyTheme(saved==='dark');
+  })();
 
   async function checkSession(){const {data}=await sb.auth.getSession();if(data.session){enterApp(data.session.user);}}
   checkSession();
