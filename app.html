@@ -184,6 +184,20 @@
   .ob-skip { font-size: 13px; color: #999; text-align: center; cursor: pointer; margin-top: 1rem; text-decoration: underline; }
   .ob-skip:hover { color: #0F6E56; }
 
+
+  /* WEEKLY DIGEST */
+  .digest { background: linear-gradient(135deg, #E1F5EE 0%, #D2F0E6 100%); border-radius: 16px; padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; }
+  .digest-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .digest-head h3 { font-size: 16px; color: #085041; margin: 0; }
+  .digest-range { font-size: 12px; color: #0F6E56; opacity: 0.8; }
+  .digest-hero { font-size: 15px; color: #0F6E56; line-height: 1.55; margin: 0 0 1.1rem; }
+  .digest-hero strong { color: #085041; font-weight: 700; }
+  .digest-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+  .digest-stat { background: rgba(255,255,255,0.7); border-radius: 12px; padding: 0.9rem 1rem; }
+  .digest-stat .dnum { font-size: 22px; font-weight: 700; color: #0F6E56; }
+  .digest-stat .dlabel { font-size: 12px; color: #427a6b; margin-top: 2px; }
+  .digest-empty { font-size: 14px; color: #0F6E56; line-height: 1.6; margin: 0; }
+
 </style>
 </head>
 <body>
@@ -311,6 +325,7 @@
         <span class="banner-icon" id="banner-icon">🛡️</span>
         <div><h2 id="banner-title">Everyone is safe today</h2><p id="banner-sub">Loading...</p></div>
       </div>
+      <div class="digest" id="digest" style="display:none;"></div>
       <div class="stats">
         <div class="stat"><p class="stat-label">Threats stopped</p><p class="stat-num" id="stat-stopped">0</p><p class="stat-sub">automatically</p></div>
         <div class="stat"><p class="stat-label">People protected</p><p class="stat-num" id="stat-people">0</p><p class="stat-sub">in your family</p></div>
@@ -579,7 +594,7 @@
 
   function toggleFaq(el){ const a=el.nextElementSibling; a.classList.toggle('open'); el.querySelector('span:last-child').textContent = a.classList.contains('open')?'－':'＋'; }
 
-  async function loadAll(){ await Promise.all([loadMembersData(), loadFeed()]); }
+  async function loadAll(){ await Promise.all([loadMembersData(), loadFeed(), loadDigest()]); }
 
   function timeAgo(ts){const diff=(Date.now()-new Date(ts).getTime())/1000;if(diff<60)return 'just now';if(diff<3600)return Math.floor(diff/60)+'m ago';if(diff<86400)return Math.floor(diff/3600)+'h ago';return Math.floor(diff/86400)+'d ago';}
   function timeOnly(ts){return new Date(ts).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});}
@@ -640,6 +655,43 @@
     inner+=detailHtml(a);
     return '<div class="feed-item"><div class="feed-row"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+inner+'</div>'+
       '<div class="right-stack">'+tagHtml+'<button class="feed-x" onclick="archiveItem(\''+a.id+'\')" title="Clear from dashboard">×</button></div></div></div>';
+  }
+
+  async function loadDigest(){
+    const el=document.getElementById('digest');
+    const weekAgo=new Date(Date.now()-7*24*60*60*1000).toISOString();
+    const {data,error}=await sb.from('activity').select('*').gte('created_at',weekAgo);
+    if(error){ el.style.display='none'; return; }
+    el.style.display='block';
+    const now=new Date();
+    const start=new Date(Date.now()-6*24*60*60*1000);
+    const fmt=(d)=>d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+    const range=fmt(start)+' – '+fmt(now);
+
+    if(!data || data.length===0){
+      el.innerHTML='<div class="digest-head"><h3>This week with Proteva</h3><span class="digest-range">'+range+'</span></div>'+
+        '<p class="digest-empty">All quiet this week — Proteva has been watching over your family, and nothing needed your attention. That\'s exactly how it should be. 💚</p>';
+      return;
+    }
+    const stopped=data.filter(a=>a.tag==='stopped').length;
+    const flagged=data.filter(a=>a.tag==='attention').length;
+    const resolved=data.filter(a=>a.resolved).length;
+    const people=new Set(data.filter(a=>a.person_id).map(a=>a.person_id)).size;
+
+    let hero;
+    if(stopped>0){
+      hero='<strong>Proteva stopped '+stopped+' threat'+(stopped>1?'s':'')+'</strong> for your family this week'+(people>0?' across '+people+' '+(people>1?'people':'person'):'')+' — quietly, before '+(stopped>1?'they':'it') +' could cause any harm.';
+    } else {
+      hero='Proteva kept watch over your family this week. '+(flagged>0?'A few things needed a look, and you handled them.':'Everything stayed calm.');
+    }
+
+    el.innerHTML='<div class="digest-head"><h3>This week with Proteva</h3><span class="digest-range">'+range+'</span></div>'+
+      '<p class="digest-hero">'+hero+'</p>'+
+      '<div class="digest-grid">'+
+      '<div class="digest-stat"><div class="dnum">'+stopped+'</div><div class="dlabel">threats stopped automatically</div></div>'+
+      '<div class="digest-stat"><div class="dnum">'+flagged+'</div><div class="dlabel">flagged for your input</div></div>'+
+      '<div class="digest-stat"><div class="dnum">'+resolved+'</div><div class="dlabel">items you cleared</div></div>'+
+      '</div>';
   }
 
   async function loadFeed(){
