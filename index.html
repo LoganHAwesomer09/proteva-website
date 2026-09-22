@@ -2,270 +2,54 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-64.png">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="manifest" href="/manifest.json">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proteva | Protecting the people you love</title>
+<meta name="description" content="A calmer kind of digital protection for the people you love. Join the Proteva waitlist and help shape a dignity-first approach to family safety.">
 <meta name="theme-color" content="#1D9E75">
-
-<meta name="robots" content="noindex, nofollow">
-<link rel="icon" type="image/svg+xml" href="/assets/proteva-icon.svg">
-<link rel="apple-touch-icon" href="/assets/proteva-icon.svg">
-<title>Proteva — Protecting the people you love most</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #ffffff; color: #1a1a1a; }
-  nav { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 2rem; border-bottom: 1px solid #f0f0f0; }
-  .logo { display: inline-flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 600; color: #1a1a1a; letter-spacing: -0.5px; text-decoration: none; }
-  .logo-icon { width: 34px; height: 34px; border-radius: 8px; display: block; flex-shrink: 0; }
-  .logo span { color: #1D9E75; }
-  .nav-signin { display: inline-flex; align-items: center; background: #1D9E75; color: #fff; text-decoration: none; padding: 9px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; transition: background 0.2s; }
-  .nav-signin:hover { background: #0F6E56; }
-  .hero { padding: 5rem 2rem 3rem; text-align: center; max-width: 700px; margin: 0 auto; }
-  .hero-tag { display: inline-block; background: #E1F5EE; color: #0F6E56; font-size: 13px; padding: 6px 16px; border-radius: 999px; margin-bottom: 1.75rem; font-weight: 500; }
-  .hero h1 { font-size: 42px; font-weight: 700; line-height: 1.15; letter-spacing: -1px; margin-bottom: 1.25rem; color: #1a1a1a; }
-  .hero h1 em { color: #1D9E75; font-style: normal; }
-  .hero p { font-size: 18px; color: #555; line-height: 1.7; margin-bottom: 2.5rem; max-width: 540px; margin-left: auto; margin-right: auto; }
-  .waitlist-form { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 1rem; }
-  .waitlist-form input { padding: 14px 18px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 15px; width: 280px; outline: none; transition: border 0.2s; }
-  .waitlist-form input:focus { border-color: #1D9E75; }
-  .waitlist-form button { background: #1D9E75; color: #fff; border: none; padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-  .waitlist-form button:hover { background: #0F6E56; }
-  .waitlist-form button:disabled { background: #9FE1CB; cursor: not-allowed; }
-  .form-note { font-size: 13px; color: #999; margin-bottom: 3rem; }
-  .success-msg { display: none; background: #E1F5EE; color: #0F6E56; padding: 14px 24px; border-radius: 10px; font-size: 15px; font-weight: 500; margin-bottom: 2rem; }
-  .error-msg { display: none; background: #FCEBEB; color: #A32D2D; padding: 14px 24px; border-radius: 10px; font-size: 14px; font-weight: 500; margin-bottom: 2rem; }
-  .story { background: #F8FFFE; border: 1.5px solid #B5EDD8; border-radius: 16px; padding: 2rem; margin: 0 2rem 4rem; max-width: 680px; margin-left: auto; margin-right: auto; }
-  .story-inner { display: flex; gap: 1.25rem; align-items: flex-start; }
-  .story-icon { font-size: 28px; flex-shrink: 0; margin-top: 2px; }
-  .story h3 { font-size: 16px; font-weight: 600; color: #085041; margin-bottom: 0.5rem; }
-  .story p { font-size: 14px; color: #0F6E56; line-height: 1.7; }
-  .features { padding: 0 2rem 4rem; max-width: 900px; margin: 0 auto; }
-  .section-eyebrow { text-align: center; font-size: 12px; color: #999; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
-  .section-title { text-align: center; font-size: 28px; font-weight: 700; color: #1a1a1a; margin-bottom: 0.75rem; letter-spacing: -0.5px; }
-  .section-sub { text-align: center; font-size: 16px; color: #666; line-height: 1.6; margin-bottom: 2.5rem; }
-  .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
-  .feature { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 1.5rem; }
-  .feature-icon { font-size: 28px; margin-bottom: 1rem; }
-  .feature h3 { font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 0.4rem; }
-  .feature p { font-size: 13px; color: #777; line-height: 1.6; }
-  .how { background: #F9F9F9; padding: 4rem 2rem; margin-bottom: 4rem; }
-  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto; }
-  .step { text-align: center; padding: 1.5rem; }
-  .step-num { width: 44px; height: 44px; border-radius: 50%; background: #1D9E75; color: #fff; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
-  .step h3 { font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 0.4rem; }
-  .step p { font-size: 13px; color: #777; line-height: 1.6; }
-  .pricing { padding: 0 2rem 4rem; max-width: 900px; margin: 0 auto; }
-  .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
-  .plan { border: 1.5px solid #eee; border-radius: 16px; padding: 1.75rem 1.5rem; }
-  .plan.best { border-color: #1D9E75; position: relative; }
-  .best-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #1D9E75; color: #fff; font-size: 11px; font-weight: 600; padding: 4px 14px; border-radius: 999px; white-space: nowrap; }
-  .plan h3 { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 0.25rem; }
-  .plan-price { font-size: 36px; font-weight: 700; color: #1a1a1a; margin: 0.75rem 0 0.25rem; }
-  .plan-price span { font-size: 16px; font-weight: 400; color: #999; }
-  .plan-desc { font-size: 13px; color: #888; margin-bottom: 1.25rem; line-height: 1.5; }
-  .plan ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-  .plan ul li { font-size: 13px; color: #555; display: flex; gap: 8px; align-items: flex-start; }
-  .plan ul li::before { content: "✓"; color: #1D9E75; font-weight: 700; flex-shrink: 0; }
-  .cta-box { background: linear-gradient(135deg, #E1F5EE 0%, #B5EDD8 100%); border-radius: 20px; padding: 3.5rem 2rem; text-align: center; margin: 0 2rem 4rem; max-width: 680px; margin-left: auto; margin-right: auto; }
-  .cta-box h2 { font-size: 28px; font-weight: 700; color: #085041; margin-bottom: 0.75rem; letter-spacing: -0.5px; }
-  .cta-box p { font-size: 16px; color: #0F6E56; margin-bottom: 2rem; line-height: 1.6; }
-  .cta-box button { background: #1D9E75; color: #fff; border: none; padding: 15px 32px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
-  footer { padding: 2rem; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-  .footer-logo { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; }
-  .footer-logo span { color: #1D9E75; }
-  footer p { font-size: 13px; color: #aaa; }
-  @media (max-width: 600px) {
-    .hero h1 { font-size: 28px; }
-    .waitlist-form { flex-direction: column; align-items: center; }
-    .waitlist-form input { width: 100%; max-width: 320px; }
-  }
-</style>
+<link rel="icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/assets/styles.css">
+<script defer src="/vendor/lucide.min.js"></script>
+<script defer src="/vendor/supabase.js"></script>
+<script type="module" src="/assets/site.js"></script>
 </head>
-<body>
-<script src="gate.js"></script>
-
-<nav>
-  <a class="logo" href="/"><img class="logo-icon" src="/assets/proteva-icon.svg" alt="">Pro<span>teva</span></a>
-  <a class="nav-signin" href="/app.html">Sign in</a>
-</nav>
-
-<section class="hero">
-  <h1>A quiet shield around the people you <em>love most</em></h1>
-  <p>Proteva protects elderly parents and loved ones from digital scams, phishing, and predatory apps — without invading their privacy or making them feel watched.</p>
-  <div class="waitlist-form" id="waitlist-form">
-    <input type="email" id="email-input" placeholder="Enter your email address" />
-    <button id="join-btn" onclick="joinWaitlist()">Join Proteva Now</button>
-  </div>
-  <div class="success-msg" id="success-msg">
-    🎉 Welcome to Proteva
-  </div>
-  <div class="error-msg" id="error-msg">
-    Something went wrong. Please try again.
-  </div>
-  <p class="form-note">Free for your first month. No credit card required.</p>
-</section>
-
-<section class="features">
-  <p class="section-eyebrow">What Proteva does</p>
-  <h2 class="section-title">Everything your family needs. Nothing they don't.</h2>
-  <p class="section-sub">Proteva lives quietly on your loved one's device — watching, protecting, and alerting you the moment something feels wrong.</p>
-  <div class="features-grid">
-    <div class="feature">
-      <div class="feature-icon">🚫</div>
-      <h3>Scam detection</h3>
-      <p>Blocks fake tech support alerts and impersonation scams in real time before any damage is done.</p>
+<body class="site">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<nav class="site-nav" aria-label="Main navigation"><a class="logo" href="/" aria-label="Proteva home"><img src="/assets/proteva-icon.svg" alt=""><span>Pro<em>teva</em></span></a><div class="site-nav-links"><a href="#approach">Our approach</a><a href="#story">Our story</a><a href="#pricing">Plans</a><a href="/app.html" class="btn btn-primary">Sign in<i data-lucide="arrow-right"></i></a></div></nav>
+<main id="main-content">
+  <section class="hero" aria-labelledby="hero-title">
+    <img class="hero-brand" src="/assets/proteva-icon.svg" alt="">
+    <h1 id="hero-title">Proteva</h1>
+    <p class="hero-tagline">A quiet shield around the people you <em>love most.</em></p>
+    <p class="hero-copy">We're building digital protection that helps families stop scams before they cause harm. Calm, clear, and always with your loved one's dignity at heart.</p>
+    <form class="waitlist-form" id="waitlist-form"><label class="sr-only" for="waitlist-email">Email address</label><input type="email" id="waitlist-email" autocomplete="email" maxlength="254" placeholder="Your email address" required><button class="btn btn-primary" id="join-btn" type="submit">Join the waitlist<i data-lucide="arrow-right"></i></button></form>
+    <div id="waitlist-message" class="message" role="status" hidden></div>
+    <p class="help-text">In development. No payment details, no commitment.</p>
+  </section>
+  <section id="approach" class="site-section band">
+    <div class="section-inner"><p class="eyebrow">Protection, with a human side</p><h2>Less worry. More everyday life.</h2><p class="section-intro">Our vision is simple: handle threats quietly, explain what matters, and ask family for help only when a conversation is needed. Here's what we're working toward.</p>
+    <div class="features-grid">
+      <article class="feature"><i data-lucide="shield-check"></i><h3>Scams stopped early</h3><p>Protection designed to interrupt fake support alerts and impersonation scams before they can cause harm.</p></article>
+      <article class="feature"><i data-lucide="lock-keyhole"></i><h3>Safer device access</h3><p>Help prevent unfamiliar remote-access tools from putting your loved one's device in the wrong hands.</p></article>
+      <article class="feature"><i data-lucide="link"></i><h3>A pause before risky links</h3><p>A safer moment between receiving a convincing message and opening a dangerous website.</p></article>
+      <article class="feature"><i data-lucide="smartphone"></i><h3>Thoughtful app protection</h3><p>Spot predatory apps and suspicious permissions without reading private conversations.</p></article>
+      <article class="feature"><i data-lucide="users"></i><h3>One calm family view</h3><p>See what happened, what was handled, and the rare things that need a personal follow-up.</p></article>
+      <article class="feature"><i data-lucide="scan-text"></i><h3>A second opinion</h3><p>The preview's AI scam checker helps you make sense of a suspicious message, in plain language.</p></article>
+    </div></div>
+  </section>
+  <section class="site-section"><div class="section-inner"><p class="eyebrow">Set up together</p><h2>Their device. Their privacy. Their choice.</h2><p class="section-intro">We protect people with their family, never behind their back. Start a conversation now; device protection will follow as we build.</p>
+    <div class="steps"><div><span class="step-num">1</span><h3>Talk it through</h3><p>Explain why you're interested in Proteva. Listen to what your loved one is comfortable with.</p></div><div><span class="step-num">2</span><h3>Explore as a family</h3><p>Create a caregiver account and a family profile. Get to know the preview together.</p></div><div><span class="step-num">3</span><h3>Choose protection together</h3><p>When device protection is ready, we'll guide you through a clear setup with their agreement.</p></div></div>
+  </div></section>
+  <section id="story" class="site-section band"><div class="section-inner story"><p class="eyebrow">Why we started</p><h2>It started with someone we love.</h2><p>After our grandmother was scammed, we couldn't stop thinking about the families facing the same worry. Two brothers, Logan and Kellen, with guidance from our dad, started Proteva to help.</p><p>To us, protection means standing beside someone, not taking away their independence. We're building the kind of help we wished our own family had.</p></div></section>
+  <section id="pricing" class="site-section"><div class="section-inner"><p class="eyebrow">Planned pricing</p><h2>Simple, honest options for families.</h2><p class="section-intro">Subscriptions aren't active yet. These are our planned options, with a first month free when paid protection launches. Features and availability will be confirmed before you subscribe.</p>
+    <div class="plans">
+      <article class="plan"><span class="pill neutral">A smaller circle</span><h3>Home</h3><div class="plan-price">$10<span> / month</span></div><p>For one or two people close to your heart.</p><ul><li>Up to 2 family members</li><li>Planned device protection</li><li>Caregiver dashboard</li><li>Clear activity summaries</li></ul></article>
+      <article class="plan best"><span class="pill">Room for more family</span><h3>Family</h3><div class="plan-price">$20<span> / month</span></div><p>For the people you look out for, near and far.</p><ul><li>Up to 5 family members</li><li>Everything planned for Home</li><li>AI-assisted insights</li><li>Planned dark web monitoring</li></ul></article>
+      <article class="plan"><span class="pill neutral">A helping hand</span><h3>Shield</h3><div class="plan-price">$35<span> / month</span></div><p>More personal support for your whole family.</p><ul><li>Up to 10 family members</li><li>Everything planned for Family</li><li>Priority support</li><li>Concierge onboarding</li></ul></article>
     </div>
-    <div class="feature">
-      <div class="feature-icon">🔒</div>
-      <h3>Remote access alerts</h3>
-      <p>Instantly notifies you if anyone tries to remotely access your loved one's device without permission.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">📧</div>
-      <h3>Phishing protection</h3>
-      <p>Catches dangerous links in emails, texts, and apps before they can do any harm.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">📱</div>
-      <h3>App safety checks</h3>
-      <p>Flags predatory or data-harvesting apps that target elderly users with hidden fees or manipulation.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">📊</div>
-      <h3>Caregiver dashboard</h3>
-      <p>One simple view showing every protected family member — safety scores, alerts, and weekly digests.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🌐</div>
-      <h3>Dark web monitoring</h3>
-      <p>Checks if your loved one's personal data has been exposed in any known breach.</p>
-    </div>
-  </div>
-</section>
-
-<section class="how">
-  <p class="section-eyebrow">Getting started</p>
-  <h2 class="section-title" style="text-align:center; font-size:28px; font-weight:700; margin-bottom:0.75rem;">Set up together in minutes</h2>
-  <p class="section-sub" style="text-align:center; font-size:16px; color:#666; margin-bottom:2.5rem;">Proteva is always installed with your loved one present — never behind their back. That's not just our policy. It's who we are.</p>
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <h3>Create your account</h3>
-      <p>Sign up as the caregiver and add your loved one's profile in under two minutes.</p>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <h3>Install together</h3>
-      <p>Sit with your loved one and install Proteva on their device — they know it's there and why.</p>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <h3>Proteva goes to work</h3>
-      <p>From that moment on, Proteva watches quietly. You get alerts. They stay safe.</p>
-    </div>
-    <div class="step">
-      <div class="step-num">4</div>
-      <h3>Peace of mind</h3>
-      <p>Check the dashboard anytime. Sleep knowing someone is always watching over them.</p>
-    </div>
-  </div>
-</section>
-
-<section class="pricing">
-  <p class="section-eyebrow">Pricing</p>
-  <h2 class="section-title">Simple, honest pricing.</h2>
-  <p class="section-sub">One free month for every new family. Then plans that grow with you.</p>
-  <div class="plans">
-    <div class="plan">
-      <h3>Home</h3>
-      <div class="plan-price">$10<span>/mo</span></div>
-      <p class="plan-desc">Protect up to 2 people. Perfect for one or two elderly parents.</p>
-      <ul>
-        <li>Up to 2 protected people</li>
-        <li>Full elder protection suite</li>
-        <li>Caregiver dashboard</li>
-        <li>Real-time alerts</li>
-        <li>Device health scores</li>
-      </ul>
-    </div>
-    <div class="plan best" style="position:relative;">
-      <div class="best-badge">Most popular</div>
-      <h3>Family</h3>
-      <div class="plan-price">$20<span>/mo</span></div>
-      <p class="plan-desc">Protect up to 5 people. For larger families and multiple loved ones.</p>
-      <ul>
-        <li>Up to 5 protected people</li>
-        <li>Everything in Home</li>
-        <li>AI-powered alerts</li>
-        <li>Dark web monitoring</li>
-        <li>Multi-location support</li>
-      </ul>
-    </div>
-    <div class="plan">
-      <h3>Shield</h3>
-      <div class="plan-price">$35<span>/mo</span></div>
-      <p class="plan-desc">Protect up to 10 people, with a dedicated safety concierge.</p>
-      <ul>
-        <li>Up to 10 protected people</li>
-        <li>Everything in Family</li>
-        <li>Priority support</li>
-        <li>Concierge onboarding</li>
-        <li>Early feature access</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<footer>
-  <div class="footer-logo"><img class="logo-icon" style="width:28px;height:28px;" src="/assets/proteva-icon.svg" alt="">Pro<span>teva</span></div>
-  <p>© 2026 Proteva · getproteva.com · Built with love, for families everywhere.</p>
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const SUPABASE_URL = 'https://njjhioejdqjwpeblrewb.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qamhpb2VqZHFqd3BlYmxyZXdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTI4NTcsImV4cCI6MjA5NTQ4ODg1N30.QVR2gB5zOIg0NYjI78anipNYUFaorIrFMxw50768am4';
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  async function joinWaitlist() {
-    const emailInput = document.getElementById('email-input');
-    const email = emailInput.value.trim();
-    const btn = document.getElementById('join-btn');
-    const errorMsg = document.getElementById('error-msg');
-
-    errorMsg.style.display = 'none';
-
-    if (!email || !email.includes('@') || !email.includes('.')) {
-      errorMsg.textContent = 'Please enter a valid email address.';
-      errorMsg.style.display = 'block';
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'Joining...';
-
-    try {
-      const { error } = await supabaseClient
-        .from('waitlist')
-        .insert([{ email: email }]);
-
-      if (error) {
-        throw error;
-      }
-
-      document.getElementById('waitlist-form').style.display = 'none';
-      document.getElementById('success-msg').style.display = 'block';
-    } catch (err) {
-      console.error('Waitlist error:', err);
-      errorMsg.textContent = 'Something went wrong. Please try again.';
-      errorMsg.style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = 'Join the waitlist';
-    }
-  }
-</script>
-
+  </div></section>
+</main>
+<footer class="site-footer"><div class="footer-inner"><a class="logo" href="/" aria-label="Proteva home"><img src="/assets/proteva-icon.svg" alt=""><span>Pro<em>teva</em></span></a><p>Built with love, for families everywhere.<br><a href="mailto:hello@getproteva.com">hello@getproteva.com</a> &middot; &copy; 2026 Proteva</p></div></footer>
+<noscript><p class="message error">Please enable JavaScript to join the waitlist, or email hello@getproteva.com.</p></noscript>
 </body>
 </html>

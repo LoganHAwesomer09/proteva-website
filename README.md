@@ -1,0 +1,69 @@
+# Proteva
+
+A dignity-first family safety prototype. The device agent is not built yet: family profiles and sample activity do not activate protection.
+
+## Start locally
+
+Use Node.js 22 or newer and npm.
+
+1. Clone this repository and open its folder in Cursor or your editor.
+2. Run `npm ci`.
+3. Run `npm run dev`.
+4. Open http://127.0.0.1:4173.
+
+The local server builds the static files when it starts. Restart it after editing. API routes are also served locally. For a live scam check, set `ANTHROPIC_API_KEY` in your environment; with Node 22 you can run `node --env-file=.env scripts/dev.mjs`. Never commit a real key.
+
+## Verify before publishing
+
+```sh
+npm run lint
+npm run check
+npm test
+npm run test:e2e
+npm run build
+```
+
+Browser tests use isolated mock accounts and never edit live Supabase data. On Windows they use installed Microsoft Edge. On other systems first run `npx playwright install chromium`. To choose a browser channel explicitly, set `PLAYWRIGHT_CHANNEL`.
+
+This is JavaScript, not TypeScript. ESLint, server tests, browser tests, accessibility checks, static-reference checks, and the build are the available checks.
+
+## Project map
+
+| Location | Purpose |
+| --- | --- |
+| `index.html` | Public story, planned pricing, waitlist |
+| `app.html` | Caregiver views and accessible forms |
+| `me.html` | Plain-language introduction for loved ones |
+| `assets/app.js` | Auth, navigation, family data, activity, onboarding |
+| `assets/styles.css` | Shared colors, controls, light/dark themes, responsive layouts |
+| `assets/config.js` | Public Supabase connection settings, not a secret |
+| `api/check-scam.js` | Authenticated Anthropic request; no database persistence |
+| `api/generate-threat.js` | Authenticated sample event, no paid provider request |
+| `lib/server.js` | Request/auth validation and per-instance burst limit |
+| `tests/` | Server and Playwright regression coverage |
+| `scripts/` | Static build, local server, file-reference checks |
+| `dist/` | Generated deployable assets; ignored by Git |
+
+Supabase handles accounts and row-level security. Each family/activity request also scopes itself to the signed-in user's ID. No database migration is included in this change.
+
+Expected protected_people fields: id, user_id, name, relationship, birth_year, devices (older device also supported for reading), protection_level, notes, created_at. Activity fields follow docs/developer-spec.md. Missing profile columns produce an explicit setup error, not a silent partial save.
+
+## Team workflow
+
+Keep credentials in the company password manager. Each person uses their own GitHub account and app account. Before starting, pull the latest work. Prefer one task per branch and a pull request when working concurrently. Do not have two agents edit the same files at once.
+
+Give your AI assistant the task and point it to this README and docs/product-quality-review.md. Preserve the green/mint Proteva identity, plain-language tone, prevention-first approach, and setup-together principle. Never represent a prototype as active device protection.
+
+Review the diff and test locally. Commit source files and the lockfile, not dist, screenshots, keys, or test output. Push normally; never force-push shared work.
+
+## Deployment
+
+Vercel uses vercel.json: npm run build produces dist, and root api/ files remain serverless functions. The build copies locked Supabase and Lucide browser assets locally, allowing a same-origin script policy. Only listed public assets are copied; docs, tests, source server helpers, and environment files are not published.
+
+Configure ANTHROPIC_API_KEY in Vercel for the scam checker. ANTHROPIC_MODEL is optional and defaults to the existing claude-sonnet-4-6 model. An OpenAI API key is no longer needed for sample threats.
+
+Supabase password recovery requires the app URL in the project's allowed redirect URLs. Turn on email confirmation and review RLS before inviting real users. The preview password screen has been removed with the owner's approval; actual caregiver access still requires Supabase sign-in.
+
+The former client-side preview password was public. Remove any reuse of it elsewhere and rotate it wherever it was reused. Its removal from current code does not remove it from existing Git history.
+
+The burst limiter is per warm serverless instance, not a global billing quota. Add durable account quotas/gateway limits before a public paid launch. Production RLS, email delivery, provider billing, and real device protection require separate operational verification.

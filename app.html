@@ -2,1102 +2,141 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="manifest" href="/manifest.json">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1D9E75">
+<title>Proteva | Your family dashboard</title>
+<link rel="icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-64.png">
-
-<title>Proteva — Caregiver Dashboard</title>
-<style>
-  :root {
-    --bg: #F4FBF8;
-    --text: #1a1a1a;
-    --card-bg: #ffffff;
-    --card-border: #eeeeee;
-    --sidebar-bg: #ffffff;
-    --sidebar-border: #eeeeee;
-    --muted: #888888;
-    --muted-2: #999999;
-    --hover-bg: #F4FBF8;
-    --input-bg: #ffffff;
-    --input-border: #dddddd;
-    --feed-bg: #ffffff;
-    --feed-border: #eeeeee;
-    --feed-divider: #f2f2f2;
-    --logo-ink: #1a1a1a;
-    --brand: #1D9E75;
-    --brand-deep: #0F6E56;
-    --pill-bg: #ffffff;
-    --pill-border: #eeeeee;
-  }
-  [data-theme="dark"] {
-    --bg: #0F1714;
-    --text: #E8F0EC;
-    --card-bg: #17211D;
-    --card-border: #26332D;
-    --sidebar-bg: #131C18;
-    --sidebar-border: #26332D;
-    --muted: #8FA69B;
-    --muted-2: #7C918700;
-    --muted-2: #7C9187;
-    --hover-bg: #1C2822;
-    --input-bg: #17211D;
-    --input-border: #33453C;
-    --feed-bg: #17211D;
-    --feed-border: #26332D;
-    --feed-divider: #222E28;
-    --logo-ink: #E8F0EC;
-    --brand: #37C79A;
-    --brand-deep: #37C79A;
-    --pill-bg: #17211D;
-    --pill-border: #2B3A33;
-  }
-  /* Smooth theme transition */
-  body, .sidebar, .main, .card, .feed, .feed-item, .member, .stat, .account-btn,
-  .dropdown, .modal, .banner, .checker-box, .nav-item, .digest, .auth-card, input, select, textarea {
-    transition: background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-  .logo { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; color: var(--logo-ink); }
-  .logo span { color: #1D9E75; }
-
-  /* AUTH */
-  .auth-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
-  .auth-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 18px; padding: 2.5rem; width: 100%; max-width: 420px; }
-  .auth-card .logo { text-align: center; margin-bottom: 0.5rem; display:block; }
-  .auth-sub { text-align: center; font-size: 14px; color: #777; margin-bottom: 1.75rem; }
-  .field { margin-bottom: 1rem; }
-  .field label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
-  .field input, .field select { width: 100%; padding: 13px 15px; border: 1.5px solid var(--input-border); border-radius: 10px; font-size: 15px; outline: none; transition: border 0.2s; background: var(--input-bg); color: var(--text); }
-  .field input:focus, .field select:focus, .field textarea:focus { border-color: #1D9E75; }
-  .field textarea:focus { outline:none; }
-  .btn-primary { width: 100%; background: #1D9E75; color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-  .btn-primary:hover { background: #0F6E56; }
-  .btn-primary:disabled { background: #9FE1CB; cursor: not-allowed; }
-  .auth-toggle { text-align: center; font-size: 14px; color: #777; margin-top: 1.25rem; }
-  .auth-toggle a { color: #1D9E75; font-weight: 600; text-decoration: none; cursor: pointer; }
-  .msg { padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 1rem; display: none; }
-  .msg.error { background: #FCEBEB; color: #A32D2D; }
-  .msg.success { background: #E1F5EE; color: #0F6E56; }
-
-  /* APP SHELL */
-  .app-shell { display: none; min-height: 100vh; }
-  .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 230px; background: var(--sidebar-bg); border-right: 1px solid var(--sidebar-border); padding: 1.5rem 1rem; display: flex; flex-direction: column; z-index: 20; }
-  .sidebar .logo { padding: 0 0.75rem 1.5rem; }
-  .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; margin-bottom: 4px; border: none; background: none; width: 100%; text-align: left; }
-  .nav-item .ni-icon { font-size: 17px; }
-  .nav-item:hover { background: var(--hover-bg); color: var(--brand); }
-  .nav-item.active { background: #E1F5EE; color: #0F6E56; }
-  .sidebar-spacer { flex: 1; }
-  .sidebar-foot { font-size: 11px; color: #bbb; padding: 0 0.75rem; }
-
-  .main { margin-left: 230px; padding: 1.5rem 2rem; }
-  .main-inner { max-width: 880px; margin: 0 auto; width: 100%; }
-  .topbar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 1.25rem; position: relative; }
-  .account-btn { display: flex; align-items: center; gap: 8px; background: var(--pill-bg); border: 1.5px solid var(--pill-border); border-radius: 999px; padding: 5px 6px 5px 12px; cursor: pointer; }
-  .account-btn:hover { border-color: #9FE1CB; }
-  .account-btn .who { font-size: 13px; color: var(--text); font-weight: 600; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .avatar { width: 30px; height: 30px; border-radius: 50%; background: #E1F5EE; color: #0F6E56; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
-  .dropdown { position: absolute; top: 48px; right: 0; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.28); width: 200px; padding: 6px; display: none; z-index: 30; }
-  .dropdown.open { display: block; }
-  .dd-head { padding: 10px 12px; border-bottom: 1px solid #f2f2f2; margin-bottom: 6px; }
-  .dd-head .dd-email { font-size: 13px; font-weight: 600; color: #1a1a1a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .dd-head .dd-role { font-size: 12px; color: #999; }
-  .dd-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; font-size: 14px; color: var(--text); cursor: pointer; background: none; border: none; width: 100%; text-align: left; }
-  .dd-item:hover { background: var(--hover-bg); color: var(--brand); }
-  .dd-item.danger:hover { background: #FCEBEB; color: #A32D2D; }
-
-  .banner { border-radius: 16px; padding: 1.5rem 1.75rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 16px; transition: background 0.3s; }
-  .banner.calm { background: #E1F5EE; }
-  .banner.active { background: #E6F1FB; }
-  .banner-icon { font-size: 34px; }
-  .banner.calm h2 { color: #085041; }
-  .banner.calm p { color: #0F6E56; }
-  .banner.active h2 { color: #0C447C; }
-  .banner.active p { color: #185FA5; }
-  .banner h2 { font-size: 19px; margin: 0; }
-  .banner p { font-size: 14px; margin: 3px 0 0; }
-
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
-  .stat { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 1.1rem; }
-  .stat-label { font-size: 13px; color: #888; }
-  .stat-num { font-size: 26px; font-weight: 700; margin: 4px 0 0; color: #0F6E56; }
-  .stat-sub { font-size: 12px; color: #999; }
-
-  .section-head { display: flex; justify-content: space-between; align-items: center; margin: 0 0 12px; }
-  .section-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin: 0; }
-  .add-btn { background: #E1F5EE; color: #0F6E56; border: none; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
-  .add-btn:hover { background: #9FE1CB; }
-  .page-title { font-size: 24px; font-weight: 700; margin: 0 0 0.25rem; color: var(--text); }
-  .page-sub { font-size: 14px; color: #888; margin: 0 0 1.5rem; }
-  .back-link { background: none; border: none; color: #1D9E75; font-size: 14px; font-weight: 600; cursor: pointer; padding: 0; margin-bottom: 1rem; }
-
-  .feed { background: var(--feed-bg); border: 1px solid var(--feed-border); border-radius: 14px; overflow: hidden; margin-bottom: 1.5rem; }
-  .feed-item { padding: 1rem 1.25rem; border-bottom: 1px solid var(--feed-divider); }
-  .feed-item:last-child { border-bottom: none; }
-  .feed-row { display: flex; align-items: flex-start; gap: 12px; }
-  .feed-icon { font-size: 20px; margin-top: 1px; flex-shrink: 0; }
-  .feed-body { flex: 1; }
-  .feed-text { font-size: 14px; margin: 0; font-weight: 500; }
-  .feed-person { font-size: 12px; color: #0F6E56; font-weight: 600; margin: 2px 0 0; }
-  .feed-meta { font-size: 12px; color: #999; margin: 3px 0 0; }
-  .feed-tag { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
-  .feed-tag.stopped { background: #E1F5EE; color: #0F6E56; }
-  .feed-tag.attention { background: #E6F1FB; color: #185FA5; }
-  .feed-tag.resolved { background: #F0EFEA; color: #5F5E5A; }
-  .feed-x { background: none; border: none; color: #c4c4c4; cursor: pointer; font-size: 20px; line-height: 1; padding: 0 2px; flex-shrink: 0; }
-  .feed-x:hover { color: #A32D2D; }
-  .right-stack { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  .expand-btn { background: none; border: none; color: #1D9E75; font-size: 13px; font-weight: 600; cursor: pointer; padding: 6px 0 0; }
-  .detail { margin-top: 12px; padding: 14px 16px; background: #F7FBF9; border: 1px solid #E1F0EA; border-radius: 10px; display: none; }
-  .detail.open { display: block; }
-  .detail-block { margin-bottom: 10px; }
-  .detail-block:last-of-type { margin-bottom: 0; }
-  .detail-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #0F6E56; margin: 0 0 2px; }
-  .detail-text { font-size: 13px; color: #444; margin: 0; line-height: 1.5; }
-
-  .date-header { font-size: 13px; font-weight: 700; color: #555; margin: 1.25rem 0 0.6rem; padding-bottom: 4px; border-bottom: 1px solid #e8e8e8; }
-  .date-header:first-child { margin-top: 0; }
-
-  .member { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 0.85rem 1.1rem; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; cursor: pointer; transition: border 0.15s; }
-  .member:hover { border-color: #9FE1CB; }
-  .m-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; background: #E1F5EE; color: #0F6E56; }
-  .m-info { flex: 1; }
-  .m-name { font-size: 14px; font-weight: 600; margin: 0; }
-  .m-detail { font-size: 12px; color: #999; margin: 1px 0 0; }
-  .m-badge { font-size: 12px; font-weight: 600; color: #0F6E56; background: #E1F5EE; padding: 4px 11px; border-radius: 999px; }
-  .m-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 17px; padding: 0 4px; }
-  .m-delete:hover { color: #A32D2D; }
-  .m-edit { background: none; border: none; color: #bbb; cursor: pointer; font-size: 15px; padding: 0 4px; }
-  .m-edit:hover { color: #0F6E56; }
-  .empty { text-align: center; padding: 2rem 1rem; color: #999; font-size: 14px; background: #fff; border: 1px dashed #ddd; border-radius: 12px; }
-
-  .card { background:var(--card-bg); border:1px solid var(--card-border); border-radius:14px; padding:1.5rem; margin-bottom:1rem; }
-  .card h3 { font-size:15px; margin:0 0 1rem; }
-  .kv { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f4f4f4; font-size:14px; }
-  .kv:last-child { border-bottom:none; }
-  .kv .k { color:#888; }
-  .kv .v { color:#1a1a1a; font-weight:600; }
-  .btn-outline { background:#fff; border:1.5px solid #ddd; color:#555; padding:10px 16px; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; }
-  .btn-outline:hover { border-color:#1D9E75; color:#0F6E56; }
-  .faq { border-bottom:1px solid #f2f2f2; padding:0.9rem 0; }
-  .faq:last-child { border-bottom:none; }
-  .faq-q { font-size:14px; font-weight:600; color:#1a1a1a; cursor:pointer; display:flex; justify-content:space-between; gap:12px; }
-  .faq-a { font-size:13px; color:#666; line-height:1.6; margin-top:8px; display:none; }
-  .faq-a.open { display:block; }
-
-  .person-hero { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 14px; }
-  .person-hero .m-avatar { width: 48px; height: 48px; font-size: 16px; }
-  .person-hero h2 { font-size: 18px; margin: 0; }
-  .person-hero p { font-size: 13px; color: #888; margin: 2px 0 0; }
-
-  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; padding: 1.5rem; z-index: 40; }
-  .modal { background: #fff; border-radius: 16px; padding: 2rem; width: 100%; max-width: 400px; }
-  .modal h3 { font-size: 18px; margin: 0 0 1.25rem; }
-  .modal-actions { display: flex; gap: 10px; margin-top: 1.25rem; }
-  .btn-cancel { flex: 1; background: #fff; border: 1.5px solid #ddd; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; color: #555; }
-  .demo-note { font-size: 12px; color: #aaa; text-align: center; margin-top: 1rem; }
-  .demo-note a { color: #1D9E75; cursor: pointer; font-weight: 600; }
-
-  .mobile-menu-btn { display:none; }
-  @media (max-width: 720px) {
-    .sidebar { transform: translateX(-100%); transition: transform 0.2s; }
-    .sidebar.open { transform: translateX(0); }
-    .main { margin-left: 0; padding: 1rem; }
-    .mobile-menu-btn { display:inline-flex; position:fixed; top:12px; left:12px; z-index:25; background:#fff; border:1px solid #eee; border-radius:8px; padding:8px 12px; font-size:18px; cursor:pointer; }
-  }
-
-  /* ONBOARDING */
-  #onboarding { position: fixed; inset: 0; background: linear-gradient(160deg,#E1F5EE 0%, #F4FBF8 60%); z-index: 60; overflow-y: auto; }
-  .ob-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
-  .ob-card { background: #fff; border: 1px solid #e5efe9; border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 460px; box-shadow: 0 12px 40px rgba(15,110,86,0.08); }
-  .ob-progress { display: flex; gap: 8px; justify-content: center; margin-bottom: 1.75rem; }
-  .ob-dot { width: 8px; height: 8px; border-radius: 50%; background: #D9E9E2; transition: background 0.2s, width 0.2s; }
-  .ob-dot.active { background: #1D9E75; width: 22px; border-radius: 999px; }
-  .ob-emoji { font-size: 44px; text-align: center; margin-bottom: 0.75rem; }
-  .ob-step h2 { font-size: 22px; text-align: center; margin: 0 0 0.75rem; color: #1a1a1a; }
-  .ob-step p { font-size: 15px; text-align: center; color: #444; line-height: 1.6; margin: 0 0 0.75rem; }
-  .ob-step p em { color: #0F6E56; font-style: normal; font-weight: 600; }
-  .ob-step .ob-sub { font-size: 14px; color: #777; }
-  .ob-step .btn-primary { margin-top: 1rem; }
-  .ob-actions { display: flex; gap: 10px; margin-top: 1.25rem; }
-  .ob-actions .btn-primary { margin-top: 0; }
-  .ob-back { flex: 0 0 auto; width: auto; padding-left: 22px; padding-right: 22px; }
-  .ob-actions .btn-primary { flex: 1; }
-  .ob-step .field { text-align: left; }
-  .ob-skip { font-size: 13px; color: #999; text-align: center; cursor: pointer; margin-top: 1rem; text-decoration: underline; }
-  .ob-skip:hover { color: #0F6E56; }
-
-
-  /* WEEKLY DIGEST */
-  .digest { background: linear-gradient(135deg, #E1F5EE 0%, #D2F0E6 100%); border-radius: 16px; padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; }
-  .digest-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-  .digest-head h3 { font-size: 16px; color: #085041; margin: 0; }
-  .digest-range { font-size: 12px; color: #0F6E56; opacity: 0.8; }
-  .digest-hero { font-size: 15px; color: #0F6E56; line-height: 1.55; margin: 0 0 1.1rem; }
-  .digest-hero strong { color: #085041; font-weight: 700; }
-  .digest-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
-  .digest-stat { background: rgba(255,255,255,0.7); border-radius: 12px; padding: 0.9rem 1rem; }
-  .digest-stat .dnum { font-size: 22px; font-weight: 700; color: #0F6E56; }
-  .digest-stat .dlabel { font-size: 12px; color: #427a6b; margin-top: 2px; }
-  .digest-empty { font-size: 14px; color: #0F6E56; line-height: 1.6; margin: 0; }
-
-
-  /* SCAM CHECKER */
-  .checker-intro { font-size: 14px; color: #666; line-height: 1.6; margin: 0 0 1.25rem; }
-  .checker-box { width: 100%; min-height: 130px; padding: 14px 16px; border: 1.5px solid var(--input-border); border-radius: 12px; font-size: 15px; font-family: inherit; outline: none; resize: vertical; line-height: 1.5; background: var(--input-bg); color: var(--text); }
-  .checker-box:focus { border-color: #1D9E75; }
-  .checker-btn { margin-top: 1rem; }
-  .checker-result { margin-top: 1.5rem; display: none; }
-  .checker-result.show { display: block; }
-  .verdict { border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
-  .verdict.danger { background: #FCEBEB; border: 1px solid #F3C0C0; }
-  .verdict.caution { background: #FBF3E1; border: 1px solid #EFD9A8; }
-  .verdict.safe { background: #E1F5EE; border: 1px solid #B5E6D3; }
-  .verdict-label { font-size: 17px; font-weight: 700; margin: 0 0 0.5rem; display:flex; align-items:center; gap:8px; }
-  .verdict.danger .verdict-label { color: #A32D2D; }
-  .verdict.caution .verdict-label { color: #8A6100; }
-  .verdict.safe .verdict-label { color: #0F6E56; }
-  .verdict p { font-size: 14px; color: #444; line-height: 1.65; margin: 0; }
-  .result-block { background:#fff; border:1px solid #eee; border-radius:12px; padding:1.1rem 1.3rem; margin-bottom:0.8rem; }
-  .result-block h4 { font-size:13px; text-transform:uppercase; letter-spacing:0.04em; color:#0F6E56; margin:0 0 0.4rem; }
-  .result-block p { font-size:14px; color:#444; line-height:1.6; margin:0; }
-  .checker-thinking { display:none; align-items:center; gap:10px; margin-top:1.25rem; color:#0F6E56; font-size:14px; font-weight:600; }
-  .checker-thinking.show { display:flex; }
-  .spinner { width:18px; height:18px; border:2.5px solid #C9EADD; border-top-color:#1D9E75; border-radius:50%; animation:spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .checker-disclaimer { font-size:12px; color:#aaa; margin-top:1.25rem; line-height:1.5; }
-
-
-  /* DARK MODE TOGGLE */
-  .theme-row { display:flex; align-items:center; justify-content:space-between; }
-  .theme-copy h3 { margin:0 0 2px; }
-  .theme-copy p { font-size:13px; color:var(--muted); margin:0; }
-  .switch { position: relative; width: 64px; height: 34px; flex-shrink:0; cursor:pointer; }
-  .switch input { opacity:0; width:0; height:0; }
-  .slider { position:absolute; inset:0; border-radius:999px;
-    background: linear-gradient(135deg,#BFE9DA,#8FD9C1);
-    transition: background 0.4s ease; overflow:hidden; }
-  .slider:before { content:""; position:absolute; height:26px; width:26px; left:4px; top:4px;
-    background:#fff; border-radius:50%; transition: transform 0.4s cubic-bezier(.4,1.3,.5,1), background 0.4s ease;
-    box-shadow:0 2px 6px rgba(0,0,0,0.25); z-index:2; }
-  .switch input:checked + .slider { background: linear-gradient(135deg,#1D9E75,#0B5A46); }
-  .switch input:checked + .slider:before { transform: translateX(30px); background:#0F1714; }
-  /* sun / moon icons inside the slider */
-  .slider .ico { position:absolute; top:50%; transform:translateY(-50%); font-size:14px; transition:opacity 0.4s ease; z-index:1; }
-  .slider .sun { left:8px; opacity:1; }
-  .slider .moon { right:8px; opacity:0; }
-  .switch input:checked + .slider .sun { opacity:0; }
-  .switch input:checked + .slider .moon { opacity:1; }
-
-</style>
+<link rel="manifest" href="/manifest.json">
+<script src="/assets/theme.js"></script>
+<link rel="stylesheet" href="/assets/styles.css">
+<script defer src="/vendor/lucide.min.js"></script>
+<script defer src="/vendor/supabase.js"></script>
+<script type="module" src="/assets/app.js"></script>
 </head>
 <body>
-
-<!-- ONBOARDING OVERLAY -->
-<div id="onboarding" style="display:none;">
-  <div class="ob-wrap">
-    <div class="ob-card">
-      <div class="ob-progress"><span class="ob-dot" data-step="0"></span><span class="ob-dot" data-step="1"></span><span class="ob-dot" data-step="2"></span><span class="ob-dot" data-step="3"></span></div>
-
-      <!-- Step 0: Welcome -->
-      <div class="ob-step" id="ob-step-0">
-        <div class="ob-emoji">🛡️</div>
-        <h2>Welcome to Proteva</h2>
-        <p>You've just taken a real step toward protecting someone you love. We're glad you're here.</p>
-        <p class="ob-sub">Let's get you set up in just a minute — it's simple, and we'll walk through it together.</p>
-        <button class="btn-primary" onclick="obNext()">Get started</button>
-      </div>
-
-      <!-- Step 1: The dignity principle -->
-      <div class="ob-step" id="ob-step-1" style="display:none;">
-        <div class="ob-emoji">🤝</div>
-        <h2>Set up together, always</h2>
-        <p>Proteva is different. We protect people <em>with</em> their family — never behind their back.</p>
-        <p class="ob-sub">When you're ready, set up Proteva side-by-side with your loved one, so they know it's there and why. It's their dignity, their device, and their peace of mind too. That's a promise at the heart of who we are.</p>
-        <div class="ob-actions">
-          <button class="btn-cancel ob-back" onclick="obPrev()">Back</button>
-          <button class="btn-primary" onclick="obNext()">I understand</button>
-        </div>
-      </div>
-
-      <!-- Step 2: Add first person -->
-      <div class="ob-step" id="ob-step-2" style="display:none;">
-        <div class="ob-emoji">👪</div>
-        <h2>Who would you like to protect first?</h2>
-        <p class="ob-sub">Add the first person you're looking after. You can add more anytime.</p>
-        <div class="msg error" id="ob-error"></div>
-        <div class="field"><label for="ob-name">Their name</label><input type="text" id="ob-name" placeholder="e.g. Rose Hagen" /></div>
-        <div class="field"><label for="ob-relationship">Relationship to you</label>
-          <select id="ob-relationship" onchange="obRelChange()">
-            <option value="">Select…</option>
-            <option>Mother</option><option>Father</option><option>Grandmother</option><option>Grandfather</option>
-            <option>Aunt</option><option>Uncle</option><option>Spouse</option><option>Sibling</option><option>Friend</option><option>Other</option>
-          </select>
-        </div>
-        <div class="field" id="ob-rel-other-wrap" style="display:none;"><label for="ob-relationship-other">Please specify</label><input type="text" id="ob-relationship-other" placeholder="e.g. Neighbor" /></div>
-        <div class="field"><label for="ob-devices">Their device(s)</label><input type="text" id="ob-devices" placeholder="e.g. iPhone, iPad" /></div>
-        <div class="ob-actions">
-          <button class="btn-cancel ob-back" onclick="obPrev()">Back</button>
-          <button class="btn-primary" id="ob-add-btn" onclick="obAddPerson()">Add &amp; continue</button>
-        </div>
-        <p class="ob-skip" onclick="obFinish(true)">I'll add someone later</p>
-      </div>
-
-      <!-- Step 3: Done -->
-      <div class="ob-step" id="ob-step-3" style="display:none;">
-        <div class="ob-emoji">💚</div>
-        <h2>You're all set</h2>
-        <p id="ob-done-msg">Proteva is now watching quietly over your family. You can rest a little easier.</p>
-        <p class="ob-sub">From here, your dashboard shows you everything Proteva catches and handles. We'll only ask for your help on the rare occasion something truly needs it.</p>
-        <button class="btn-primary" onclick="obFinish(false)">Go to my dashboard</button>
-      </div>
-    </div>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<main class="auth-page" id="auth-screen">
+  <div class="auth-brand"><a href="/" class="logo" aria-label="Proteva home"><img src="/assets/proteva-icon.svg" alt=""><span>Pro<em>teva</em></span></a></div>
+  <div class="auth-panel">
+    <h1 id="auth-title">Welcome back</h1>
+    <p class="page-sub" id="auth-subtitle">A little peace of mind, all in one place.</p>
+    <form id="auth-form">
+      <div id="auth-message" class="message" role="status" hidden></div>
+      <div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" maxlength="254" required></div>
+      <div class="field"><label for="password">Password</label><div class="password-field"><input id="password" name="password" type="password" autocomplete="current-password" required minlength="6" maxlength="128"><button class="icon-btn" type="button" data-password="password" aria-label="Show password" title="Show password"><i data-lucide="eye"></i></button></div></div>
+      <button class="btn btn-primary full" id="auth-btn" type="submit">Sign in</button>
+      <button class="btn btn-quiet full" id="forgot-password" type="button">Forgot password?</button>
+    </form>
+    <p class="auth-toggle"><span id="auth-toggle-label">New to Proteva?</span> <button class="btn btn-quiet" id="auth-toggle" type="button">Create an account</button></p>
+    <p class="auth-footer">Made for families. Built around dignity.<br><a href="/me.html">What Proteva means for your loved one</a></p>
   </div>
-</div>
-
-
-<!-- AUTH SCREEN -->
-<div class="auth-wrap" id="auth-screen">
-  <div class="auth-card">
-    <span class="logo">Pro<span>teva</span></span>
-    <p class="auth-sub" id="auth-subtitle">Welcome back — sign in to your family dashboard</p>
-    <div class="msg error" id="msg-error"></div>
-    <div class="msg success" id="msg-success"></div>
-    <div class="field">
-      <label for="email">Email address</label>
-      <input type="email" id="email" placeholder="you@example.com" />
-    </div>
-    <div class="field">
-      <label for="password">Password</label>
-      <input type="password" id="password" placeholder="••••••••" />
-    </div>
-    <button class="btn-primary" id="auth-btn" onclick="handleAuth()">Sign in</button>
-    <p class="auth-toggle" id="toggle-text">
-      New to Proteva? <a onclick="toggleMode()">Create an account</a>
-    </p>
-  </div>
-</div>
-
-<!-- APP SHELL -->
-<div class="app-shell" id="app-shell">
-  <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
-
-  <aside class="sidebar" id="sidebar">
-    <span class="logo">Pro<span>teva</span></span>
-    <button class="nav-item active" id="nav-dashboard" onclick="go('dashboard')"><span class="ni-icon">🏠</span> Dashboard</button>
-    <button class="nav-item" id="nav-family" onclick="go('family')"><span class="ni-icon">👪</span> Family</button>
-    <button class="nav-item" id="nav-history" onclick="go('history')"><span class="ni-icon">🗂️</span> History</button>
-    <button class="nav-item" id="nav-checker" onclick="go('checker')"><span class="ni-icon">🔍</span> Scam checker</button>
-    <button class="nav-item" id="nav-settings" onclick="go('settings')"><span class="ni-icon">⚙️</span> Settings</button>
-    <button class="nav-item" id="nav-help" onclick="go('help')"><span class="ni-icon">❓</span> Help</button>
-    <div class="sidebar-spacer"></div>
-    <div class="sidebar-foot">Proteva · protecting families</div>
+</main>
+<div id="app-shell" hidden>
+  <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+    <a class="logo" href="/" aria-label="Proteva home"><img src="/assets/proteva-icon.svg" alt=""><span>Pro<em>teva</em></span></a>
+    <p class="nav-label">Your family space</p>
+    <nav>
+      <button class="nav-item" data-view="dashboard"><i data-lucide="layout-dashboard"></i>Overview</button>
+      <button class="nav-item" data-view="family"><i data-lucide="users"></i>Family</button>
+      <button class="nav-item" data-view="history"><i data-lucide="history"></i>History</button>
+      <button class="nav-item" data-view="checker"><i data-lucide="scan-text"></i>Scam checker</button>
+      <button class="nav-item" data-view="settings"><i data-lucide="settings-2"></i>Settings</button>
+      <button class="nav-item" data-view="help"><i data-lucide="circle-help"></i>Help &amp; support</button>
+    </nav>
+    <div class="sidebar-bottom"><span class="pill neutral">Family preview</span><p>Looking out for the people<br>who matter most.</p></div>
   </aside>
-
-  <main class="main"><div class="main-inner">
-    <div class="topbar">
-      <button class="account-btn" onclick="toggleDropdown(event)">
-        <span class="who" id="account-email">user@email.com</span>
-        <span class="avatar" id="user-initial">U</span>
-      </button>
-      <div class="dropdown" id="dropdown">
-        <div class="dd-head">
-          <div class="dd-email" id="dd-email">user@email.com</div>
-          <div class="dd-role">Caregiver</div>
-        </div>
-        <button class="dd-item" onclick="go('profile'); closeDropdown()">👤 Profile</button>
-        <button class="dd-item" onclick="go('settings'); closeDropdown()">⚙️ Settings</button>
-        <button class="dd-item danger" onclick="handleLogout()">🚪 Log out</button>
+  <button class="nav-backdrop" id="nav-backdrop" aria-label="Close navigation" tabindex="-1"></button>
+  <main class="main" id="main-content" tabindex="-1"><div class="main-inner">
+    <header class="topbar">
+      <button class="icon-btn mobile-menu" id="mobile-menu" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><i data-lucide="menu"></i></button>
+      <span class="breadcrumb" id="breadcrumb">Your family / Overview</span>
+      <button class="account-btn" id="account-btn" aria-expanded="false" aria-controls="account-menu"><span class="account-label" id="account-email"></span><span class="avatar" id="user-initial"></span><i data-lucide="chevron-down"></i><span class="sr-only">Account menu</span></button>
+      <div class="dropdown" id="account-menu" hidden>
+        <button class="btn btn-quiet" data-view="profile"><i data-lucide="user-round"></i>Your profile</button>
+        <button class="btn btn-quiet" data-view="settings"><i data-lucide="settings-2"></i>Settings</button>
+        <button class="btn btn-quiet" data-action="logout"><i data-lucide="log-out"></i>Sign out</button>
       </div>
-    </div>
-
-    <!-- DASHBOARD -->
+    </header>
     <section class="view" id="view-dashboard">
-      <div class="banner calm" id="banner">
-        <span class="banner-icon" id="banner-icon">🛡️</span>
-        <div><h2 id="banner-title">Everyone is safe today</h2><p id="banner-sub">Loading...</p></div>
-      </div>
-      <div class="digest" id="digest" style="display:none;"></div>
-      <div class="stats">
-        <div class="stat"><p class="stat-label">Threats stopped</p><p class="stat-num" id="stat-stopped">0</p><p class="stat-sub">automatically</p></div>
-        <div class="stat"><p class="stat-label">People protected</p><p class="stat-num" id="stat-people">0</p><p class="stat-sub">in your family</p></div>
-        <div class="stat"><p class="stat-label">Needs your input</p><p class="stat-num" id="stat-attention">0</p><p class="stat-sub">items</p></div>
-      </div>
-      <div class="section-head"><p class="section-label">What Proteva caught &amp; handled</p></div>
-      <div id="feed"></div>
-      <p class="demo-note">Demo: <a onclick="simulateThreat()">simulate a threat Proteva catches</a></p>
+      <div class="page-head"><div><p class="eyebrow">A little peace of mind</p><h1 tabindex="-1">Your family, at a glance</h1><p class="page-sub">The important things, without the overwhelm.</p></div><button class="btn btn-secondary" data-view="checker"><i data-lucide="scan-text"></i>Check a message</button></div>
+      <div class="notice"><i data-lucide="info"></i><p>You're exploring the Proteva prototype. Device protection is not connected; activity here is for demonstration.</p></div>
+      <div id="dashboard-content"></div>
     </section>
-
-    <!-- FAMILY -->
-    <section class="view" id="view-family" style="display:none;">
-      <p class="page-title">Protected family</p>
-      <p class="page-sub">Everyone you're protecting with Proteva. Tap a person to see their activity.</p>
-      <div class="section-head"><p class="section-label">Family members</p><button class="add-btn" onclick="openModal()">+ Add family member</button></div>
-      <div id="member-list"></div>
+    <section class="view" id="view-family" hidden>
+      <div class="page-head"><div><h1 tabindex="-1">Your family</h1><p class="page-sub">The people you're looking out for, together.</p></div><button class="btn btn-primary" data-action="add-member"><i data-lucide="plus"></i>Add family member</button></div>
+      <div class="notice"><i data-lucide="heart-handshake"></i><p>Adding a profile doesn't install protection. Always talk through setup with your loved one.</p></div>
+      <div id="member-list" class="member-list full-list"></div>
     </section>
-
-    <!-- PERSON DETAIL -->
-    <section class="view" id="view-person" style="display:none;">
-      <button class="back-link" onclick="go('family')">← Back to family</button>
-      <div class="person-hero" id="person-hero"></div>
-      <div class="section-head"><p class="section-label">Active for this person</p></div>
-      <div id="person-active"></div>
-      <div class="section-head"><p class="section-label">History for this person</p></div>
-      <div id="person-history"></div>
+    <section class="view" id="view-person" hidden>
+      <button class="btn btn-quiet" data-view="family"><i data-lucide="arrow-left"></i>Back to family</button>
+      <div id="person-content"></div>
     </section>
-
-    <!-- HISTORY -->
-    <section class="view" id="view-history" style="display:none;">
-      <p class="page-title">History</p>
-      <p class="page-sub">A record of everything you've cleared, organized by day.</p>
+    <section class="view" id="view-history" hidden>
+      <div class="page-head"><div><h1 tabindex="-1">Family history</h1><p class="page-sub">Archived activity, kept here when you need it.</p></div></div>
       <div id="history-feed"></div>
     </section>
-
-    <!-- SETTINGS -->
-    <section class="view" id="view-settings" style="display:none;">
-      <p class="page-title">Settings</p>
-      <p class="page-sub">Manage your account and preferences.</p>
-      <div class="card">
-        <div class="theme-row">
-          <div class="theme-copy">
-            <h3>Dark mode</h3>
-            <p>Easier on the eyes in low light.</p>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="theme-toggle" onchange="toggleTheme()" />
-            <span class="slider"><span class="ico sun">☀️</span><span class="ico moon">🌙</span></span>
-          </label>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Account</h3>
-        <div class="kv"><span class="k">Email</span><span class="v" id="set-email">—</span></div>
-        <div class="kv"><span class="k">Role</span><span class="v">Caregiver</span></div>
-        <div class="kv"><span class="k">Plan</span><span class="v">Free trial</span></div>
-      </div>
-      <div class="card">
-        <h3>Security</h3>
-        <p style="font-size:13px;color:#777;margin:0 0 1rem;line-height:1.6;">Change the password you use to sign in to Proteva.</p>
-        <div class="msg error" id="pw-error"></div>
-        <div class="msg success" id="pw-success"></div>
-        <div class="field"><label for="new-pw">New password</label><input type="password" id="new-pw" placeholder="At least 6 characters" /></div>
-        <button class="btn-outline" id="pw-btn" onclick="changePassword()">Update password</button>
-      </div>
-      <div class="card">
-        <h3>Session</h3>
-        <p style="font-size:13px;color:#777;margin:0 0 1rem;">Sign out of Proteva on this device.</p>
-        <button class="btn-outline" onclick="handleLogout()">Log out</button>
-      </div>
+    <section class="view" id="view-checker" hidden>
+      <h1 tabindex="-1">Is this a scam?</h1>
+      <p class="page-sub">Unsure about a message? Let's take a closer look together.</p>
+      <form id="checker-form" class="checker-form">
+        <div class="field"><label for="checker-input">Message to check</label><textarea class="checker-input" id="checker-input" rows="6" minlength="3" maxlength="4000" required placeholder="Paste the message, or describe what happened..." aria-describedby="checker-privacy checker-count"></textarea>
+        <p class="help-text" id="checker-privacy">Remove names, account numbers, passwords, and other personal details. Your text is sent to our AI provider for this check; Proteva doesn't save it in your activity.</p><p class="help-text" id="checker-count">0 / 4,000 characters</p></div>
+        <button class="btn btn-primary" id="checker-btn" type="submit"><i data-lucide="scan-text"></i>Check this message</button>
+        <div class="loading" id="checker-thinking" role="status" hidden><span class="spinner"></span>Looking for signs of a scam...</div>
+      </form>
+      <div id="checker-result" class="checker-result" role="status" tabindex="-1"></div>
+      <p class="checker-disclaimer">A second opinion, never a guarantee. AI can make mistakes. Avoid unfamiliar links and verify requests using a contact method you already trust.</p>
     </section>
-
-    <!-- PROFILE -->
-    <section class="view" id="view-profile" style="display:none;">
-      <p class="page-title">Profile</p>
-      <p class="page-sub">Your caregiver account.</p>
-      <div class="card">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:1rem;">
-          <span class="avatar" id="profile-avatar" style="width:52px;height:52px;font-size:18px;">U</span>
-          <div><div style="font-size:16px;font-weight:700;" id="profile-email">—</div><div style="font-size:13px;color:#999;">Caregiver account</div></div>
-        </div>
-        <div class="kv"><span class="k">Email</span><span class="v" id="profile-email2">—</span></div>
-        <div class="kv"><span class="k">People protected</span><span class="v" id="profile-count">0</span></div>
-        <div class="kv"><span class="k">Member since</span><span class="v" id="profile-since">—</span></div>
-      </div>
+    <section class="view" id="view-settings" hidden>
+      <h1 tabindex="-1">Settings</h1><p class="page-sub">Make Proteva feel right for you.</p>
+      <section class="settings-section"><div><h2>Appearance</h2><p>A comfortable view, day or night.</p></div><label class="switch-label" for="theme-toggle"><span>Dark mode</span><input id="theme-toggle" type="checkbox" role="switch"></label></section>
+      <section class="settings-section"><div><h2>Account</h2><p>Your caregiver account details.</p></div><dl><div class="kv"><dt>Email</dt><dd id="settings-email"></dd></div><div class="kv"><dt>Access</dt><dd>Prototype preview</dd></div><div class="kv"><dt>Role</dt><dd>Caregiver</dd></div></dl></section>
+      <section class="settings-section"><div><h2>Password</h2><p>Choose a password you don't use elsewhere.</p></div><form id="password-form">
+        <div id="password-message" class="message" role="status" hidden></div>
+        <div class="field"><label for="new-password">New password</label><div class="password-field"><input id="new-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required aria-describedby="password-hint"><button class="icon-btn" type="button" data-password="new-password" aria-label="Show new password" title="Show new password"><i data-lucide="eye"></i></button></div><p class="help-text" id="password-hint">Use at least 8 characters.</p></div>
+        <div class="field"><label for="confirm-password">Confirm new password</label><input id="confirm-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required></div>
+        <button class="btn btn-secondary" id="password-btn" type="submit">Update password</button>
+      </form></section>
+      <section class="settings-section"><div><h2>This device</h2><p>Sign out when you're finished on a shared device.</p></div><div><button class="btn btn-secondary" data-action="logout"><i data-lucide="log-out"></i>Sign out</button></div></section>
     </section>
-
-    <!-- HELP -->
-    <section class="view" id="view-help" style="display:none;">
-      <p class="page-title">Help &amp; support</p>
-      <p class="page-sub">Answers to common questions, and how to reach us.</p>
-      <div class="card">
-        <h3>How Proteva works</h3>
-        <p style="font-size:13px;color:#666;line-height:1.7;margin:0;">Proteva quietly watches over your loved one's device and stops most digital threats — scam pop-ups, phishing links, predatory apps, and remote-access attempts — automatically, before they ever reach you. For the rare situation Proteva can't fully resolve on its own, it flags it here on your dashboard with a plain-language explanation and what you can do. You're always informed, never overwhelmed.</p>
-      </div>
-      <div class="card">
-        <h3>Frequently asked questions</h3>
-        <div class="faq"><div class="faq-q" onclick="toggleFaq(this)"><span>Does Proteva read my loved one's messages?</span><span>＋</span></div><div class="faq-a">No. Proteva is noninvasive by design. It watches what the device is doing — like blocking a scam pop-up — not what your loved one is saying. It never reads private messages or tracks conversations.</div></div>
-        <div class="faq"><div class="faq-q" onclick="toggleFaq(this)"><span>Does my loved one know Proteva is installed?</span><span>＋</span></div><div class="faq-a">Yes, always. Proteva is set up together with your loved one, with their full awareness. Protecting people with dignity — never behind their back — is core to who we are.</div></div>
-        <div class="faq"><div class="faq-q" onclick="toggleFaq(this)"><span>Can Proteva be removed?</span><span>＋</span></div><div class="faq-a">Absolutely. If your loved one ever wants Proteva removed, the process is simple and immediate, and you'll be notified with calm, neutral language. We never make removal difficult.</div></div>
-        <div class="faq"><div class="faq-q" onclick="toggleFaq(this)"><span>How many people can I protect?</span><span>＋</span></div><div class="faq-a">It depends on your plan: Home covers up to 2 people, Family up to 5, and Shield up to 10. You can change plans anytime as your family's needs grow.</div></div>
-      </div>
-      <div class="card">
-        <h3>Contact us</h3>
-        <p style="font-size:13px;color:#666;line-height:1.7;margin:0;">Need a hand? Email us at <strong>hello@getproteva.com</strong> and a real person will get back to you. We're here to help your family feel safe.</p>
-      </div>
-    </section>
-
-    <!-- SCAM CHECKER -->
-    <section class="view" id="view-checker" style="display:none;">
-      <p class="page-title">Is this a scam?</p>
-      <p class="checker-intro">Got a suspicious text, email, or message? Paste it below and Proteva will check it for you -- in plain language, with what to do next. Works for anything: strange texts, "your account is locked" emails, prize notifications, calls asking for money, and more.</p>
-      <textarea class="checker-box" id="checker-input" placeholder="Paste the suspicious message here..."></textarea>
-      <button class="btn-primary checker-btn" id="checker-btn" style="width:auto;padding-left:28px;padding-right:28px;" onclick="checkScam()">Check this message</button>
-      <div class="checker-thinking" id="checker-thinking"><span class="spinner"></span> Proteva is looking at this closely...</div>
-      <div class="checker-result" id="checker-result"></div>
-      <p class="checker-disclaimer">Proteva's scam checker offers guidance to help you decide -- it's a helpful second opinion, not a guarantee. When in doubt, don't click links, don't send money, and check with someone you trust.</p>
+    <section class="view" id="view-profile" hidden><h1 tabindex="-1">Your profile</h1><p class="page-sub">The person behind your family's peace of mind.</p><div id="profile-content"></div></section>
+    <section class="view" id="view-help" hidden>
+      <h1 tabindex="-1">Here to help</h1><p class="page-sub">A few answers, and a real person when you need one.</p>
+      <div class="banner"><i data-lucide="heart-handshake"></i><div><h2>Protection with dignity</h2><p>We believe in protecting people with their family, never behind their back.</p></div></div>
+      <details class="faq"><summary>Is my loved one's device protected yet?</summary><p>Not yet. This is a working prototype of the caregiver experience. You can manage family profiles, explore sample activity, and check a message with AI. The device software that automatically detects and blocks threats is still being built.</p></details>
+      <details class="faq"><summary>Does Proteva read private messages?</summary><p>There is no background message monitoring in this prototype. The scam checker analyzes only text you choose to submit to it. Our device-protection vision is noninvasive: no reading private conversations or hidden surveillance.</p></details>
+      <details class="faq"><summary>What does archiving an item do?</summary><p>It moves the item from your overview to History. It doesn't change a threat assessment, allow an app, or take action on a device. Follow any suggested next steps before archiving an item that needs your attention.</p></details>
+      <details class="faq"><summary>Can my loved one choose not to use Proteva?</summary><p>Always. Setup must happen with their knowledge and agreement. A profile here doesn't install anything on their device. Their device, their privacy, their choice.</p></details>
+      <details class="faq"><summary>Can I change my plan?</summary><p>Subscriptions are not active in this preview. The planned Home, Family, and Shield options are shown on our website. We'll explain pricing clearly before asking you to subscribe.</p></details>
+      <div class="support"><h2>Let's talk</h2><p>Email <a href="mailto:hello@getproteva.com">hello@getproteva.com</a>. A real person will help you find the next step.</p><p><a href="/me.html">Read our introduction for your loved one</a></p></div>
     </section>
   </div></main>
 </div>
-
-<!-- ADD / EDIT MEMBER MODAL -->
-<div class="modal-bg" id="modal">
-  <div class="modal" style="max-width:440px;">
-    <h3 id="modal-title">Add a family member</h3>
-    <div class="msg error" id="modal-error"></div>
-    <div class="field"><label for="m-name">Their name</label><input type="text" id="m-name" placeholder="e.g. Rose Hagen" /></div>
-    <div class="field"><label for="m-relationship">Relationship to you</label>
-      <select id="m-relationship" onchange="onRelationshipChange()">
-        <option value="">Select…</option>
-        <option>Mother</option><option>Father</option><option>Grandmother</option><option>Grandfather</option>
-        <option>Aunt</option><option>Uncle</option><option>Spouse</option><option>Sibling</option><option>Friend</option><option>Other</option>
-      </select>
-    </div>
-    <div class="field" id="m-relationship-other-wrap" style="display:none;"><label for="m-relationship-other">Please specify</label><input type="text" id="m-relationship-other" placeholder="e.g. Neighbor, Family friend" /></div>
-    <div class="field"><label for="m-birthyear">Birth year <span style="color:#bbb;font-weight:400;">(optional)</span></label><input type="number" id="m-birthyear" placeholder="e.g. 1944" min="1900" max="2025" /></div>
-    <div class="field"><label for="m-devices">Their devices</label><input type="text" id="m-devices" placeholder="e.g. iPhone, iPad" /></div>
-    <div class="field"><label for="m-protection">Protection level</label>
-      <select id="m-protection">
-        <option value="standard">Standard — balanced protection</option>
-        <option value="extra">Extra-cautious — flags more, blocks aggressively</option>
-      </select>
-    </div>
-    <div class="field"><label for="m-notes">Notes <span style="color:#bbb;font-weight:400;">(optional)</span></label>
-      <textarea id="m-notes" placeholder="e.g. Gets confused by pop-ups. Fell for a scam last year." style="width:100%;padding:13px 15px;border:1.5px solid #ddd;border-radius:10px;font-size:15px;outline:none;font-family:inherit;resize:vertical;min-height:70px;"></textarea>
-    </div>
-    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-primary" id="save-member-btn" onclick="saveMember()">Add</button></div>
-  </div>
-</div>
-
-<!-- SIMULATE MODAL -->
-<div class="modal-bg" id="sim-modal">
-  <div class="modal">
-    <h3>Simulate a threat</h3>
-    <p style="font-size:13px;color:#888;margin:0 0 1rem;">Which family member's device did Proteva catch this on?</p>
-    <div class="field"><label for="sim-person">Family member</label><select id="sim-person"></select></div>
-    <div class="modal-actions"><button class="btn-cancel" onclick="closeSimModal()">Cancel</button><button class="btn-primary" onclick="confirmSimulate()">Simulate</button></div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const SUPABASE_URL = 'https://njjhioejdqjwpeblrewb.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qamhpb2VqZHFqd3BlYmxyZXdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTI4NTcsImV4cCI6MjA5NTQ4ODg1N30.QVR2gB5zOIg0NYjI78anipNYUFaorIrFMxw50768am4';
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  let isSignupMode = false;
-  let membersCache = [];
-  let currentPersonId = null;
-  let currentUser = null;
-
-  const THREATS = [
-    {icon:'🚫', text:'Blocked a fake "Microsoft support" pop-up', tag:'stopped',
-      why:'These pop-ups try to scare people into calling a fake "support" number, where scammers ask for remote access or payment.',
-      did:'Proteva closed the pop-up immediately and blocked the website it came from. Nothing was clicked or called.',
-      actions:'No action needed — this was fully handled. You may want to gently remind your loved one that real companies never use pop-ups like this.'},
-    {icon:'📧', text:'Caught a phishing text pretending to be from the bank', tag:'stopped',
-      why:'Scammers send fake "your account is locked" texts with links that steal banking login details.',
-      did:'Proteva disabled the dangerous link before it could be opened and flagged the sender.',
-      actions:'No action needed. If you\'d like, confirm with your loved one that they didn\'t already tap the link earlier.'},
-    {icon:'🔒', text:'Stopped an unauthorized remote-access attempt', tag:'stopped',
-      why:'Scammers often try to install remote-control apps to take over a device and access accounts or money.',
-      did:'Proteva blocked the remote-access attempt and prevented the app from connecting.',
-      actions:'No action needed — fully blocked. Worth a friendly check-in to make sure no one called your loved one claiming to be "tech support."'},
-    {icon:'📱', text:'Blocked a predatory app from installing', tag:'stopped',
-      why:'Some apps target seniors with hidden fees, data harvesting, or manipulative subscriptions.',
-      did:'Proteva stopped the app from installing and removed the download.',
-      actions:'No action needed. You can review which apps are allowed anytime in settings.'},
-    {icon:'🎣', text:'Removed a fake "IRS refund" link from a text', tag:'stopped',
-      why:'Fake government refund messages trick people into entering personal and payment information.',
-      did:'Proteva removed the malicious link and flagged the message as a scam.',
-      actions:'No action needed. The IRS never texts about refunds — a good thing to mention to your loved one.'},
-    {icon:'⚠️', text:'A new app is requesting unusual permissions', tag:'attention',
-      why:'A newly installed app is asking for access to contacts, microphone, and location together — a combination common in data-harvesting apps that target seniors.',
-      did:'Proteva paused the app before it could run and is holding it until you decide.',
-      actions:'Check with your loved one whether they meant to install this app. If yes and it seems trustworthy, you can allow it. If unsure, remove it — Proteva can do that for you.'},
-    {icon:'👁️', text:'An unfamiliar login was seen — confirming it was them', tag:'attention',
-      why:'A sign-in happened from a device or location Proteva hasn\'t seen before. This can be normal (a new phone) or a sign someone else has access.',
-      did:'Proteva flagged the login and is monitoring the account closely until it\'s confirmed.',
-      actions:'Ask your loved one if they recently signed in somewhere new. If yes, mark this resolved. If not, it\'s worth changing the password — Proteva can guide them through it.'}
-  ];
-
-  function showError(t){const e=document.getElementById('msg-error');e.textContent=t;e.style.display='block';document.getElementById('msg-success').style.display='none';}
-  function showSuccess(t){const e=document.getElementById('msg-success');e.textContent=t;e.style.display='block';document.getElementById('msg-error').style.display='none';}
-  function clearMsgs(){document.getElementById('msg-error').style.display='none';document.getElementById('msg-success').style.display='none';}
-
-  function toggleMode(){
-    isSignupMode=!isSignupMode; clearMsgs();
-    if(isSignupMode){
-      document.getElementById('auth-subtitle').textContent='Create your account to protect your family';
-      document.getElementById('auth-btn').textContent='Create account';
-      document.getElementById('toggle-text').innerHTML='Already have an account? <a onclick="toggleMode()">Sign in</a>';
-    }else{
-      document.getElementById('auth-subtitle').textContent='Welcome back — sign in to your family dashboard';
-      document.getElementById('auth-btn').textContent='Sign in';
-      document.getElementById('toggle-text').innerHTML='New to Proteva? <a onclick="toggleMode()">Create an account</a>';
-    }
-  }
-
-  async function handleAuth(){
-    const email=document.getElementById('email').value.trim();
-    const password=document.getElementById('password').value;
-    const btn=document.getElementById('auth-btn');
-    clearMsgs();
-    if(!email||!email.includes('@')){showError('Please enter a valid email address.');return;}
-    if(password.length<6){showError('Password must be at least 6 characters.');return;}
-    btn.disabled=true; btn.textContent=isSignupMode?'Creating...':'Signing in...';
-    try{
-      if(isSignupMode){
-        const {data,error}=await sb.auth.signUp({email,password});
-        if(error)throw error;
-        if(data.session){enterApp(data.session.user);}
-        else{showSuccess('Account created! Check your email to confirm, then sign in.');btn.disabled=false;toggleMode();}
-      }else{
-        const {data,error}=await sb.auth.signInWithPassword({email,password});
-        if(error)throw error;
-        enterApp(data.user);
-      }
-    }catch(err){
-      showError(err.message||'Something went wrong.');
-      btn.disabled=false; btn.textContent=isSignupMode?'Create account':'Sign in';
-    }
-  }
-
-  function enterApp(user){
-    currentUser = user;
-    document.getElementById('auth-screen').style.display='none';
-    document.getElementById('app-shell').style.display='block';
-    const email = user.email;
-    const initial = email.charAt(0).toUpperCase();
-    document.getElementById('user-initial').textContent=initial;
-    document.getElementById('account-email').textContent=email;
-    document.getElementById('dd-email').textContent=email;
-    document.getElementById('set-email').textContent=email;
-    document.getElementById('profile-email').textContent=email;
-    document.getElementById('profile-email2').textContent=email;
-    document.getElementById('profile-avatar').textContent=initial;
-    if(user.created_at){ document.getElementById('profile-since').textContent=new Date(user.created_at).toLocaleDateString(undefined,{month:'long',year:'numeric'}); }
-    go('dashboard');
-    maybeOnboard();
-  }
-
-  async function maybeOnboard(){
-    let onboarded=false;
-    try{ onboarded = localStorage.getItem('proteva_onboarded')==='1'; }catch(e){}
-    if(onboarded) return;
-    const {data}=await sb.from('protected_people').select('id').limit(1);
-    if(!data || data.length===0){ obShow(); }
-    else { try{ localStorage.setItem('proteva_onboarded','1'); }catch(e){} }
-  }
-
-  // ---- navigation ----
-  const VIEWS = ['dashboard','family','person','history','settings','profile','help','checker'];
-  function go(view){
-    VIEWS.forEach(v=>{ const el=document.getElementById('view-'+v); if(el) el.style.display = (v===view)?'block':'none'; });
-    ['dashboard','family','history','settings','help','checker'].forEach(v=>{
-      const nav=document.getElementById('nav-'+v); if(nav) nav.classList.toggle('active', v===view);
-    });
-    document.getElementById('sidebar').classList.remove('open');
-    if(view==='dashboard') loadAll();
-    if(view==='family') loadMembers();
-    if(view==='history') loadHistory();
-    if(view==='profile') loadProfile();
-  }
-
-  function toggleDropdown(e){ e.stopPropagation(); document.getElementById('dropdown').classList.toggle('open'); }
-  function closeDropdown(){ document.getElementById('dropdown').classList.remove('open'); }
-  document.addEventListener('click', ()=>closeDropdown());
-
-  function toggleFaq(el){ const a=el.nextElementSibling; a.classList.toggle('open'); el.querySelector('span:last-child').textContent = a.classList.contains('open')?'－':'＋'; }
-
-  async function loadAll(){ await Promise.all([loadMembersData(), loadFeed(), loadDigest()]); }
-
-  function timeAgo(ts){const diff=(Date.now()-new Date(ts).getTime())/1000;if(diff<60)return 'just now';if(diff<3600)return Math.floor(diff/60)+'m ago';if(diff<86400)return Math.floor(diff/3600)+'h ago';return Math.floor(diff/86400)+'d ago';}
-  function timeOnly(ts){return new Date(ts).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});}
-  function dayLabel(ts){return new Date(ts).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'});}
-  function personName(id){const m=membersCache.find(x=>x.id===id);return m?m.name:null;}
-  function escapeHtml(s){const d=document.createElement('div');d.textContent=(s===null||s===undefined)?'':s;return d.innerHTML;}
-
-  async function loadMembersData(){
-    const {data}=await sb.from('protected_people').select('*').order('created_at',{ascending:true});
-    membersCache=data||[];
-    document.getElementById('stat-people').textContent=membersCache.length;
-    return membersCache;
-  }
-
-  async function loadMembers(){
-    await loadMembersData();
-    const list=document.getElementById('member-list');
-    const {data:acts}=await sb.from('activity').select('person_id').eq('resolved',false);
-    const counts={}; (acts||[]).forEach(a=>{ if(a.person_id){counts[a.person_id]=(counts[a.person_id]||0)+1;} });
-    if(membersCache.length===0){list.innerHTML='<div class="empty">No family members yet. Add someone you want to protect.</div>';return;}
-    list.innerHTML=membersCache.map(p=>{
-      const initials=p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
-      const c=counts[p.id]||0;
-      let sub;
-      if(c>0){ sub = c+' active item'+(c>1?'s':''); }
-      else {
-        const bits=[];
-        if(p.relationship) bits.push(escapeHtml(p.relationship));
-        const dev = p.devices || p.device;
-        if(dev) bits.push(escapeHtml(dev));
-        sub = bits.length ? bits.join(' · ') : 'protected';
-      }
-      const badge = c>0 ? '<span class="m-badge" style="background:#E6F1FB;color:#185FA5;">'+c+' active</span>' : '<span class="m-badge">✓ Protected</span>';
-      return '<div class="member" onclick="showPerson(\''+p.id+'\')"><span class="m-avatar">'+initials+'</span>'+
-        '<div class="m-info"><p class="m-name">'+escapeHtml(p.name)+'</p><p class="m-detail">'+sub+'</p></div>'+badge+
-        '<button class="m-edit" onclick="event.stopPropagation();openEdit(\''+p.id+'\')" title="Edit">✎</button>'+
-        '<button class="m-delete" onclick="event.stopPropagation();deleteMember(\''+p.id+'\')" title="Remove">×</button></div>';
-    }).join('');
-  }
-
-  function detailHtml(a){
-    if(!a.detail_why && !a.detail_did && !a.detail_actions) return '';
-    let h='<div class="detail" id="detail-'+a.id+'">';
-    if(a.detail_why){h+='<div class="detail-block"><p class="detail-label">What happened</p><p class="detail-text">'+escapeHtml(a.detail_why)+'</p></div>';}
-    if(a.detail_did){h+='<div class="detail-block"><p class="detail-label">What Proteva did</p><p class="detail-text">'+escapeHtml(a.detail_did)+'</p></div>';}
-    if(a.detail_actions){h+='<div class="detail-block"><p class="detail-label">What you can do</p><p class="detail-text">'+escapeHtml(a.detail_actions)+'</p></div>';}
-    h+='</div>'; return h;
-  }
-
-  function activeItemHtml(a, showPersonName){
-    const tagHtml = a.tag==='stopped' ? '<span class="feed-tag stopped">Handled</span>' : '<span class="feed-tag attention">Your input</span>';
-    const hasDetail = a.detail_why || a.detail_did || a.detail_actions;
-    const pname = showPersonName ? personName(a.person_id) : null;
-    let inner='<p class="feed-text">'+escapeHtml(a.text)+'</p>';
-    if(pname){ inner+='<p class="feed-person">on '+escapeHtml(pname)+'\'s device</p>'; }
-    inner+='<p class="feed-meta">'+timeAgo(a.created_at)+(a.tag==='stopped'?' · handled automatically':'')+'</p>';
-    if(hasDetail){ inner+='<button class="expand-btn" onclick="toggleDetail(\''+a.id+'\',this)">See details ▾</button>'; }
-    inner+=detailHtml(a);
-    return '<div class="feed-item"><div class="feed-row"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+inner+'</div>'+
-      '<div class="right-stack">'+tagHtml+'<button class="feed-x" onclick="archiveItem(\''+a.id+'\')" title="Clear from dashboard">×</button></div></div></div>';
-  }
-
-  async function loadDigest(){
-    const el=document.getElementById('digest');
-    const weekAgo=new Date(Date.now()-7*24*60*60*1000).toISOString();
-    const {data,error}=await sb.from('activity').select('*').gte('created_at',weekAgo);
-    if(error){ el.style.display='none'; return; }
-    el.style.display='block';
-    const now=new Date();
-    const start=new Date(Date.now()-6*24*60*60*1000);
-    const fmt=(d)=>d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
-    const range=fmt(start)+' – '+fmt(now);
-
-    if(!data || data.length===0){
-      el.innerHTML='<div class="digest-head"><h3>This week with Proteva</h3><span class="digest-range">'+range+'</span></div>'+
-        '<p class="digest-empty">All quiet this week — Proteva has been watching over your family, and nothing needed your attention. That\'s exactly how it should be. 💚</p>';
-      return;
-    }
-    const stopped=data.filter(a=>a.tag==='stopped').length;
-    const flagged=data.filter(a=>a.tag==='attention').length;
-    const resolved=data.filter(a=>a.resolved).length;
-    const people=new Set(data.filter(a=>a.person_id).map(a=>a.person_id)).size;
-
-    let hero;
-    if(stopped>0){
-      hero='<strong>Proteva stopped '+stopped+' threat'+(stopped>1?'s':'')+'</strong> for your family this week'+(people>0?' across '+people+' '+(people>1?'people':'person'):'')+' — quietly, before '+(stopped>1?'they':'it') +' could cause any harm.';
-    } else {
-      hero='Proteva kept watch over your family this week. '+(flagged>0?'A few things needed a look, and you handled them.':'Everything stayed calm.');
-    }
-
-    el.innerHTML='<div class="digest-head"><h3>This week with Proteva</h3><span class="digest-range">'+range+'</span></div>'+
-      '<p class="digest-hero">'+hero+'</p>'+
-      '<div class="digest-grid">'+
-      '<div class="digest-stat"><div class="dnum">'+stopped+'</div><div class="dlabel">threats stopped automatically</div></div>'+
-      '<div class="digest-stat"><div class="dnum">'+flagged+'</div><div class="dlabel">flagged for your input</div></div>'+
-      '<div class="digest-stat"><div class="dnum">'+resolved+'</div><div class="dlabel">items you cleared</div></div>'+
-      '</div>';
-  }
-
-  async function loadFeed(){
-    const feed=document.getElementById('feed');
-    const {data,error}=await sb.from('activity').select('*').eq('resolved',false).order('created_at',{ascending:false}).limit(20);
-    if(error){feed.innerHTML='<div class="empty">Could not load activity.</div>';updateBanner(0,0);return;}
-    const stopped=data.filter(a=>a.tag==='stopped').length;
-    const attention=data.filter(a=>a.tag==='attention').length;
-    document.getElementById('stat-stopped').textContent=stopped;
-    document.getElementById('stat-attention').textContent=attention;
-    updateBanner(stopped, attention);
-    if(data.length===0){feed.innerHTML='<div class="empty">Nothing to report right now. Proteva is watching quietly.<br>When it catches something, you\'ll see it here.</div>';return;}
-    feed.innerHTML='<div class="feed">'+data.map(a=>activeItemHtml(a,true)).join('')+'</div>';
-  }
-
-  function toggleDetail(id, btn){const d=document.getElementById('detail-'+id);if(!d)return;const open=d.classList.toggle('open');btn.textContent=open?'Hide details ▴':'See details ▾';}
-
-  function historyItemHtml(a){
-    const hasDetail = a.detail_why || a.detail_did || a.detail_actions;
-    let inner='<p class="feed-text">'+escapeHtml(a.text)+'</p><p class="feed-meta">'+timeOnly(a.created_at)+'</p>';
-    if(hasDetail){ inner+='<button class="expand-btn" onclick="toggleDetail(\''+a.id+'\',this)">See details ▾</button>'+detailHtml(a); }
-    return '<div class="feed-item"><div class="feed-row"><span class="feed-icon">'+a.icon+'</span><div class="feed-body">'+inner+'</div><span class="feed-tag resolved">Cleared</span></div></div>';
-  }
-  function groupByDay(data, feedEl, emptyMsg){
-    if(!data || data.length===0){feedEl.innerHTML='<div class="empty">'+emptyMsg+'</div>';return;}
-    const groups={}; const order=[];
-    data.forEach(a=>{const key=dayLabel(a.created_at);if(!groups[key]){groups[key]=[];order.push(key);}groups[key].push(a);});
-    let html=''; order.forEach(day=>{html+='<div class="date-header">'+day+'</div><div class="feed">'+groups[day].map(historyItemHtml).join('')+'</div>';});
-    feedEl.innerHTML=html;
-  }
-  async function loadHistory(){
-    const feed=document.getElementById('history-feed');
-    feed.innerHTML='<div class="empty">Loading...</div>';
-    const {data,error}=await sb.from('activity').select('*').eq('resolved',true).order('created_at',{ascending:false}).limit(100);
-    if(error){feed.innerHTML='<div class="empty">Could not load history.</div>';return;}
-    groupByDay(data, feed, 'No history yet.<br>When you clear an item with the × button, it\'ll be filed here by date.');
-  }
-
-  async function showPerson(id){
-    currentPersonId=id;
-    go('person');
-    const p=membersCache.find(x=>x.id===id);
-    const initials=p?p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase():'?';
-    let heroBits=[];
-    if(p&&p.relationship) heroBits.push(escapeHtml(p.relationship));
-    if(p&&p.birth_year){ const age=new Date().getFullYear()-p.birth_year; heroBits.push(age+' years old'); }
-    const dev = p&&(p.devices||p.device);
-    if(dev) heroBits.push(escapeHtml(dev));
-    const protchip = (p&&p.protection_level==='extra') ? '<span class="m-badge" style="background:#FAEEDA;color:#854F0B;margin-left:8px;">Extra-cautious</span>' : '<span class="m-badge" style="margin-left:8px;">Standard</span>';
-    let heroHtml='<span class="m-avatar">'+initials+'</span><div style="flex:1;"><h2>'+escapeHtml(p?p.name:'')+protchip+'</h2><p>'+(heroBits.length?heroBits.join(' · '):'protected by Proteva')+'</p>';
-    if(p&&p.notes){ heroHtml+='<p style="margin-top:8px;font-size:13px;color:#666;background:#F7FBF9;border:1px solid #E1F0EA;border-radius:8px;padding:8px 12px;"><strong style="color:#0F6E56;">Note:</strong> '+escapeHtml(p.notes)+'</p>'; }
-    heroHtml+='<button class="btn-outline" style="margin-top:10px;padding:6px 12px;font-size:13px;" onclick="openEdit(\''+id+'\')">Edit details</button></div>';
-    document.getElementById('person-hero').innerHTML=heroHtml;
-    const act=document.getElementById('person-active'); const hist=document.getElementById('person-history');
-    act.innerHTML='<div class="empty">Loading...</div>'; hist.innerHTML='';
-    const {data:activeData}=await sb.from('activity').select('*').eq('person_id',id).eq('resolved',false).order('created_at',{ascending:false});
-    if(!activeData||activeData.length===0){act.innerHTML='<div class="empty">Nothing active for '+escapeHtml(p?p.name:'this person')+' right now. All clear. ✓</div>';}
-    else{act.innerHTML='<div class="feed">'+activeData.map(a=>activeItemHtml(a,false)).join('')+'</div>';}
-    const {data:histData}=await sb.from('activity').select('*').eq('person_id',id).eq('resolved',true).order('created_at',{ascending:false}).limit(100);
-    groupByDay(histData||[], hist, 'No history yet for this person.');
-  }
-
-  function updateBanner(stopped, attention){
-    const banner=document.getElementById('banner');const icon=document.getElementById('banner-icon');const title=document.getElementById('banner-title');const sub=document.getElementById('banner-sub');
-    if(attention>0){banner.className='banner active';icon.textContent='👁️';title.textContent=attention+' item'+(attention>1?'s need':' needs')+' your input';sub.textContent='Proteva handled everything else automatically';}
-    else{banner.className='banner calm';icon.textContent='🛡️';title.textContent='Everyone is safe today';sub.textContent=stopped>0?'Proteva stopped '+stopped+' threat'+(stopped>1?'s':'')+' for you — nothing needs your attention':'Proteva is watching quietly over your family';}
-  }
-
-  async function archiveItem(id){
-    await sb.from('activity').update({resolved:true}).eq('id',id);
-    if(currentPersonId && document.getElementById('view-person').style.display==='block'){showPerson(currentPersonId);}
-    else {loadFeed();}
-  }
-
-  function simulateThreat(){
-    if(membersCache.length===0){ alert('Add a family member first (Family tab), then simulate a threat on their device.'); return; }
-    const sel=document.getElementById('sim-person');
-    sel.innerHTML=membersCache.map(m=>'<option value="'+m.id+'">'+escapeHtml(m.name)+'</option>').join('');
-    document.getElementById('sim-modal').style.display='flex';
-  }
-  function closeSimModal(){document.getElementById('sim-modal').style.display='none';}
-  async function confirmSimulate(){
-    const personId=document.getElementById('sim-person').value;
-    const t=THREATS[Math.floor(Math.random()*THREATS.length)];
-    await sb.from('activity').insert([{icon:t.icon, text:t.text, tag:t.tag, detail_why:t.why, detail_did:t.did, detail_actions:t.actions, person_id:personId}]);
-    closeSimModal(); loadFeed();
-  }
-
-  let editingId = null;
-  function onRelationshipChange(){
-    const sel=document.getElementById('m-relationship');
-    const wrap=document.getElementById('m-relationship-other-wrap');
-    wrap.style.display = (sel.value==='Other') ? 'block' : 'none';
-  }
-  const REL_PRESETS = ['Mother','Father','Grandmother','Grandfather','Aunt','Uncle','Spouse','Sibling','Friend'];
-  function fillForm(p){
-    document.getElementById('m-name').value = p ? (p.name||'') : '';
-    const rel = p ? (p.relationship||'') : '';
-    const relSel=document.getElementById('m-relationship');
-    const otherWrap=document.getElementById('m-relationship-other-wrap');
-    const otherInput=document.getElementById('m-relationship-other');
-    if(rel && !REL_PRESETS.includes(rel)){ relSel.value='Other'; otherWrap.style.display='block'; otherInput.value=rel; }
-    else { relSel.value=rel; otherWrap.style.display='none'; otherInput.value=''; }
-    document.getElementById('m-birthyear').value = p ? (p.birth_year||'') : '';
-    document.getElementById('m-devices').value = p ? (p.devices||p.device||'') : '';
-    document.getElementById('m-protection').value = p ? (p.protection_level||'standard') : 'standard';
-    document.getElementById('m-notes').value = p ? (p.notes||'') : '';
-  }
-  function openModal(){
-    editingId=null;
-    document.getElementById('modal-title').textContent='Add a family member';
-    document.getElementById('save-member-btn').textContent='Add';
-    fillForm(null);
-    document.getElementById('modal-error').style.display='none';
-    document.getElementById('modal').style.display='flex';
-  }
-  function openEdit(id){
-    const p=membersCache.find(x=>x.id===id); if(!p)return;
-    editingId=id;
-    document.getElementById('modal-title').textContent='Edit family member';
-    document.getElementById('save-member-btn').textContent='Save changes';
-    fillForm(p);
-    document.getElementById('modal-error').style.display='none';
-    document.getElementById('modal').style.display='flex';
-  }
-  function closeModal(){document.getElementById('modal').style.display='none';}
-  async function saveMember(){
-    const name=document.getElementById('m-name').value.trim();
-    let relationship=document.getElementById('m-relationship').value||null;
-    if(relationship==='Other'){ const custom=document.getElementById('m-relationship-other').value.trim(); relationship = custom || 'Other'; }
-    const byRaw=document.getElementById('m-birthyear').value.trim();
-    const birth_year=byRaw?parseInt(byRaw,10):null;
-    const devices=document.getElementById('m-devices').value.trim()||null;
-    const protection_level=document.getElementById('m-protection').value||'standard';
-    const notes=document.getElementById('m-notes').value.trim()||null;
-    const btn=document.getElementById('save-member-btn');const err=document.getElementById('modal-error');err.style.display='none';
-    if(!name){err.textContent='Please enter a name.';err.style.display='block';return;}
-    if(birth_year!==null && (isNaN(birth_year)||birth_year<1900||birth_year>new Date().getFullYear())){err.textContent='Please enter a valid birth year.';err.style.display='block';return;}
-    btn.disabled=true;btn.textContent=editingId?'Saving...':'Adding...';
-    const payload={name,relationship,birth_year,devices,protection_level,notes};
-    try{
-      let error;
-      if(editingId){ ({error}=await sb.from('protected_people').update(payload).eq('id',editingId)); }
-      else { ({error}=await sb.from('protected_people').insert([payload])); }
-      if(error)throw error;
-      closeModal();
-      if(editingId && document.getElementById('view-person').style.display==='block'){ await loadMembersData(); showPerson(editingId); }
-      else { loadMembers(); }
-    }catch(e){ err.textContent='Could not save. Please try again.';err.style.display='block'; }
-    btn.disabled=false;btn.textContent=editingId?'Save changes':'Add';
-  }
-  async function deleteMember(id){await sb.from('protected_people').delete().eq('id',id);loadMembers();}
-
-  async function loadProfile(){
-    await loadMembersData();
-    document.getElementById('profile-count').textContent=membersCache.length;
-  }
-
-  async function changePassword(){
-    const pw=document.getElementById('new-pw').value;
-    const err=document.getElementById('pw-error');const ok=document.getElementById('pw-success');const btn=document.getElementById('pw-btn');
-    err.style.display='none';ok.style.display='none';
-    if(pw.length<6){err.textContent='Password must be at least 6 characters.';err.style.display='block';return;}
-    btn.disabled=true;btn.textContent='Updating...';
-    const {error}=await sb.auth.updateUser({password:pw});
-    if(error){err.textContent=error.message||'Could not update password.';err.style.display='block';}
-    else{ok.textContent='Password updated successfully.';ok.style.display='block';document.getElementById('new-pw').value='';}
-    btn.disabled=false;btn.textContent='Update password';
-  }
-
-  async function handleLogout(){
-    await sb.auth.signOut();
-    currentUser=null;
-    document.getElementById('app-shell').style.display='none';
-    document.getElementById('auth-screen').style.display='flex';
-    document.getElementById('email').value='';document.getElementById('password').value='';
-    document.getElementById('auth-btn').disabled=false;document.getElementById('auth-btn').textContent=isSignupMode?'Create account':'Sign in';
-    clearMsgs();
-  }
-
-
-  // ---------- ONBOARDING ----------
-  let obStep = 0;
-  let obFirstName = '';
-  function obShow(){
-    obStep=0; obRender();
-    document.getElementById('onboarding').style.display='block';
-  }
-  function obRender(){
-    for(let i=0;i<4;i++){ const el=document.getElementById('ob-step-'+i); if(el) el.style.display=(i===obStep)?'block':'none'; }
-    document.querySelectorAll('.ob-dot').forEach((d,i)=>d.classList.toggle('active', i===obStep));
-  }
-  function obNext(){ if(obStep<3){obStep++;obRender();} }
-  function obPrev(){ if(obStep>0){obStep--;obRender();} }
-  function obRelChange(){
-    const sel=document.getElementById('ob-relationship');
-    document.getElementById('ob-rel-other-wrap').style.display=(sel.value==='Other')?'block':'none';
-  }
-  async function obAddPerson(){
-    const name=document.getElementById('ob-name').value.trim();
-    let relationship=document.getElementById('ob-relationship').value||null;
-    if(relationship==='Other'){ const c=document.getElementById('ob-relationship-other').value.trim(); relationship=c||'Other'; }
-    const devices=document.getElementById('ob-devices').value.trim()||null;
-    const btn=document.getElementById('ob-add-btn');const err=document.getElementById('ob-error');err.style.display='none';
-    if(!name){err.textContent='Please enter their name.';err.style.display='block';return;}
-    btn.disabled=true;btn.textContent='Adding...';
-    try{
-      const {error}=await sb.from('protected_people').insert([{name,relationship,devices,protection_level:'standard'}]);
-      if(error)throw error;
-      obFirstName=name.split(' ')[0];
-      document.getElementById('ob-done-msg').textContent='Proteva is now watching quietly over '+obFirstName+'. You can rest a little easier.';
-      obStep=3; obRender();
-    }catch(e){ err.textContent='Could not add. Please try again.';err.style.display='block'; }
-    btn.disabled=false;btn.textContent='Add & continue';
-  }
-  function obFinish(skipped){
-    document.getElementById('onboarding').style.display='none';
-    try{ localStorage.setItem('proteva_onboarded', '1'); }catch(e){}
-    go('dashboard');
-  }
-
-
-  // ---------- SCAM CHECKER (AI) ----------
-  async function checkScam(){
-    var input=document.getElementById('checker-input').value.trim();
-    var btn=document.getElementById('checker-btn');
-    var thinking=document.getElementById('checker-thinking');
-    var resultEl=document.getElementById('checker-result');
-    resultEl.classList.remove('show'); resultEl.innerHTML='';
-    if(input.length<3){ resultEl.classList.add('show'); resultEl.innerHTML='<div class="verdict caution"><p>Please paste a message first so Proteva can check it.</p></div>'; return; }
-    btn.disabled=true; thinking.classList.add('show');
-
-    try{
-      var response = await fetch("/api/check-scam", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input })
-      });
-      var data = await response.json();
-      if(!response.ok){ throw new Error(data && data.error ? data.error : 'request failed'); }
-      var text = (data.text||'').trim();
-      text = text.replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
-      var parsed;
-      try { parsed = JSON.parse(text); }
-      catch(e){ parsed = { verdict:'caution', headline:'Please double-check this one', why:text||'Proteva had trouble reading this message clearly.', whatToDo:"When unsure, don't click any links or send money, and check with someone you trust." }; }
-      renderScamResult(parsed);
-    }catch(err){
-      resultEl.classList.add('show');
-      resultEl.innerHTML='<div class="verdict caution"><p class="verdict-label">Couldn\'t check right now</p><p>Something went wrong reaching Proteva\'s checker. Please try again in a moment. In the meantime, if a message asks you to click a link, send money, or share personal details, it\'s safest to treat it as suspicious.</p></div>';
-    }
-    btn.disabled=false; thinking.classList.remove('show');
-  }
-
-  function renderScamResult(r){
-    var resultEl=document.getElementById('checker-result');
-    var v=(r.verdict||'caution').toLowerCase();
-    var icon = v==='danger' ? '\u26A0\uFE0F' : (v==='safe' ? '\u2705' : '\uD83D\uDD0E');
-    var label = r.headline || (v==='danger'?'This looks like a scam':(v==='safe'?'This looks okay':'Be careful with this one'));
-    var cls = v==='danger'?'danger':(v==='safe'?'safe':'caution');
-    var html='<div class="verdict '+cls+'"><p class="verdict-label">'+icon+' '+escapeHtml(label)+'</p></div>';
-    if(r.why){ html+='<div class="result-block"><h4>Why Proteva thinks this</h4><p>'+escapeHtml(r.why)+'</p></div>'; }
-    if(r.whatToDo){ html+='<div class="result-block"><h4>What you can do</h4><p>'+escapeHtml(r.whatToDo)+'</p></div>'; }
-    resultEl.innerHTML=html; resultEl.classList.add('show');
-  }
-
-
-  // ---------- DARK MODE ----------
-  function applyTheme(dark){
-    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    var t=document.getElementById('theme-toggle'); if(t) t.checked=dark;
-    try{ localStorage.setItem('proteva_theme', dark ? 'dark':'light'); }catch(e){}
-  }
-  function toggleTheme(){
-    var t=document.getElementById('theme-toggle');
-    applyTheme(t && t.checked);
-  }
-  (function initTheme(){
-    var saved='light';
-    try{ saved=localStorage.getItem('proteva_theme')||'light'; }catch(e){}
-    applyTheme(saved==='dark');
-  })();
-
-  async function checkSession(){const {data}=await sb.auth.getSession();if(data.session){enterApp(data.session.user);}}
-  checkSession();
-</script>
-
+<dialog id="member-dialog" aria-labelledby="member-title">
+  <form id="member-form">
+    <div class="dialog-head"><h2 id="member-title">Add a family member</h2><button class="icon-btn" type="button" data-close="member-dialog" aria-label="Close family member form" title="Close"><i data-lucide="x"></i></button></div>
+    <p class="page-sub">Start with a few details. Set up together with their knowledge.</p>
+    <div id="member-message" class="message" role="alert" hidden></div>
+    <div class="field"><label for="member-name">Their name</label><input id="member-name" autocomplete="off" required maxlength="100" placeholder="e.g. Rose"></div>
+    <div class="field"><label for="member-relationship">Relationship <span class="optional">(optional)</span></label><select id="member-relationship"><option value="">Choose a relationship</option><option>Mother</option><option>Father</option><option>Grandmother</option><option>Grandfather</option><option>Aunt</option><option>Uncle</option><option>Spouse</option><option>Sibling</option><option>Friend</option><option>Other</option></select></div>
+    <div class="field" id="relationship-other-field" hidden><label for="member-other">Relationship to you</label><input id="member-other" maxlength="80" placeholder="e.g. Neighbor"></div>
+    <div class="field"><label for="member-devices">Devices <span class="optional">(optional)</span></label><input id="member-devices" maxlength="160" placeholder="e.g. iPhone, iPad"></div>
+    <div class="form-grid"><div class="field"><label for="member-birthyear">Birth year <span class="optional">(optional)</span></label><input id="member-birthyear" type="number" min="1900" step="1" placeholder="e.g. 1944"></div>
+    <div class="field"><label for="member-protection">Protection preference</label><select id="member-protection"><option value="standard">Standard</option><option value="extra">Extra cautious</option></select></div></div>
+    <p class="help-text">Saved for future setup. Protection preferences don't change a device in this preview.</p>
+    <div class="field"><label for="member-notes">Notes <span class="optional">(optional)</span></label><textarea id="member-notes" rows="3" maxlength="1000" placeholder="Anything helpful for setting up together."></textarea><p class="help-text">Keep passwords and sensitive financial details out of notes.</p></div>
+    <div class="dialog-actions"><button class="btn btn-secondary" type="button" data-close="member-dialog">Cancel</button><button class="btn btn-primary" id="save-member-btn" type="submit">Add family member</button></div>
+  </form>
+</dialog>
+<dialog id="delete-dialog" aria-labelledby="delete-title"><h2 id="delete-title">Remove family member?</h2><p id="delete-description" class="page-sub"></p><div id="delete-message" class="message" role="alert" hidden></div><div class="dialog-actions"><button class="btn btn-secondary" data-close="delete-dialog">Keep member</button><button class="btn btn-danger" id="delete-confirm">Remove member</button></div></dialog>
+<dialog id="simulation-dialog" aria-labelledby="simulation-title"><form id="simulation-form"><h2 id="simulation-title">Explore a sample event</h2><p class="page-sub">See how Proteva will explain a threat. This creates a clearly labeled demonstration, not a real device event.</p><div id="simulation-message" class="message" role="alert" hidden></div><div class="field"><label for="simulation-person">Family member</label><select id="simulation-person" required></select></div><div class="dialog-actions"><button class="btn btn-secondary" type="button" data-close="simulation-dialog">Cancel</button><button class="btn btn-primary" id="simulation-btn">Create sample</button></div></form></dialog>
+<dialog id="onboarding-dialog" class="onboarding" aria-labelledby="onboarding-title">
+  <p class="eyebrow" id="onboarding-step-label">Step 1 of 4</p>
+  <div class="ob-progress" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+  <div id="onboarding-content"></div>
+</dialog>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<noscript><p class="message error">Please enable JavaScript to use your caregiver dashboard.</p></noscript>
 </body>
 </html>
