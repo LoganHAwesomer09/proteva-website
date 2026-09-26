@@ -327,3 +327,9 @@ dialog .page-sub { font-size: 14px; margin-bottom: 24px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* Scam checker: photo attachment */
+.checker-photo { margin-top: 16px; }
+.checker-photo .help-text { margin-top: 8px; }
+.checker-photo-preview { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.checker-thumb { max-width: 260px; max-height: 260px; border-radius: 12px; border: 1px solid var(--line); object-fit: contain; }

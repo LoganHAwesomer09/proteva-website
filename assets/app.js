@@ -9,6 +9,7 @@ const containers = {dashboard:'dashboard-content',family:'member-list',person:'p
 const pending = new Set();
 let activeCounts = {};
 let checkerController;
+let checkerImage = null; // { media_type, data } for an attached photo, or null
 const relationshipOptions = '<option value="">Choose a relationship</option>' + ['Mother','Father','Grandmother','Grandfather','Aunt','Uncle','Spouse','Sibling','Friend','Other'].map(x=>'<option>'+x+'</option>').join('');
 
 function scoped(table) {
@@ -162,7 +163,7 @@ function clearSession() {
   checkerController?.abort();
   for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
   for (const id of Object.values(containers)) $(id).replaceChildren();
-  $('checker-result').replaceChildren(); $('checker-input').value=''; $('checker-count').textContent='0 / 4,000 characters';
+  $('checker-result').replaceChildren(); $('checker-input').value=''; $('checker-count').textContent='0 / 4,000 characters'; clearCheckerImage();
   for (const id of ['auth-form','member-form','password-form']) $(id).reset();
   for (const id of ['account-email','settings-email','user-initial']) $(id).textContent='';
   $('onboarding-content').replaceChildren(); $('delete-description').textContent='';
@@ -413,21 +414,22 @@ async function checkScam(event) {
   const form=event.currentTarget, epoch=state.epoch;
   if (form.getAttribute('aria-busy')==='true') return;
   const input=$('checker-input').value.trim();
-  if (input.length<3 || input.length>4000) return;
+  // Allow submitting with text, an image, or both. Block only if neither is present.
+  if ((input.length<3 || input.length>4000) && !checkerImage) return;
   busy(form,true); $('checker-thinking').hidden=false; $('checker-result').replaceChildren();
   checkerController=new AbortController();
   const timeout=setTimeout(()=>checkerController?.abort(),35000);
   try {
     const {data,error}=await sb.auth.getSession();
     if (error || !data.session) throw new Error('Please sign in again to check a message.');
-    const response=await fetch('/api/check-scam',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+data.session.access_token},body:JSON.stringify({message:input}),signal:checkerController.signal});
+    const response=await fetch('/api/check-scam',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+data.session.access_token},body:JSON.stringify(checkerImage?{message:input,image:checkerImage}:{message:input}),signal:checkerController.signal});
     const parsed=await response.json();
     if (!response.ok) throw new Error(response.status===429?'You\u2019ve made several checks. Please wait a minute and try again.':response.status===401?'Please sign in again to check a message.':'The checker is unavailable right now. Please try again in a moment.');
     if (epoch!==state.epoch) return;
     const r=parsed.result;
     if (!r || !['danger','caution','safe'].includes(r.verdict) || !['headline','why','whatToDo'].every(k=>typeof r[k]==='string')) throw new Error('We couldn\u2019t read the result. Please try again.');
     $('checker-result').innerHTML='<div class="verdict '+r.verdict+'"><h2>'+esc(r.verdict==='safe'?'No obvious warning signs':r.headline)+'</h2></div><section class="result-section"><h3>What we noticed</h3><p>'+esc(r.why)+'</p></section><section class="result-section"><h3>Your next step</h3><p>'+esc(r.whatToDo)+'</p></section>'+(r.verdict==='safe'?'<p class="help-text">This does not verify who sent the message or whether a link is safe. Confirm independently before sharing information or money.</p>':'');
-    $('checker-result').focus();
+    $('checker-result').focus(); clearCheckerImage();
   } catch(error) {
     if (epoch===state.epoch) $('checker-result').innerHTML='<div class="message error" role="alert"><strong>We couldn\u2019t check this message.</strong><p>'+esc(error.name==='AbortError'?'The check took too long. Please try again.':error.message)+'</p><p>Avoid links or payments until you can verify the request independently.</p></div>';
   } finally { clearTimeout(timeout); busy(form,false); $('checker-thinking').hidden=true; }
@@ -478,6 +480,37 @@ $('delete-confirm').addEventListener('click',deleteMember);
 $('simulation-form').addEventListener('submit',simulate);
 $('checker-form').addEventListener('submit',checkScam);
 $('checker-input').addEventListener('input',()=>{ $('checker-count').textContent=$('checker-input').value.length.toLocaleString()+' / 4,000 characters'; });
+// ---- Scam checker: photo attachment ----
+function clearCheckerImage() {
+  checkerImage=null;
+  const inp=$('checker-photo-input'); if (inp) inp.value='';
+  const prev=$('checker-photo-preview'); if (prev) { prev.replaceChildren(); prev.hidden=true; }
+}
+async function handleCheckerPhoto(event) {
+  const file=event.target.files && event.target.files[0];
+  if (!file) return;
+  const okTypes=['image/jpeg','image/png','image/gif','image/webp'];
+  const msg=$('checker-result');
+  if (!okTypes.includes(file.type)) { msg.innerHTML='<div class="message error" role="alert"><strong>That file type isn\u2019t supported.</strong><p>Please choose a JPG, PNG, GIF, or WEBP image.</p></div>'; event.target.value=''; return; }
+  if (file.size > 5*1024*1024) { msg.innerHTML='<div class="message error" role="alert"><strong>That image is a bit too large.</strong><p>Please choose an image under 5MB.</p></div>'; event.target.value=''; return; }
+  const dataUrl=await new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(r.result); r.onerror=()=>reject(new Error('read failed')); r.readAsDataURL(file); }).catch(()=>null);
+  if (!dataUrl || typeof dataUrl!=='string' || dataUrl.indexOf(',')===-1) { event.target.value=''; return; }
+  checkerImage={ media_type:file.type, data:dataUrl.slice(dataUrl.indexOf(',')+1) };
+  const prev=$('checker-photo-preview');
+  if (prev) {
+    prev.replaceChildren();
+    const img=document.createElement('img'); img.src=dataUrl; img.alt='Selected image preview'; img.className='checker-thumb';
+    const remove=document.createElement('button'); remove.type='button'; remove.className='btn btn-quiet'; remove.textContent='Remove photo'; remove.addEventListener('click',clearCheckerImage);
+    prev.append(img,remove); prev.hidden=false;
+  }
+}
+{
+  const photoInput=$('checker-photo-input');
+  const photoBtn=$('checker-photo-btn');
+  if (photoInput) photoInput.addEventListener('change',handleCheckerPhoto);
+  if (photoBtn && photoInput) photoBtn.addEventListener('click',()=>photoInput.click());
+}
+
 $('onboarding-dialog').addEventListener('submit',event=>{ if (event.target.id==='onboarding-form') onboardAdd(event); });
 $('onboarding-dialog').addEventListener('cancel',event=>{ event.preventDefault(); finishOnboarding(); });
 for (const dialog of document.querySelectorAll('dialog:not(#onboarding-dialog)')) {
