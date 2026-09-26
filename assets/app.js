@@ -81,6 +81,35 @@ function historyHtml(rows) {
   }
   return [...groups].map(([day, items])=>'<h2 class="date-header">'+esc(day)+'</h2><div class="feed">'+items.map(item=>feedItem(item,true)).join('')+'</div>').join('');
 }
+
+async function scamChecks() {
+  const {data}=await result(sb.from('scam_checks').select('*').eq('user_id',state.user.id).order('created_at',{ascending:false}).limit(100));
+  return data || [];
+}
+function scamCheckItem(check) {
+  const label = check.verdict==='danger' ? 'Scam' : check.verdict==='safe' ? 'Looked okay' : 'Caution';
+  const tagClass = check.verdict==='danger' ? 'attention' : check.verdict==='safe' ? '' : 'attention';
+  const what = check.was_photo && (!check.snippet || check.snippet==='(photo checked)') ? 'A photo was checked' : ('\u201c'+ (check.snippet||'') +'\u201d');
+  const details = [['What we noticed',check.why],['Your next step',check.what_to_do]].filter(([,t])=>t);
+  return '<article class="feed-item"><div class="feed-row"><span class="event-icon">'+icon('search-check')+'</span><div class="feed-body"><p class="feed-text">'+esc(check.headline || 'Scam check')+'</p><p class="feed-meta">Scam check \u00b7 '+esc(what)+' \u00b7 '+esc(dateLabel(check.created_at,true))+'</p><div class="feed-status"><span class="pill '+tagClass+'">'+esc(label)+'</span></div>' +
+    (details.length ? '<details><summary>See details</summary><div class="detail">'+details.map(([title,text])=>'<h3>'+title+'</h3><p>'+esc(text)+'</p>').join('')+'</div></details>' : '') +
+    '</div></div></article>';
+}
+// Merge archived activity + scam checks into one date-grouped timeline.
+function combinedHistoryHtml(activityRows, checkRows) {
+  const items = [];
+  for (const row of activityRows) items.push({ when: row.created_at, kind:'activity', row });
+  for (const c of checkRows) items.push({ when: c.created_at, kind:'check', row:c });
+  if (!items.length) return empty('Nothing archived yet', 'Items you archive and scam checks you run will be kept here, organized by date.');
+  items.sort((a,b)=> new Date(b.when) - new Date(a.when));
+  const groups = new Map();
+  for (const it of items) {
+    const day = dateLabel(it.when);
+    if (!groups.has(day)) groups.set(day, []);
+    groups.get(day).push(it);
+  }
+  return [...groups].map(([day, list])=>'<h2 class="date-header">'+esc(day)+'</h2><div class="feed">'+list.map(it=> it.kind==='check' ? scamCheckItem(it.row) : feedItem(it.row,true)).join('')+'</div>').join('');
+}
 function memberEmpty() {
   return empty('A place for the people you love', 'Add your first family member when you are ready to set up together.', '<button class="btn btn-primary" data-action="add-member">'+icon('plus')+'Add family member</button>');
 }
@@ -123,7 +152,7 @@ async function loadView() {
     if (view==='family') html = await familyHtml();
     if (view==='person') html = await personHtml();
     if (view==='profile') html = await profileHtml();
-    if (view==='history') { const [, records] = await Promise.all([members(),activity(true)]); html=historyHtml(records.rows)+moreButton(records.more); }
+    if (view==='history') { const [, records, checks] = await Promise.all([members(),activity(true),scamChecks()]); html=combinedHistoryHtml(records.rows, checks)+moreButton(records.more); }
     if (request!==state.request || epoch!==state.epoch) return;
     target.innerHTML = html;
   } catch (error) {
@@ -429,7 +458,14 @@ async function checkScam(event) {
     const r=parsed.result;
     if (!r || !['danger','caution','safe'].includes(r.verdict) || !['headline','why','whatToDo'].every(k=>typeof r[k]==='string')) throw new Error('We couldn\u2019t read the result. Please try again.');
     $('checker-result').innerHTML='<div class="verdict '+r.verdict+'"><h2>'+esc(r.verdict==='safe'?'No obvious warning signs':r.headline)+'</h2></div><section class="result-section"><h3>What we noticed</h3><p>'+esc(r.why)+'</p></section><section class="result-section"><h3>Your next step</h3><p>'+esc(r.whatToDo)+'</p></section>'+(r.verdict==='safe'?'<p class="help-text">This does not verify who sent the message or whether a link is safe. Confirm independently before sharing information or money.</p>':'');
-    $('checker-result').focus(); clearCheckerImage();
+    $('checker-result').focus();
+    // Save this check to history (best-effort; a failure here never blocks the result).
+    try {
+      const wasPhoto = !!checkerImage;
+      const snippet = input ? input.slice(0,80) : (wasPhoto ? '(photo checked)' : '');
+      await sb.from('scam_checks').insert({ user_id:state.user.id, verdict:r.verdict, headline:r.headline, why:r.why, what_to_do:r.whatToDo, snippet:snippet, was_photo:wasPhoto });
+    } catch (e) { /* saving is best-effort */ }
+    clearCheckerImage();
   } catch(error) {
     if (epoch===state.epoch) $('checker-result').innerHTML='<div class="message error" role="alert"><strong>We couldn\u2019t check this message.</strong><p>'+esc(error.name==='AbortError'?'The check took too long. Please try again.':error.message)+'</p><p>Avoid links or payments until you can verify the request independently.</p></div>';
   } finally { clearTimeout(timeout); busy(form,false); $('checker-thinking').hidden=true; }
