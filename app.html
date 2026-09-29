@@ -80,12 +80,12 @@
       <h1 tabindex="-1">Is this a scam?</h1>
       <p class="page-sub">Unsure about a message? Let's take a closer look together.</p>
       <form id="checker-form" class="checker-form">
-        <div class="field"><label for="checker-input">Message to check</label><textarea class="checker-input" id="checker-input" rows="6" minlength="3" maxlength="4000" required placeholder="Paste the message, or describe what happened..." aria-describedby="checker-privacy checker-count"></textarea>
-        <p class="help-text" id="checker-privacy">Remove names, account numbers, passwords, and other personal details. Your text is sent to our AI provider for this check; Proteva doesn't save it in your activity.</p><p class="help-text" id="checker-count">0 / 4,000 characters</p></div>
+        <div class="field"><label for="checker-input">Message to check</label><textarea class="checker-input" id="checker-input" rows="6" maxlength="4000" required placeholder="Paste the message, or describe what happened..." aria-describedby="checker-privacy checker-count"></textarea>
+        <p class="help-text" id="checker-privacy">Remove names, account numbers, passwords, and other personal details from text and photos. Submitted content goes to our AI provider for analysis. Proteva saves the assessment in your History, not the original text or photo. Assessments may still mention details you submit.</p><p class="help-text" id="checker-count">0 / 4,000 characters</p></div>
         <div class="checker-photo">
           <input type="file" id="checker-photo-input" accept="image/jpeg,image/png,image/gif,image/webp" hidden>
           <button class="btn btn-secondary" type="button" id="checker-photo-btn"><i data-lucide="camera"></i>Add a photo</button>
-          <p class="help-text">Take or upload a screenshot of a suspicious text, email, or pop-up.</p>
+          <p class="help-text">JPG, PNG, GIF, or WEBP, up to 3MB.</p>
           <div class="checker-photo-preview" id="checker-photo-preview" hidden></div>
         </div>
         <button class="btn btn-primary" id="checker-btn" type="submit"><i data-lucide="scan-text"></i>Check this message</button>
@@ -111,7 +111,7 @@
       <h1 tabindex="-1">Here to help</h1><p class="page-sub">A few answers, and a real person when you need one.</p>
       <div class="banner"><i data-lucide="heart-handshake"></i><div><h2>Protection with dignity</h2><p>We believe in protecting people with their family, never behind their back.</p></div></div>
       <details class="faq"><summary>Is my loved one's device protected yet?</summary><p>Not yet. This is a working prototype of the caregiver experience. You can manage family profiles, explore sample activity, and check a message with AI. The device software that automatically detects and blocks threats is still being built.</p></details>
-      <details class="faq"><summary>Does Proteva read private messages?</summary><p>There is no background message monitoring in this prototype. The scam checker analyzes only text you choose to submit to it. Our device-protection vision is noninvasive: no reading private conversations or hidden surveillance.</p></details>
+      <details class="faq"><summary>Does Proteva read private messages?</summary><p>There is no background message monitoring in this prototype. The scam checker analyzes only text and photos you choose to submit to it. Assessments are saved in your History. Our device-protection vision is noninvasive: no reading private conversations or hidden surveillance.</p></details>
       <details class="faq"><summary>What does archiving an item do?</summary><p>It moves the item from your overview to History. It doesn't change a threat assessment, allow an app, or take action on a device. Follow any suggested next steps before archiving an item that needs your attention.</p></details>
       <details class="faq"><summary>Can my loved one choose not to use Proteva?</summary><p>Always. Setup must happen with their knowledge and agreement. A profile here doesn't install anything on their device. Their device, their privacy, their choice.</p></details>
       <details class="faq"><summary>Can I change my plan?</summary><p>Subscriptions are not active in this preview. The planned Home, Family, and Shield options are shown on our website. We'll explain pricing clearly before asking you to subscribe.</p></details>

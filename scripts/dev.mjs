@@ -2,6 +2,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { readFile, stat } from 'node:fs/promises';
 import { build } from './build.mjs';
+import { MAX_CHECK_BYTES } from '../assets/checker-limits.js';
 const output=await build();
 const port=Number(process.env.PORT || 4173);
 const deployment=JSON.parse(await readFile(new URL('../vercel.json',import.meta.url),'utf8'));
@@ -19,9 +20,15 @@ http.createServer(async(req,res)=>{
     if (url.pathname.startsWith('/api/')) {
       const handler=handlers[url.pathname];
       if (!handler) { res.writeHead(404).end(); return; }
-      let body='';
-      for await (const chunk of req) { body+=chunk; if (Buffer.byteLength(body)>16000) { res.writeHead(413).end(); return; } }
-      req.body=body;
+      const chunks=[];
+      let bytes=0;
+      const limit=url.pathname==='/api/check-scam'?MAX_CHECK_BYTES:16000;
+      for await (const chunk of req) {
+        bytes+=chunk.length;
+        if (bytes>limit) { res.writeHead(413,{'Content-Type':'application/json'}).end(JSON.stringify({error:'This request is too large.'})); return; }
+        chunks.push(chunk);
+      }
+      req.body=Buffer.concat(chunks).toString('utf8');
       res.status=code=>{res.statusCode=code;return res;};
       res.json=value=>{res.setHeader('Content-Type','application/json');res.end(JSON.stringify(value));};
       await handler(req,res); return;

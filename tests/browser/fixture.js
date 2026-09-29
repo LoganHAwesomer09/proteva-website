@@ -4,7 +4,7 @@ export function event(id,tag='stopped',resolved=false) {
   return {id:String(id),user_id:user.id,person_id:person.id,text:'Sample event '+id,icon:'shield-check',tag,resolved,created_at:new Date(Date.now()-id*60000).toISOString(),detail_why:'A suspicious request appeared.',detail_did:'The request was stopped in this sample.',detail_actions:'No action needed for this sample.'};
 }
 export async function setup(page,options={}) {
-  const db={user:{...user},people:options.empty?[]:[{...person}],activity:options.empty?[]:[event(1),event(2,'attention'),event(3,'stopped',true)],fail:null,writes:0,signupConfirmation:false,checkerFail:false,checkerMalformed:false,waitlistFail:false,signedOut:false};
+  const db={user:{...user},people:options.empty?[]:[{...person}],activity:options.empty?[]:[event(1),event(2,'attention'),event(3,'stopped',true)],checks:[],checkerRequests:[],historySaveFail:false,fail:null,writes:0,signupConfirmation:false,checkerFail:false,checkerMalformed:false,waitlistFail:false,signedOut:false};
   const session={access_token:'test-access-token',refresh_token:'test-refresh-token',expires_in:3600,expires_at:Math.floor(Date.now()/1000)+3600,token_type:'bearer',user};
   if (!options.signedOut) await page.addInitScript(({session})=>{
     localStorage.setItem('sb-njjhioejdqjwpeblrewb-auth-token',JSON.stringify(session));
@@ -24,7 +24,7 @@ export async function setup(page,options={}) {
     const table=url.pathname.split('/').pop();
     if (table==='waitlist') { db.writes++; return send(db.waitlistFail?500:201,db.waitlistFail?{message:'Database unavailable'}:[]); }
     if (db.fail && (db.fail===method || db.fail==='ALL')) return send(500,{message:'Simulated failure',code:'XX000'});
-    let rows=table==='protected_people'?db.people:db.activity;
+    let rows=table==='protected_people'?db.people:table==='scam_checks'?db.checks:db.activity;
     let filtered=rows.filter(row=>[...url.searchParams].every(([key,value])=>{
       if (value.startsWith('eq.')) return String(row[key])===value.slice(3);
       if (value.startsWith('gte.')) return row[key]>=value.slice(4);
@@ -51,7 +51,10 @@ export async function setup(page,options={}) {
   await page.route('**/api/check-scam',async route=>{
     if (!route.request().headers().authorization) throw new Error('Missing bearer auth');
     await new Promise(resolve=>setTimeout(resolve,50));
-    return route.fulfill({status:db.checkerFail?503:200,contentType:'application/json',body:JSON.stringify(db.checkerFail?{error:'Unavailable'}:db.checkerMalformed?{result:{verdict:'safe',headline:12}}:{result:{verdict:'caution',headline:'Verify this independently',why:'This message asks for urgent payment.',whatToDo:'Contact the company through a number you already trust.'}})});
+    db.checkerRequests.push(route.request().postDataJSON());
+    const result={verdict:'caution',headline:'Verify this independently',why:'This message asks for urgent payment.',whatToDo:'Contact the company through a number you already trust.'};
+    if (!db.checkerFail && !db.checkerMalformed && !db.historySaveFail) db.checks.push({id:crypto.randomUUID(),user_id:db.user.id,...result,what_to_do:result.whatToDo,snippet:'',was_photo:!!route.request().postDataJSON().image,created_at:new Date().toISOString()});
+    return route.fulfill({status:db.checkerFail?503:200,contentType:'application/json',body:JSON.stringify(db.checkerFail?{error:'Unavailable'}:db.checkerMalformed?{result:{verdict:'safe',headline:12}}:{result,historySaved:!db.historySaveFail})});
   });
   return db;
 }

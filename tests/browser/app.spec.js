@@ -1,6 +1,62 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { setup, openView, event } from './fixture.js';
+import {MAX_IMAGE_BYTES,MAX_CHECK_BYTES} from '../../assets/checker-limits.js';
+
+const photo={name:'screenshot.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aVp0AAAAASUVORK5CYII=','base64')};
+
+test('photo-only checks submit, save once on the server, and appear in History',async({page})=>{
+  const db=await setup(page); await page.goto('/app.html'); await openView(page,'checker');
+  await page.locator('#checker-photo-input').setInputFiles(photo);
+  await expect(page.locator('#checker-photo-preview')).toBeVisible();
+  await page.locator('#checker-btn').click();
+  await expect(page.locator('#checker-result')).toContainText('Assessment saved to History.');
+  expect(db.checkerRequests).toHaveLength(1);
+  expect(db.checkerRequests[0].message).toBe('');
+  expect(db.checkerRequests[0].image.media_type).toBe('image/png');
+  expect(db.writes).toBe(0);
+  await expect(page.locator('#checker-photo-preview')).toBeHidden();
+  await openView(page,'history');
+  await expect(page.locator('#history-feed')).toContainText('A photo was checked');
+  await expect(page.locator('#history-feed')).toContainText('Verify this independently');
+});
+
+test('removing or rejecting a photo does not leave an invisible attachment',async({page})=>{
+  const db=await setup(page); await page.goto('/app.html'); await openView(page,'checker');
+  await page.locator('#checker-photo-input').setInputFiles(photo);
+  await page.getByRole('button',{name:'Remove photo'}).click();
+  await expect(page.locator('#checker-input')).toHaveAttribute('required','');
+  await page.locator('#checker-photo-input').setInputFiles(photo);
+  await page.locator('#checker-photo-input').setInputFiles({...photo,buffer:Buffer.alloc(MAX_IMAGE_BYTES+1)});
+  await expect(page.locator('#checker-result')).toContainText('no larger than 3MB');
+  await expect(page.locator('#checker-photo-preview')).toBeHidden();
+  await page.locator('#checker-input').fill('Check this urgent message please');
+  await page.locator('#checker-btn').click();
+  await expect(page.locator('#checker-result')).toContainText('Assessment saved');
+  expect(db.checkerRequests[0].image).toBeUndefined();
+});
+
+test('failed history saves and non-JSON upload errors have clear messages',async({page})=>{
+  const db=await setup(page); db.historySaveFail=true;
+  await page.goto('/app.html'); await openView(page,'checker');
+  await page.locator('#checker-input').fill('Check this urgent message please');
+  await page.locator('#checker-btn').click();
+  await expect(page.locator('#checker-result')).toContainText('could not be saved to History');
+  await expect(page.locator('#checker-result')).toContainText('Your next step');
+  await page.route('**/api/check-scam',route=>route.fulfill({status:413,contentType:'text/plain',body:'FUNCTION_PAYLOAD_TOO_LARGE'}));
+  await page.locator('#checker-btn').click();
+  await expect(page.locator('#checker-result')).toContainText('no larger than 3MB');
+  await expect(page.locator('#checker-btn')).toBeEnabled();
+});
+
+test('local HTTP upload limit matches the handler and returns JSON errors',async({request})=>{
+  const bytes=Buffer.concat([photo.buffer,Buffer.alloc(20000)]);
+  const accepted=await request.post('/api/check-scam',{data:{image:{media_type:'image/png',data:bytes.toString('base64')}}});
+  expect(accepted.status()).toBe(401);
+  const rejected=await request.post('/api/check-scam',{data:{message:'x'.repeat(MAX_CHECK_BYTES)}});
+  expect(rejected.status()).toBe(413);
+  expect(await rejected.json()).toEqual({error:'This request is too large.'});
+});
 
 test('sample events stay labeled and expand correctly in a person view',async({page})=>{
   const db=await setup(page); await page.goto('/app.html');

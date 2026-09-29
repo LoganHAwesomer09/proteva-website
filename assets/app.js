@@ -1,4 +1,5 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+import { IMAGE_TYPES, MAX_IMAGE_BYTES } from './checker-limits.js';
 import { $, escapeHtml as esc, icons, icon, message, busy, toast, initials, empty, loading, dateLabel, errorText } from './ui.js';
 
 const sb = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -10,6 +11,8 @@ const pending = new Set();
 let activeCounts = {};
 let checkerController;
 let checkerImage = null; // { media_type, data } for an attached photo, or null
+let photoRevision=0;
+let photoLoading=false;
 const relationshipOptions = '<option value="">Choose a relationship</option>' + ['Mother','Father','Grandmother','Grandfather','Aunt','Uncle','Spouse','Sibling','Friend','Other'].map(x=>'<option>'+x+'</option>').join('');
 
 function scoped(table) {
@@ -87,9 +90,9 @@ async function scamChecks() {
   return data || [];
 }
 function scamCheckItem(check) {
-  const label = check.verdict==='danger' ? 'Scam' : check.verdict==='safe' ? 'Looked okay' : 'Caution';
+  const label = check.verdict==='danger' ? 'Likely scam' : check.verdict==='safe' ? 'No obvious warning signs' : 'Caution';
   const tagClass = check.verdict==='danger' ? 'attention' : check.verdict==='safe' ? '' : 'attention';
-  const what = check.was_photo && (!check.snippet || check.snippet==='(photo checked)') ? 'A photo was checked' : ('\u201c'+ (check.snippet||'') +'\u201d');
+  const what = check.snippet && check.snippet!=='(photo checked)' ? ('\u201c'+check.snippet+'\u201d') : check.was_photo ? 'A photo was checked' : 'A message was checked';
   const details = [['What we noticed',check.why],['Your next step',check.what_to_do]].filter(([,t])=>t);
   return '<article class="feed-item"><div class="feed-row"><span class="event-icon">'+icon('search-check')+'</span><div class="feed-body"><p class="feed-text">'+esc(check.headline || 'Scam check')+'</p><p class="feed-meta">Scam check \u00b7 '+esc(what)+' \u00b7 '+esc(dateLabel(check.created_at,true))+'</p><div class="feed-status"><span class="pill '+tagClass+'">'+esc(label)+'</span></div>' +
     (details.length ? '<details><summary>See details</summary><div class="detail">'+details.map(([title,text])=>'<h3>'+title+'</h3><p>'+esc(text)+'</p>').join('')+'</div></details>' : '') +
@@ -190,6 +193,7 @@ function closeDialog(id) {
 function clearSession() {
   state.epoch++; state.request++; state.user=null; state.members=[]; state.person=null; state.editing=null; state.deleting=null; state.consent=false;
   checkerController?.abort();
+  busy($('checker-form'),false); $('checker-thinking').hidden=true;
   for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
   for (const id of Object.values(containers)) $(id).replaceChildren();
   $('checker-result').replaceChildren(); $('checker-input').value=''; $('checker-count').textContent='0 / 4,000 characters'; clearCheckerImage();
@@ -443,32 +447,39 @@ async function checkScam(event) {
   const form=event.currentTarget, epoch=state.epoch;
   if (form.getAttribute('aria-busy')==='true') return;
   const input=$('checker-input').value.trim();
-  // Allow submitting with text, an image, or both. Block only if neither is present.
-  if ((input.length<3 || input.length>4000) && !checkerImage) return;
-  busy(form,true); $('checker-thinking').hidden=false; $('checker-result').replaceChildren();
-  checkerController=new AbortController();
-  const timeout=setTimeout(()=>checkerController?.abort(),35000);
+  if (photoLoading) { message('checker-result','Please wait for the photo to finish loading.'); return; }
+  if (input.length>4000 || (input.length<3 && !checkerImage)) { message('checker-result','Add a message with 3 to 4,000 characters or a photo.'); return; }
+  const image=checkerImage;
+  busy(form,true); $('checker-thinking').hidden=false; $('checker-result').replaceChildren(); $('checker-result').className='checker-result';
+  const controller=new AbortController();
+  checkerController=controller;
+  const timeout=setTimeout(()=>controller.abort(),35000);
   try {
     const {data,error}=await sb.auth.getSession();
+    if (epoch!==state.epoch) return;
     if (error || !data.session) throw new Error('Please sign in again to check a message.');
-    const response=await fetch('/api/check-scam',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+data.session.access_token},body:JSON.stringify(checkerImage?{message:input,image:checkerImage}:{message:input}),signal:checkerController.signal});
+    const response=await fetch('/api/check-scam',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+data.session.access_token},body:JSON.stringify(image?{message:input,image}:{message:input}),signal:controller.signal});
+    if (!response.ok) {
+      const errors={400:'Please check your message or choose a valid JPG, PNG, GIF, or WEBP image.',413:'Please choose an image no larger than 3MB.',429:'You\u2019ve made several checks. Please wait a minute and try again.',401:'Please sign in again to check a message.'};
+      throw new Error(errors[response.status] || 'The checker is unavailable right now. Please try again in a moment.');
+    }
     const parsed=await response.json();
-    if (!response.ok) throw new Error(response.status===429?'You\u2019ve made several checks. Please wait a minute and try again.':response.status===401?'Please sign in again to check a message.':'The checker is unavailable right now. Please try again in a moment.');
     if (epoch!==state.epoch) return;
     const r=parsed.result;
-    if (!r || !['danger','caution','safe'].includes(r.verdict) || !['headline','why','whatToDo'].every(k=>typeof r[k]==='string')) throw new Error('We couldn\u2019t read the result. Please try again.');
+    if (!r || !['danger','caution','safe'].includes(r.verdict) || !['headline','why','whatToDo'].every(k=>typeof r[k]==='string' && r[k].trim() && r[k].length<=2000)) throw new Error('We couldn\u2019t read the result. Please try again.');
     $('checker-result').innerHTML='<div class="verdict '+r.verdict+'"><h2>'+esc(r.verdict==='safe'?'No obvious warning signs':r.headline)+'</h2></div><section class="result-section"><h3>What we noticed</h3><p>'+esc(r.why)+'</p></section><section class="result-section"><h3>Your next step</h3><p>'+esc(r.whatToDo)+'</p></section>'+(r.verdict==='safe'?'<p class="help-text">This does not verify who sent the message or whether a link is safe. Confirm independently before sharing information or money.</p>':'');
     $('checker-result').focus();
-    // Save this check to history (best-effort; a failure here never blocks the result).
-    try {
-      const wasPhoto = !!checkerImage;
-      const snippet = input ? input.slice(0,80) : (wasPhoto ? '(photo checked)' : '');
-      await sb.from('scam_checks').insert({ user_id:state.user.id, verdict:r.verdict, headline:r.headline, why:r.why, what_to_do:r.whatToDo, snippet:snippet, was_photo:wasPhoto });
-    } catch (e) { /* saving is best-effort */ }
+    const saved=document.createElement('p');
+    saved.className='help-text';
+    saved.textContent=parsed.historySaved===true?'Assessment saved to History.':'This assessment could not be saved to History. You can still read it here.';
+    $('checker-result').append(saved);
     clearCheckerImage();
   } catch(error) {
     if (epoch===state.epoch) $('checker-result').innerHTML='<div class="message error" role="alert"><strong>We couldn\u2019t check this message.</strong><p>'+esc(error.name==='AbortError'?'The check took too long. Please try again.':error.message)+'</p><p>Avoid links or payments until you can verify the request independently.</p></div>';
-  } finally { clearTimeout(timeout); busy(form,false); $('checker-thinking').hidden=true; }
+  } finally {
+    clearTimeout(timeout);
+    if (epoch===state.epoch) { busy(form,false); $('checker-thinking').hidden=true; }
+  }
 }
 document.addEventListener('click', async event => {
   const button=event.target.closest('button');
@@ -518,20 +529,28 @@ $('checker-form').addEventListener('submit',checkScam);
 $('checker-input').addEventListener('input',()=>{ $('checker-count').textContent=$('checker-input').value.length.toLocaleString()+' / 4,000 characters'; });
 // ---- Scam checker: photo attachment ----
 function clearCheckerImage() {
+  photoRevision++; photoLoading=false;
   checkerImage=null;
+  $('checker-input').required=true;
   const inp=$('checker-photo-input'); if (inp) inp.value='';
   const prev=$('checker-photo-preview'); if (prev) { prev.replaceChildren(); prev.hidden=true; }
 }
 async function handleCheckerPhoto(event) {
   const file=event.target.files && event.target.files[0];
   if (!file) return;
-  const okTypes=['image/jpeg','image/png','image/gif','image/webp'];
+  clearCheckerImage();
+  const revision=photoRevision, epoch=state.epoch;
   const msg=$('checker-result');
-  if (!okTypes.includes(file.type)) { msg.innerHTML='<div class="message error" role="alert"><strong>That file type isn\u2019t supported.</strong><p>Please choose a JPG, PNG, GIF, or WEBP image.</p></div>'; event.target.value=''; return; }
-  if (file.size > 5*1024*1024) { msg.innerHTML='<div class="message error" role="alert"><strong>That image is a bit too large.</strong><p>Please choose an image under 5MB.</p></div>'; event.target.value=''; return; }
+  if (!IMAGE_TYPES.includes(file.type)) { msg.innerHTML='<div class="message error" role="alert"><strong>That file type isn\u2019t supported.</strong><p>Please choose a JPG, PNG, GIF, or WEBP image.</p></div>'; return; }
+  if (file.size > MAX_IMAGE_BYTES || !file.size) { msg.innerHTML='<div class="message error" role="alert"><strong>That image cannot be attached.</strong><p>Please choose a nonempty image no larger than 3MB.</p></div>'; return; }
+  photoLoading=true;
   const dataUrl=await new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(r.result); r.onerror=()=>reject(new Error('read failed')); r.readAsDataURL(file); }).catch(()=>null);
-  if (!dataUrl || typeof dataUrl!=='string' || dataUrl.indexOf(',')===-1) { event.target.value=''; return; }
+  if (revision!==photoRevision || epoch!==state.epoch) return;
+  photoLoading=false;
+  if (!dataUrl || typeof dataUrl!=='string' || dataUrl.indexOf(',')===-1) { message('checker-result','We could not read that photo. Please choose it again.'); return; }
   checkerImage={ media_type:file.type, data:dataUrl.slice(dataUrl.indexOf(',')+1) };
+  $('checker-input').required=false;
+  msg.replaceChildren();
   const prev=$('checker-photo-preview');
   if (prev) {
     prev.replaceChildren();

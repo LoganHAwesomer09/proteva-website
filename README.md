@@ -37,7 +37,7 @@ This is JavaScript, not TypeScript. ESLint, server tests, browser tests, accessi
 | `assets/app.js` | Auth, navigation, family data, activity, onboarding |
 | `assets/styles.css` | Shared colors, controls, light/dark themes, responsive layouts |
 | `assets/config.js` | Public Supabase connection settings, not a secret |
-| `api/check-scam.js` | Authenticated Anthropic request; no database persistence |
+| `api/check-scam.js` | Authenticated text/photo assessment and account-scoped history save |
 | `api/generate-threat.js` | Authenticated sample event, no paid provider request |
 | `lib/server.js` | Request/auth validation and per-instance burst limit |
 | `tests/` | Server and Playwright regression coverage |
@@ -67,3 +67,24 @@ Supabase password recovery requires the app URL in the project's allowed redirec
 The former client-side preview password was public. Remove any reuse of it elsewhere and rotate it wherever it was reused. Its removal from current code does not remove it from existing Git history.
 
 The burst limiter is per warm serverless instance, not a global billing quota. Add durable account quotas/gateway limits before a public paid launch. Production RLS, email delivery, provider billing, and real device protection require separate operational verification.
+
+## Scam-checker backend
+
+Flow: sign in -> submit text/photo -> server verifies the Supabase user -> Claude assessment -> validated result -> save assessment under that user's JWT -> show result and save status.
+
+Photos are limited to 3 MiB, leaving room for base64 and JSON inside Vercel's 4.5 MB request limit. Browser, local server, and deployed handler share limits in assets/checker-limits.js. The handler checks image signatures and base64; the AI provider still decodes the image. Authentication, analysis, and saving share a 28-second deadline within the configured 30-second function duration.
+
+The existing scam_checks table needs id, user_id, verdict, headline, why, what_to_do, snippet, was_photo, and created_at. No schema changes are included. New records save an empty snippet, never the submitted message or image. Existing snippets are not deleted. AI assessments can still mention submitted details, so remove sensitive information before submitting. Provider data retention is separate from Proteva's database.
+
+History saving uses the caller's JWT and the public Supabase key, not a service-role key. RLS must enforce user_id = auth.uid() for both INSERT and SELECT. Never relax RLS to fix a save error. The assessment remains available when saving fails, with a visible warning; the client does not retry the paid check automatically.
+
+Before treating this as live:
+
+1. Set ANTHROPIC_API_KEY in the Vercel project's server environment and redeploy. A Claude chat subscription does not configure this key.
+2. Review scam_checks RLS and grants in Supabase. Verify two test accounts cannot read or create each other's rows.
+3. Sign in with a test account, check a synthetic scam message and a redacted screenshot, then reload History to confirm both saved.
+4. Confirm an unsigned request to /api/check-scam returns 401 and that failed saves never claim success.
+
+Local automated tests mock authenticated Supabase/Claude responses; they do not prove deployed credentials, live RLS, provider billing, or real device monitoring. The Sep 29, 2026 read-only live check confirmed the three table routes were reachable (no rows requested) and unsigned scam checks returned 401. No authenticated production writes or paid model requests were made.
+
+References: [Vercel request limits](https://vercel.com/docs/functions/limitations), [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [Claude image inputs](https://platform.claude.com/docs/en/build-with-claude/vision).
