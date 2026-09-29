@@ -39,20 +39,23 @@ This is JavaScript, not TypeScript. ESLint, server tests, browser tests, accessi
 | `assets/config.js` | Public Supabase connection settings, not a secret |
 | `api/check-scam.js` | Authenticated text/photo assessment and account-scoped history save |
 | `api/generate-threat.js` | Authenticated sample event, no paid provider request |
+| `api/device-pair.js`, `api/device-event.js` | Disabled-by-default device event foundation |
 | `lib/server.js` | Request/auth validation and per-instance burst limit |
 | `tests/` | Server and Playwright regression coverage |
 | `scripts/` | Static build, local server, file-reference checks |
 | `dist/` | Generated deployable assets; ignored by Git |
 
-Supabase handles accounts and row-level security. Each family/activity request also scopes itself to the signed-in user's ID. No database migration is included in this change.
+Supabase handles accounts and row-level security. Each family/activity request also scopes itself to the signed-in user's ID. The optional device-event foundation has a separate migration that is not yet applied to production.
 
-Expected protected_people fields: id, user_id, name, relationship, birth_year, devices (older device also supported for reading), protection_level, notes, created_at. Activity fields follow docs/developer-spec.md. Missing profile columns produce an explicit setup error, not a silent partial save.
+Expected protected_people fields: id, user_id, name, relationship, birth_year, devices (older device also supported for reading), protection_level, notes, created_at. Activity fields used by the device foundation are described in docs/device-mvp-plan.md. Missing profile columns produce an explicit setup error, not a silent partial save.
 
 ## Team workflow
 
 Keep credentials in the company password manager. Each person uses their own GitHub account and app account. Before starting, pull the latest work. Prefer one task per branch and a pull request when working concurrently. Do not have two agents edit the same files at once.
 
 Give your AI assistant the task and point it to this README and docs/product-quality-review.md. Preserve the green/mint Proteva identity, plain-language tone, prevention-first approach, and setup-together principle. Never represent a prototype as active device protection.
+
+See docs/device-mvp-plan.md for the private device test contract. The former confidential developer brief was removed from the current tree, but remains in earlier public Git history. Treat any credential published in earlier commits as exposed and rotate it wherever reused.
 
 Review the diff and test locally. Commit source files and the lockfile, not dist, screenshots, keys, or test output. Push normally; never force-push shared work.
 
@@ -67,6 +70,8 @@ Supabase password recovery requires the app URL in the project's allowed redirec
 The former client-side preview password was public. Remove any reuse of it elsewhere and rotate it wherever it was reused. Its removal from current code does not remove it from existing Git history.
 
 The burst limiter is per warm serverless instance, not a global billing quota. Add durable account quotas/gateway limits before a public paid launch. Production RLS, email delivery, provider billing, and real device protection require separate operational verification.
+
+Device event ingestion is disabled by default. Applying its migration and enabling it requires Supabase project access and a server-only secret key. No native app or browser extension is included. Keep it disabled on production until device behavior and database policies are verified end to end.
 
 ## Scam-checker backend
 
