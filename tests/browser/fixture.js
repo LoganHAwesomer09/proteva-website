@@ -24,6 +24,14 @@ export async function setup(page,options={}) {
     const table=url.pathname.split('/').pop();
     if (table==='waitlist') { db.writes++; return send(db.waitlistFail?500:201,db.waitlistFail?{message:'Database unavailable'}:[]); }
     if (db.fail && (db.fail===method || db.fail==='ALL')) return send(500,{message:'Simulated failure',code:'XX000'});
+    if (table==='set_check_followup') {
+      const {check_id,completed}=req.postDataJSON();
+      const row=db.checks.find(c=>c.id===check_id && c.user_id===db.user.id);
+      if (!row) return send(200,[]);
+      db.writes++;
+      row.followed_up_at=completed?(row.followed_up_at || new Date().toISOString()):null;
+      return send(200,[{id:row.id,followed_up_at:row.followed_up_at}]);
+    }
     let rows=table==='protected_people'?db.people:table==='scam_checks'?db.checks:db.activity;
     let filtered=rows.filter(row=>[...url.searchParams].every(([key,value])=>{
       if (value.startsWith('eq.')) return String(row[key])===value.slice(3);
@@ -53,8 +61,12 @@ export async function setup(page,options={}) {
     await new Promise(resolve=>setTimeout(resolve,50));
     db.checkerRequests.push(route.request().postDataJSON());
     const result={verdict:'caution',headline:'Verify this independently',why:'This message asks for urgent payment.',whatToDo:'Contact the company through a number you already trust.'};
-    if (!db.checkerFail && !db.checkerMalformed && !db.historySaveFail) db.checks.push({id:crypto.randomUUID(),user_id:db.user.id,...result,what_to_do:result.whatToDo,snippet:'',was_photo:!!route.request().postDataJSON().image,created_at:new Date().toISOString()});
-    return route.fulfill({status:db.checkerFail?503:200,contentType:'application/json',body:JSON.stringify(db.checkerFail?{error:'Unavailable'}:db.checkerMalformed?{result:{verdict:'safe',headline:12}}:{result,historySaved:!db.historySaveFail})});
+    let check=null;
+    if (!db.checkerFail && !db.checkerMalformed && !db.historySaveFail) {
+      check={id:crypto.randomUUID(),user_id:db.user.id,...result,what_to_do:result.whatToDo,snippet:'',person_id:route.request().postDataJSON().person_id || null,followed_up_at:null,was_photo:!!route.request().postDataJSON().image,created_at:new Date().toISOString()};
+      db.checks.push(check);
+    }
+    return route.fulfill({status:db.checkerFail?503:200,contentType:'application/json',body:JSON.stringify(db.checkerFail?{error:'Unavailable'}:db.checkerMalformed?{result:{verdict:'safe',headline:12}}:{result,historySaved:!db.historySaveFail,check})});
   });
   return db;
 }

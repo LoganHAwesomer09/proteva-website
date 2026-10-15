@@ -44,7 +44,7 @@ This is JavaScript, not TypeScript. ESLint, server tests, browser tests, accessi
 | `scripts/` | Static build, local server, file-reference checks |
 | `dist/` | Generated deployable assets; ignored by Git |
 
-Supabase handles accounts and row-level security. Each family/activity request also scopes itself to the signed-in user's ID. No database migration is included in this change.
+Supabase handles accounts and row-level security. Each family/activity request also scopes itself to the signed-in user's ID. The family follow-up feature requires the migration described below before deployment.
 
 Expected protected_people fields: id, user_id, name, relationship, birth_year, devices (older device also supported for reading), protection_level, notes, created_at. Activity fields follow docs/developer-spec.md. Missing profile columns produce an explicit setup error, not a silent partial save.
 
@@ -74,7 +74,7 @@ Flow: sign in -> submit text/photo -> server verifies the Supabase user -> Claud
 
 Photos are limited to 3 MiB, leaving room for base64 and JSON inside Vercel's 4.5 MB request limit. Browser, local server, and deployed handler share limits in assets/checker-limits.js. The handler checks image signatures and base64; the AI provider still decodes the image. Authentication, analysis, and saving share a 28-second deadline within the configured 30-second function duration.
 
-The existing scam_checks table needs id, user_id, verdict, headline, why, what_to_do, snippet, was_photo, and created_at. No schema changes are included. New records save an empty snippet, never the submitted message or image. Existing snippets are not deleted. AI assessments can still mention submitted details, so remove sensitive information before submitting. Provider data retention is separate from Proteva's database.
+The scam_checks table needs id, user_id, verdict, headline, why, what_to_do, snippet, was_photo, created_at, person_id, and followed_up_at. New records save an empty snippet, never the submitted message or image. Existing snippets are not deleted. AI assessments can still mention submitted details, so remove sensitive information before submitting. Provider data retention is separate from Proteva's database.
 
 History saving uses the caller's JWT and the public Supabase key, not a service-role key. RLS must enforce user_id = auth.uid() for both INSERT and SELECT. Never relax RLS to fix a save error. The assessment remains available when saving fails, with a visible warning; the client does not retry the paid check automatically.
 
@@ -88,3 +88,17 @@ Before treating this as live:
 Local automated tests mock authenticated Supabase/Claude responses; they do not prove deployed credentials, live RLS, provider billing, or real device monitoring. The Sep 29, 2026 read-only live check confirmed the three table routes were reachable (no rows requested) and unsigned scam checks returned 401. No authenticated production writes or paid model requests were made.
 
 References: [Vercel request limits](https://vercel.com/docs/functions/limitations), [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [Claude image inputs](https://platform.claude.com/docs/en/build-with-claude/vision).
+
+## Family follow-up rollout
+
+The local implementation lets a caregiver choose a family member when checking a message, see the check in that person's history, edit/copy/share a calm conversation draft, and record or undo a follow-up. The AI verdict is never changed by following up. Drafts are generated locally without another AI call, never include model-provided links, and are not sent automatically or saved to the database. Native sharing is offered only when supported; copying remains available.
+
+Deployment prerequisite: review and apply `supabase/migrations/20261015175010_family_check_followups.sql` to Project Proteva before publishing the app code. It adds nullable person_id and followed_up_at fields, a same-account composite foreign key, ownership policies, and the security-invoker set_check_followup RPC. It assumes existing UUID IDs and existing owner-scoped SELECT/INSERT policies; confirm these against the actual database before applying. Existing checks remain unlinked. Removing a person unlinks their checks without deleting assessments.
+
+On October 15, 2026 the reconnected Supabase management connection succeeded. The live UUID columns, owner-scoped policies, and enabled RLS were inspected, and the migration was applied successfully. Verification confirmed both new fields, authenticated follow-up updates, denied verdict updates, denied anonymous RPC execution, and security-invoker execution. The migration removes the old table-wide authenticated UPDATE grant before granting follow-up-only updates. No existing family records were changed during verification.
+
+The new Postgres test uses development-only PGlite with synthetic accounts to execute the actual migration, verify cross-account link rejection and row isolation, exercise follow-up/undo/idempotency, and confirm assessments survive member deletion. These tests validate the migration against a modeled baseline, including the pre-existing table-wide UPDATE grant. `npm test` includes them. No production credentials or family records are needed.
+
+After migration: check with a dedicated test account, verify the saved check is listed for only the selected person, mark follow-up, reload, undo, and confirm the verdict is unchanged. Review Supabase security advisors. The existing per-instance rate limit and other pre-launch checks remain unchanged.
+
+The October 15 security advisor reported pre-existing warnings for public/signed-in execution of `public.rls_auto_enable()` and disabled leaked-password protection. These are not changed by this release and still need review before launch. No real signed-in production scam check or paid provider request was performed as part of this release verification.

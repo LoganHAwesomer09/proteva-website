@@ -1,5 +1,6 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 import { IMAGE_TYPES, MAX_IMAGE_BYTES } from './checker-limits.js';
+import { conversationDraft } from './followup.js';
 import { $, escapeHtml as esc, icons, icon, message, busy, toast, initials, empty, loading, dateLabel, errorText } from './ui.js';
 
 const sb = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -13,6 +14,10 @@ let checkerController;
 let checkerImage = null; // { media_type, data } for an attached photo, or null
 let photoRevision=0;
 let photoLoading=false;
+const checkRecords=new Map();
+let checkerPeopleRequest=0;
+let checkerPeopleLoading=false;
+let suggestedPerson='';
 const relationshipOptions = '<option value="">Choose a relationship</option>' + ['Mother','Father','Grandmother','Grandfather','Aunt','Uncle','Spouse','Sibling','Friend','Other'].map(x=>'<option>'+x+'</option>').join('');
 
 function scoped(table) {
@@ -74,29 +79,27 @@ function feedItem(item, archived = false) {
     (details.length ? '<details><summary>See details</summary><div class="detail">'+details.map(([title,text])=>'<h3>'+title+'</h3><p>'+esc(text)+'</p>').join('')+'</div></details>' : '') +
     '</div>'+(archived?'':'<button class="icon-btn" data-archive="'+esc(item.id)+'" aria-label="Archive '+esc(item.text)+'" title="Archive to history">'+icon('x')+'</button>')+'</div></article>';
 }
-function historyHtml(rows) {
-  if (!rows.length) return empty('Nothing archived yet', 'Items you archive will be kept here, organized by date.');
-  const groups = new Map();
-  for (const row of rows) {
-    const day = dateLabel(row.created_at);
-    if (!groups.has(day)) groups.set(day, []);
-    groups.get(day).push(row);
-  }
-  return [...groups].map(([day, items])=>'<h2 class="date-header">'+esc(day)+'</h2><div class="feed">'+items.map(item=>feedItem(item,true)).join('')+'</div>').join('');
-}
-
-async function scamChecks() {
-  const {data}=await result(sb.from('scam_checks').select('*').eq('user_id',state.user.id).order('created_at',{ascending:false}).limit(100));
+async function scamChecks(personId) {
+  let query=scoped('scam_checks');
+  if (personId) query=query.eq('person_id',personId);
+  const {data}=await result(query.order('created_at',{ascending:false}).limit(100));
   return data || [];
 }
+function checkControls(check) {
+  checkRecords.set(check.id,check);
+  return '<div class="check-controls" data-check-controls="'+esc(check.id)+'"><button class="btn btn-secondary" data-talk="'+esc(check.id)+'">'+icon('message-circle')+'Talk about this</button>'+
+    (check.saved===false?'':'<label class="followup-toggle"><input type="checkbox" data-followup="'+esc(check.id)+'" '+(check.followed_up_at?'checked':'')+'>I followed up</label>')+
+    '<p class="help-text followup-date">'+(check.followed_up_at?'Followed up '+esc(dateLabel(check.followed_up_at))+'. Assessment unchanged.':'')+'</p></div>';
+}
 function scamCheckItem(check) {
+  const person=state.members.find(p=>p.id===check.person_id);
   const label = check.verdict==='danger' ? 'Likely scam' : check.verdict==='safe' ? 'No obvious warning signs' : 'Caution';
   const tagClass = check.verdict==='danger' ? 'attention' : check.verdict==='safe' ? '' : 'attention';
   const what = check.snippet && check.snippet!=='(photo checked)' ? ('\u201c'+check.snippet+'\u201d') : check.was_photo ? 'A photo was checked' : 'A message was checked';
   const details = [['What we noticed',check.why],['Your next step',check.what_to_do]].filter(([,t])=>t);
-  return '<article class="feed-item"><div class="feed-row"><span class="event-icon">'+icon('search-check')+'</span><div class="feed-body"><p class="feed-text">'+esc(check.headline || 'Scam check')+'</p><p class="feed-meta">Scam check \u00b7 '+esc(what)+' \u00b7 '+esc(dateLabel(check.created_at,true))+'</p><div class="feed-status"><span class="pill '+tagClass+'">'+esc(label)+'</span></div>' +
+  return '<article class="feed-item"><div class="feed-row"><span class="event-icon">'+icon('search-check')+'</span><div class="feed-body"><p class="feed-text">'+esc(check.headline || 'Scam check')+'</p><p class="feed-meta">'+esc(person?.name || 'Not linked to a family member')+' \u00b7 '+esc(what)+' \u00b7 '+esc(dateLabel(check.created_at,true))+'</p><div class="feed-status"><span class="pill '+tagClass+'">'+esc(label)+'</span></div>' +
     (details.length ? '<details><summary>See details</summary><div class="detail">'+details.map(([title,text])=>'<h3>'+title+'</h3><p>'+esc(text)+'</p>').join('')+'</div></details>' : '') +
-    '</div></div></article>';
+    checkControls(check)+'</div></div></article>';
 }
 // Merge archived activity + scam checks into one date-grouped timeline.
 function combinedHistoryHtml(activityRows, checkRows) {
@@ -129,15 +132,16 @@ async function familyHtml() {
   return people.length ? people.map(p=>memberHtml(p)).join('') : memberEmpty();
 }
 async function personHtml() {
-  const id = state.person;
-  const [people, active, history] = await Promise.all([members(),activity(false,id),activity(true,id)]);
+  const id = state.person, epoch=state.epoch;
+  const [people, active, history, checks] = await Promise.all([members(),activity(false,id),activity(true,id),scamChecks(id)]);
+  if (epoch!==state.epoch) return '';
   const person = people.find(p=>p.id===id);
   if (!person) return empty('This profile is no longer available', 'Return to Family to see your current profiles.');
   const meta = [person.relationship, person.devices || person.device, person.birth_year ? 'Born '+person.birth_year : null].filter(Boolean).join(' \u00b7 ');
   return '<header class="person-header"><span class="avatar">'+esc(initials(person.name))+'</span><div><h1 tabindex="-1">'+esc(person.name)+'</h1><p class="muted">'+esc(meta)+'</p><span class="pill neutral">Device setup pending</span></div><button class="btn btn-secondary" data-edit="'+esc(id)+'">'+icon('pencil')+'Edit details</button></header>'+
     (person.notes?'<p class="person-notes">'+esc(person.notes)+'</p>':'')+
     '<div class="section-head"><h2>Current activity</h2></div>'+(active.rows.length?'<div class="feed">'+active.rows.map(item=>feedItem(item)).join('')+'</div>':empty('No open items','Nothing needs your input for this person.'))+
-    '<h2 class="date-header">Archived activity</h2>'+historyHtml(history.rows)+moreButton(active.more||history.more);
+    '<div class="section-head"><h2>History</h2><button class="btn btn-secondary" data-check-person="'+esc(id)+'">'+icon('scan-text')+'Check a message</button></div>'+combinedHistoryHtml(history.rows,checks)+moreButton(active.more||history.more);
 }
 async function profileHtml() {
   const people = await members();
@@ -155,7 +159,11 @@ async function loadView() {
     if (view==='family') html = await familyHtml();
     if (view==='person') html = await personHtml();
     if (view==='profile') html = await profileHtml();
-    if (view==='history') { const [, records, checks] = await Promise.all([members(),activity(true),scamChecks()]); html=combinedHistoryHtml(records.rows, checks)+moreButton(records.more); }
+    if (view==='history') {
+      const [, records, checks] = await Promise.all([members(),activity(true),scamChecks()]);
+      if (request!==state.request || epoch!==state.epoch) return;
+      html=combinedHistoryHtml(records.rows, checks)+moreButton(records.more);
+    }
     if (request!==state.request || epoch!==state.epoch) return;
     target.innerHTML = html;
   } catch (error) {
@@ -177,7 +185,84 @@ async function navigate(view, {focus = true, reset = true} = {}) {
   document.title=labels[view]+' | Proteva';
   closeMenu(); setMobile(false);
   if (focus) document.querySelector('#view-'+view+' h1')?.focus();
-  await loadView();
+  if (view==='checker') await loadCheckerPeople();
+  else await loadView();
+}
+async function loadCheckerPeople() {
+  const epoch=state.epoch, request=++checkerPeopleRequest, select=$('checker-person');
+  const selected=suggestedPerson || select.value;
+  suggestedPerson='';
+  select.disabled=true; checkerPeopleLoading=true;
+  message('checker-person-message');
+  try {
+    const people=await members();
+    if (epoch!==state.epoch || request!==checkerPeopleRequest) return;
+    select.replaceChildren(new Option('Just checking / not linked',''),...people.map(p=>new Option(p.name,p.id)));
+    select.value=people.some(p=>p.id===selected)?selected:'';
+    message('checker-person-message');
+  } catch {
+    if (epoch===state.epoch && request===checkerPeopleRequest) {
+      select.replaceChildren(new Option('Just checking / not linked',''));
+      message('checker-person-message','Family members could not be loaded. This check will not be linked.','error');
+    }
+  } finally {
+    if (epoch===state.epoch && request===checkerPeopleRequest) {
+      checkerPeopleLoading=false;
+      if ($('checker-form').getAttribute('aria-busy')==='true') select.dataset.wasDisabled='false';
+      else select.disabled=false;
+    }
+  }
+}
+function openConversation(id) {
+  const check=checkRecords.get(id);
+  if (!check) return;
+  const person=state.members.find(p=>p.id===check.person_id);
+  $('conversation-draft').value=conversationDraft(check,person?.name);
+  message('conversation-message');
+  $('share-conversation').hidden=typeof navigator.share!=='function';
+  showDialog('conversation-dialog');
+}
+async function copyConversation() {
+  const epoch=state.epoch;
+  try {
+    await navigator.clipboard.writeText($('conversation-draft').value);
+    if (epoch===state.epoch) message('conversation-message','Message copied.','success');
+  } catch {
+    if (epoch===state.epoch) {
+      $('conversation-draft').focus(); $('conversation-draft').select();
+      message('conversation-message','Copy was unavailable. Your draft is selected so you can copy it yourself.');
+    }
+  }
+}
+async function shareConversation() {
+  const epoch=state.epoch;
+  try { await navigator.share({text:$('conversation-draft').value}); }
+  catch (error) { if (epoch===state.epoch && error.name!=='AbortError') message('conversation-message','Sharing was unavailable. You can copy your message instead.'); }
+}
+async function setFollowup(input) {
+  const id=input.dataset.followup, check=checkRecords.get(id), epoch=state.epoch;
+  if (!check || check.saved===false || pending.has('followup:'+id)) return;
+  const completed=input.checked;
+  pending.add('followup:'+id);
+  const inputs=()=>[...document.querySelectorAll('[data-followup]')].filter(el=>el.dataset.followup===id);
+  for (const el of inputs()) el.disabled=true;
+  try {
+    const {data}=await result(sb.rpc('set_check_followup',{check_id:id,completed}).abortSignal(AbortSignal.timeout(10000)));
+    if (epoch!==state.epoch) return;
+    const updated=data?.find(row=>row.id===id);
+    if (!updated || (completed ? !Number.isFinite(Date.parse(updated.followed_up_at)) : updated.followed_up_at!==null)) throw new Error('Follow-up was not saved');
+    check.followed_up_at=updated.followed_up_at;
+    checkRecords.set(id,check);
+    for (const controls of document.querySelectorAll('[data-check-controls]')) {
+      if (controls.dataset.checkControls===id) controls.querySelector('.followup-date').textContent=check.followed_up_at?'Followed up '+dateLabel(check.followed_up_at)+'. Assessment unchanged.':'';
+    }
+    toast(completed?'Follow-up recorded. The assessment has not changed.':'Follow-up undone. The assessment has not changed.');
+  } catch {
+    if (epoch===state.epoch) toast('We could not save your follow-up. Please try again.');
+  } finally {
+    pending.delete('followup:'+id);
+    if (epoch===state.epoch) for (const el of inputs()) { el.checked=!!check.followed_up_at; el.disabled=false; }
+  }
 }
 function closeMenu() { $('account-menu').hidden=true; $('account-btn').setAttribute('aria-expanded','false'); }
 function setMobile(open) {
@@ -193,6 +278,9 @@ function closeDialog(id) {
 function clearSession() {
   state.epoch++; state.request++; state.user=null; state.members=[]; state.person=null; state.editing=null; state.deleting=null; state.consent=false;
   checkerController?.abort();
+  checkerPeopleRequest++; checkerPeopleLoading=false; suggestedPerson=''; checkRecords.clear();
+  $('checker-person').replaceChildren(new Option('Just checking / not linked',''));
+  $('conversation-draft').value=''; message('conversation-message');
   busy($('checker-form'),false); $('checker-thinking').hidden=true;
   for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
   for (const id of Object.values(containers)) $(id).replaceChildren();
@@ -447,9 +535,11 @@ async function checkScam(event) {
   const form=event.currentTarget, epoch=state.epoch;
   if (form.getAttribute('aria-busy')==='true') return;
   const input=$('checker-input').value.trim();
+  if (checkerPeopleLoading) { message('checker-person-message','Please wait while family members load.'); return; }
   if (photoLoading) { message('checker-result','Please wait for the photo to finish loading.'); return; }
   if (input.length>4000 || (input.length<3 && !checkerImage)) { message('checker-result','Add a message with 3 to 4,000 characters or a photo.'); return; }
   const image=checkerImage;
+  const personId=$('checker-person').disabled?null:($('checker-person').value || null);
   busy(form,true); $('checker-thinking').hidden=false; $('checker-result').replaceChildren(); $('checker-result').className='checker-result';
   const controller=new AbortController();
   checkerController=controller;
@@ -458,9 +548,9 @@ async function checkScam(event) {
     const {data,error}=await sb.auth.getSession();
     if (epoch!==state.epoch) return;
     if (error || !data.session) throw new Error('Please sign in again to check a message.');
-    const response=await fetch('/api/check-scam',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+data.session.access_token},body:JSON.stringify(image?{message:input,image}:{message:input}),signal:controller.signal});
+    const response=await fetch('/api/check-scam',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+data.session.access_token},body:JSON.stringify({message:input,...(image?{image}:{}),person_id:personId}),signal:controller.signal});
     if (!response.ok) {
-      const errors={400:'Please check your message or choose a valid JPG, PNG, GIF, or WEBP image.',413:'Please choose an image no larger than 3MB.',429:'You\u2019ve made several checks. Please wait a minute and try again.',401:'Please sign in again to check a message.'};
+      const errors={400:'Please check your message or choose a valid JPG, PNG, GIF, or WEBP image.',404:'That family member is no longer available. Choose another person or check without linking.',413:'Please choose an image no larger than 3MB.',429:'You\u2019ve made several checks. Please wait a minute and try again.',401:'Please sign in again to check a message.'};
       throw new Error(errors[response.status] || 'The checker is unavailable right now. Please try again in a moment.');
     }
     const parsed=await response.json();
@@ -473,6 +563,9 @@ async function checkScam(event) {
     saved.className='help-text';
     saved.textContent=parsed.historySaved===true?'Assessment saved to History.':'This assessment could not be saved to History. You can still read it here.';
     $('checker-result').append(saved);
+    const check={...r,what_to_do:r.whatToDo,...parsed.check,id:parsed.check?.id || crypto.randomUUID(),person_id:personId,saved:parsed.historySaved===true && !!parsed.check?.id};
+    $('checker-result').insertAdjacentHTML('beforeend',checkControls(check));
+    icons();
     clearCheckerImage();
   } catch(error) {
     if (epoch===state.epoch) $('checker-result').innerHTML='<div class="message error" role="alert"><strong>We couldn\u2019t check this message.</strong><p>'+esc(error.name==='AbortError'?'The check took too long. Please try again.':error.message)+'</p><p>Avoid links or payments until you can verify the request independently.</p></div>';
@@ -490,6 +583,8 @@ document.addEventListener('click', async event => {
     if (button.dataset.edit) openMember(button.dataset.edit);
     if (button.dataset.delete) confirmDelete(button.dataset.delete);
     if (button.dataset.archive) await archive(button.dataset.archive,button);
+    if (button.dataset.talk) openConversation(button.dataset.talk);
+    if (button.dataset.checkPerson) { suggestedPerson=button.dataset.checkPerson; await navigate('checker'); }
     if (button.dataset.close) closeDialog(button.dataset.close);
     if (button.dataset.password) {
       const input=$(button.dataset.password), show=input.type==='password';
@@ -526,6 +621,9 @@ $('member-birthyear').max=String(new Date().getFullYear());
 $('delete-confirm').addEventListener('click',deleteMember);
 $('simulation-form').addEventListener('submit',simulate);
 $('checker-form').addEventListener('submit',checkScam);
+$('copy-conversation').addEventListener('click',copyConversation);
+$('share-conversation').addEventListener('click',shareConversation);
+document.addEventListener('change',event=>{ if (event.target.matches('[data-followup]')) setFollowup(event.target); });
 $('checker-input').addEventListener('input',()=>{ $('checker-count').textContent=$('checker-input').value.length.toLocaleString()+' / 4,000 characters'; });
 // ---- Scam checker: photo attachment ----
 function clearCheckerImage() {

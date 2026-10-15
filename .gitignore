@@ -5,6 +5,7 @@ dist/
 test-results/
 playwright-report/
 .vercel
+supabase/.temp/
 docs/PRIVATE-*
 docs/family-test-notes.txt
 docs/competitor-notes.txt

@@ -80,6 +80,7 @@
       <h1 tabindex="-1">Is this a scam?</h1>
       <p class="page-sub">Unsure about a message? Let's take a closer look together.</p>
       <form id="checker-form" class="checker-form">
+        <div class="field"><label for="checker-person">Who is this for?</label><select id="checker-person"><option value="">Just checking / not linked</option></select><p id="checker-person-message" class="message" role="status" hidden></p></div>
         <div class="field"><label for="checker-input">Message to check</label><textarea class="checker-input" id="checker-input" rows="6" maxlength="4000" required placeholder="Paste the message, or describe what happened..." aria-describedby="checker-privacy checker-count"></textarea>
         <p class="help-text" id="checker-privacy">Remove names, account numbers, passwords, and other personal details from text and photos. Submitted content goes to our AI provider for analysis. Proteva saves the assessment in your History, not the original text or photo. Assessments may still mention details you submit.</p><p class="help-text" id="checker-count">0 / 4,000 characters</p></div>
         <div class="checker-photo">
@@ -134,6 +135,12 @@
     <div class="field"><label for="member-notes">Notes <span class="optional">(optional)</span></label><textarea id="member-notes" rows="3" maxlength="1000" placeholder="Anything helpful for setting up together."></textarea><p class="help-text">Keep passwords and sensitive financial details out of notes.</p></div>
     <div class="dialog-actions"><button class="btn btn-secondary" type="button" data-close="member-dialog">Cancel</button><button class="btn btn-primary" id="save-member-btn" type="submit">Add family member</button></div>
   </form>
+</dialog>
+<dialog id="conversation-dialog" aria-labelledby="conversation-title">
+  <div class="dialog-head"><h2 id="conversation-title">Talk about this</h2><button class="icon-btn" type="button" data-close="conversation-dialog" aria-label="Close conversation draft" title="Close"><i data-lucide="x"></i></button></div>
+  <div class="field"><label for="conversation-draft">Your message</label><textarea id="conversation-draft" rows="9" maxlength="3000"></textarea></div>
+  <div id="conversation-message" class="message" role="status" hidden></div>
+  <div class="dialog-actions"><button class="btn btn-secondary" type="button" id="copy-conversation"><i data-lucide="copy"></i>Copy message</button><button class="btn btn-primary" type="button" id="share-conversation" hidden><i data-lucide="share-2"></i>Share message</button></div>
 </dialog>
 <dialog id="delete-dialog" aria-labelledby="delete-title"><h2 id="delete-title">Remove family member?</h2><p id="delete-description" class="page-sub"></p><div id="delete-message" class="message" role="alert" hidden></div><div class="dialog-actions"><button class="btn btn-secondary" data-close="delete-dialog">Keep member</button><button class="btn btn-danger" id="delete-confirm">Remove member</button></div></dialog>
 <dialog id="simulation-dialog" aria-labelledby="simulation-title"><form id="simulation-form"><h2 id="simulation-title">Explore a sample event</h2><p class="page-sub">See how Proteva will explain a threat. This creates a clearly labeled demonstration, not a real device event.</p><div id="simulation-message" class="message" role="alert" hidden></div><div class="field"><label for="simulation-person">Family member</label><select id="simulation-person" required></select></div><div class="dialog-actions"><button class="btn btn-secondary" type="button" data-close="simulation-dialog">Cancel</button><button class="btn btn-primary" id="simulation-btn">Create sample</button></div></form></dialog>

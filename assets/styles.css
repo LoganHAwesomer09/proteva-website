@@ -189,6 +189,13 @@ summary { cursor: pointer; color: var(--brand-deep); font-size: 13px; font-weigh
 .checker-form { margin-top: 26px; max-width: 720px; }
 .checker-input { min-height: 190px; }
 .checker-result { margin-top: 28px; max-width: 720px; }
+.check-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; margin-top: 16px; }
+.followup-toggle { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; font-size: 14px; }
+.followup-date { flex-basis: 100%; margin-top: 0; }
+.followup-date:empty { display: none; }
+#conversation-draft { min-height: 240px; }
+#conversation-dialog .dialog-actions { flex-wrap: wrap; }
+.checker-form select { text-overflow: ellipsis; }
 .verdict { padding: 22px; border-left: 3px solid currentColor; background: var(--amber-bg); color: var(--amber); }
 .verdict.danger { background: var(--danger-bg); color: var(--danger); }
 .verdict.safe { background: var(--mint); color: var(--brand-deep); }

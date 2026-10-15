@@ -19,9 +19,10 @@ function mockFetch(t,options={}) {
   t.mock.method(globalThis,'fetch',async(url,init)=>{
     calls.push({url:String(url),init});
     if (String(url).includes('/auth/v1/user')) return new Response(JSON.stringify(options.authInvalid?{message:'Invalid token'}:{id:userId,email:'caregiver@example.test',is_anonymous:!!options.anonymous}),{status:options.authInvalid?401:200,headers:{'Content-Type':'application/json'}});
+    if (String(url).includes('/rest/v1/protected_people')) return new Response(JSON.stringify(options.personMissing?null:{id:'22222222-2222-4222-8222-222222222222'}),{status:200,headers:{'Content-Type':'application/json'}});
     if (String(url).includes('/rest/v1/scam_checks')) {
       if (options.saveThrows) throw new Error('private database error');
-      return new Response(options.saveError?JSON.stringify({message:'private database error'}):null,{status:options.saveError?403:201});
+      return new Response(JSON.stringify(options.saveError?{message:'private database error'}:{id:'33333333-3333-4333-8333-333333333333',person_id:JSON.parse(init.body).person_id,followed_up_at:null,created_at:new Date().toISOString()}),{status:options.saveError?403:201,headers:{'Content-Type':'application/json'}});
     }
     if (options.reject) throw new Error('private provider error');
     return new Response(JSON.stringify(options.providerError?{error:'private provider error'}:{content:[{type:'text',text:options.text || JSON.stringify({verdict:'caution',headline:'Check this independently',why:'The request asks for urgent payment.',whatToDo:'Contact the sender using a number you already trust.'})}]}),{status:options.providerError?429:200,headers:{'Content-Type':'application/json'}});
@@ -144,4 +145,30 @@ test('a history error preserves the assessment without falsely claiming it was s
     assert.ok(!JSON.stringify(res.body).includes('private database'));
     t.mock.restoreAll();
   }
+});
+
+test('linked checks verify person ownership before paid analysis and save the chosen person',async t=>{
+  process.env.ANTHROPIC_API_KEY='test-placeholder';
+  t.after(()=>delete process.env.ANTHROPIC_API_KEY);
+  const personId='22222222-2222-4222-8222-222222222222';
+  const calls=mockFetch(t,{userId:'owner'}),res=response();
+  await handler(request({message:'Check this message',person_id:personId}),res);
+  assert.equal(res.code,200);
+  assert.ok(calls[1].url.includes('user_id=eq.owner'));
+  assert.ok(calls[1].url.includes('id=eq.'+personId));
+  assert.equal(JSON.parse(calls[3].init.body).person_id,personId);
+  assert.equal(res.body.check.person_id,personId);
+  assert.equal(res.body.historySaved,true);
+});
+
+test('invalid and unavailable family links never call the paid provider',async t=>{
+  const calls=mockFetch(t,{personMissing:true});
+  const invalid=response();
+  await handler(request({message:'Hello',person_id:'bad'}),invalid);
+  assert.equal(invalid.code,400);
+  assert.equal(calls.length,0);
+  const missing=response();
+  await handler(request({message:'Hello',person_id:'22222222-2222-4222-8222-222222222222'}),missing);
+  assert.equal(missing.code,404);
+  assert.equal(calls.length,2);
 });
