@@ -11,6 +11,8 @@ export async function build() {
   await mkdir(path.join(output,'vendor'),{recursive:true});
   await copyFile(path.join(root,'node_modules/lucide/dist/umd/lucide.min.js'),path.join(output,'vendor/lucide.min.js'));
   await copyFile(path.join(root,'node_modules/@supabase/supabase-js/dist/umd/supabase.js'),path.join(output,'vendor/supabase.js'));
+  // Loaded on demand by the scam checker's instant link preview.
+  await copyFile(path.join(root,'node_modules/tldts/dist/index.esm.min.js'),path.join(output,'vendor/tldts.esm.min.js'));
   return output;
 }
 if (process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {

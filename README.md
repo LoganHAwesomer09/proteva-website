@@ -40,7 +40,8 @@ This is JavaScript, not TypeScript. ESLint, server tests, browser tests, accessi
 | `api/check-scam.js` | Authenticated text/photo assessment and account-scoped history save |
 | `api/generate-threat.js` | Authenticated sample event, no paid provider request |
 | `lib/server.js` | Request/auth validation, per-instance burst limit, daily quota claim |
-| `lib/links.js` | Free local link checks (Tier 0): look-alike brands, hidden destinations, risky endings |
+| `lib/links.js` | Server entry for the free Tier 0 link checks |
+| `assets/links-core.js` | Link-check rules shared by the server and the in-browser instant preview |
 | `assets/link-signals.js` | Plain-language link warnings shared by server and app |
 | `tests/` | Server and Playwright regression coverage |
 | `scripts/` | Static build, local server, file-reference checks |
@@ -156,7 +157,7 @@ Every scam check also runs free, local link checks (`lib/links.js`, using `tldts
 - **Medium:** URL shorteners, endings often used by scam sites (such as `.xyz` and `.top`), very long layered addresses, and words like "login" or "verify" alongside another warning.
 - **Low (informational):** links written with plain `http://`.
 
-The app shows a "Links in this message" section with each domain, a plain-language reason, and which real site it imitates. Results are also returned at the daily limit, since they cost nothing. Findings are added to the AI's input as labeled context data (domains and fixed warning text only, never paths or query strings), which helps the verdict without trusting message content. Real company domains are allow-listed, so `paypal.com` or `secure.chase.com` are not flagged. The checks look at addresses only and cannot prove a site is safe; text inside photos is not link-checked. `tests/links.test.mjs` covers scam patterns, real-site non-flags, and email/file-name false positives.
+While a caregiver types, the same rules run in the browser (`assets/links-core.js`, with `tldts` copied to `/vendor` and loaded only when a message contains something that looks like a domain). Flagged links appear instantly with "Before you check: ... Don't open it." This uses no daily check and sends nothing anywhere. If the parser cannot load, the preview stays hidden and checking works as before. After a check, the app shows a "Links in this message" section with each domain, a plain-language reason, and which real site it imitates. Results are also returned at the daily limit, since they cost nothing. Findings are added to the AI's input as labeled context data (domains and fixed warning text only, never paths or query strings), which helps the verdict without trusting message content. Real company domains are allow-listed, so `paypal.com` or `secure.chase.com` are not flagged. The checks look at addresses only and cannot prove a site is safe; text inside photos is not link-checked. `tests/links.test.mjs` covers scam patterns, real-site non-flags, and email/file-name false positives.
 
 ## Database performance
 

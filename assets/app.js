@@ -312,6 +312,29 @@ function linkReport(links) {
   }).join('');
   return '<section class="result-section link-report"><h3>Links in this message</h3><ul class="link-list">'+items+'</ul><p class="help-text">This checks the address only. It cannot confirm a website is safe. To visit a company, type its address yourself or use its app.</p></section>';
 }
+// Instant, free link preview while typing. The parser loads only when needed;
+// if it cannot load, the preview simply stays hidden and the checker works as before.
+let linkChecker=null, linkPreviewTimer=0, linkPreviewRevision=0;
+function loadLinkChecker() {
+  linkChecker??=Promise.all([import('/vendor/tldts.esm.min.js'),import('./links-core.js')])
+    .then(([tldts,core])=>core.createLinkChecker(tldts.parse))
+    .catch(()=>{ linkChecker=null; return null; });
+  return linkChecker;
+}
+function clearLinkPreview() { linkPreviewRevision++; clearTimeout(linkPreviewTimer); $('checker-link-preview').hidden=true; $('checker-link-preview').replaceChildren(); }
+function scheduleLinkPreview() {
+  clearTimeout(linkPreviewTimer);
+  const revision=++linkPreviewRevision, text=$('checker-input').value;
+  if (!/[a-z0-9-]\.[a-z]{2,}/i.test(text)) { $('checker-link-preview').hidden=true; $('checker-link-preview').replaceChildren(); return; }
+  linkPreviewTimer=setTimeout(async()=>{
+    const checker=await loadLinkChecker();
+    if (revision!==linkPreviewRevision) return;
+    const flagged=checker?checker.checkLinks(text).filter(link=>link.signals.length && link.risk!=='low'):[];
+    if (!flagged.length) { $('checker-link-preview').hidden=true; $('checker-link-preview').replaceChildren(); return; }
+    $('checker-link-preview').innerHTML='<p class="link-preview-title">'+icon('triangle-alert')+'Before you check: '+(flagged.length===1?'this link has':'these links have')+' warning signs. Don\u2019t open '+(flagged.length===1?'it':'them')+'.</p>'+linkReport(flagged);
+    $('checker-link-preview').hidden=false; icons();
+  },350);
+}
 function priceLabel(cents) { return Number.isInteger(cents)?'$'+(cents/100).toFixed(cents%100?2:0)+' / month':'Free'; }
 async function openUpgrade() {
   const epoch=state.epoch;
@@ -367,7 +390,7 @@ function clearSession() {
   busy($('checker-form'),false); $('checker-thinking').hidden=true;
   for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
   for (const id of Object.values(containers)) $(id).replaceChildren();
-  $('checker-result').replaceChildren(); $('checker-input').value=''; $('checker-count').textContent='0 / 4,000 characters'; clearCheckerImage();
+  $('checker-result').replaceChildren(); $('checker-input').value=''; $('checker-count').textContent='0 / 4,000 characters'; clearCheckerImage(); clearLinkPreview();
   for (const id of ['auth-form','member-form','password-form']) $(id).reset();
   for (const id of ['account-email','settings-email','user-initial']) $(id).textContent='';
   $('onboarding-content').replaceChildren(); $('delete-description').textContent='';
@@ -648,6 +671,7 @@ async function checkScam(event) {
     const r=parsed.result;
     if (!r || !['danger','caution','safe'].includes(r.verdict) || !['headline','why','whatToDo'].every(k=>typeof r[k]==='string' && r[k].trim() && r[k].length<=2000)) throw new Error('We couldn\u2019t read the result. Please try again.');
     $('checker-result').innerHTML='<div class="verdict '+r.verdict+'"><h2>'+esc(r.verdict==='safe'?'No obvious warning signs':r.headline)+'</h2></div><section class="result-section"><h3>What we noticed</h3><p>'+esc(r.why)+'</p></section><section class="result-section"><h3>Your next step</h3><p>'+esc(r.whatToDo)+'</p></section>'+linkReport(parsed.links)+(r.verdict==='safe'?'<p class="help-text">This does not verify who sent the message or whether a link is safe. Confirm independently before sharing information or money.</p>':'');
+    clearLinkPreview();
     $('checker-result').focus();
     const saved=document.createElement('p');
     saved.className='help-text';
@@ -717,7 +741,7 @@ $('checker-form').addEventListener('submit',checkScam);
 $('copy-conversation').addEventListener('click',copyConversation);
 $('share-conversation').addEventListener('click',shareConversation);
 document.addEventListener('change',event=>{ if (event.target.matches('[data-followup]')) setFollowup(event.target); });
-$('checker-input').addEventListener('input',()=>{ $('checker-count').textContent=$('checker-input').value.length.toLocaleString()+' / 4,000 characters'; });
+$('checker-input').addEventListener('input',()=>{ $('checker-count').textContent=$('checker-input').value.length.toLocaleString()+' / 4,000 characters'; scheduleLinkPreview(); });
 // ---- Scam checker: photo attachment ----
 function clearCheckerImage() {
   photoRevision++; photoLoading=false;

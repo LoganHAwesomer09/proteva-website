@@ -144,6 +144,12 @@ input[type="checkbox"] { accent-color: #0f7659; width: 20px; height: 20px; flex:
 .link-item ul { margin: 6px 0 0 18px; color: var(--muted); font-size: 14px; }
 .link-item li + li { margin-top: 3px; }
 .message.error + .link-report { margin-top: 16px; }
+.link-preview { border: 1px solid var(--danger); background: var(--danger-bg); border-radius: var(--radius); padding: 14px 16px; margin: 4px 0 16px; }
+.link-preview-title { display: flex; align-items: center; gap: 8px; font-weight: 650; color: var(--danger); }
+.link-preview-title svg { flex-shrink: 0; }
+.link-preview .link-report { border: 0; padding: 0; margin: 0; }
+.link-preview .link-report h3 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.link-preview .link-item { background: var(--surface); }
 .sidebar-bottom { margin-top: auto; padding: 20px 12px 0; border-top: 1px solid var(--line); }
 .sidebar-bottom p { color: var(--muted); font-size: 12px; margin-top: 8px; }
 .main { margin-left: 232px; padding: 0 44px 50px; }
