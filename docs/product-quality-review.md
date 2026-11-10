@@ -35,7 +35,7 @@ Run the commands in README.md for the current result. The browser suite covers 1
 - Confirm live Supabase columns and ownership/cascade policies with project access.
 - Verify real signup email, recovery redirects, and authenticated provider requests.
 - Enable email confirmation before inviting real users.
-- Add durable rate limits and spend controls; the code's burst limiter is only per instance.
+- Apply the scam-check daily-limit migration (see README), then add email confirmation, a sign-up CAPTCHA, and a provider-side spend limit.
 - Commission and test the actual device agent.
 - Review privacy policy, retention, and launch messaging before a paid launch.
 

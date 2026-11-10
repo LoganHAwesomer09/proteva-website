@@ -60,6 +60,7 @@ export async function setup(page,options={}) {
     if (!route.request().headers().authorization) throw new Error('Missing bearer auth');
     await new Promise(resolve=>setTimeout(resolve,50));
     db.checkerRequests.push(route.request().postDataJSON());
+    if (db.checkerLimit) return route.fulfill({status:429,contentType:'application/json',headers:{'Retry-After':db.checkerLimit==='daily'?'30000':'45'},body:JSON.stringify({error:'Limit reached'})});
     const result={verdict:'caution',headline:'Verify this independently',why:'This message asks for urgent payment.',whatToDo:'Contact the company through a number you already trust.'};
     let check=null;
     if (!db.checkerFail && !db.checkerMalformed && !db.historySaveFail) {

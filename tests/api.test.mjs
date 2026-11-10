@@ -19,6 +19,12 @@ function mockFetch(t,options={}) {
   t.mock.method(globalThis,'fetch',async(url,init)=>{
     calls.push({url:String(url),init});
     if (String(url).includes('/auth/v1/user')) return new Response(JSON.stringify(options.authInvalid?{message:'Invalid token'}:{id:userId,email:'caregiver@example.test',is_anonymous:!!options.anonymous}),{status:options.authInvalid?401:200,headers:{'Content-Type':'application/json'}});
+    if (String(url).includes('/rest/v1/rpc/claim_scam_check')) {
+      if (options.quota==='throw') throw new Error('private quota error');
+      if (options.quota==='error') return new Response(JSON.stringify({message:'private quota error'}),{status:404,headers:{'Content-Type':'application/json'}});
+      const denied=options.quota==='account' || options.quota==='project';
+      return new Response(JSON.stringify([{allowed:!denied,limit_reason:denied?options.quota:null,remaining:denied?0:19,resets_at:new Date(Date.now()+3600000).toISOString()}]),{status:200,headers:{'Content-Type':'application/json'}});
+    }
     if (String(url).includes('/rest/v1/protected_people')) return new Response(JSON.stringify(options.personMissing?null:{id:'22222222-2222-4222-8222-222222222222'}),{status:200,headers:{'Content-Type':'application/json'}});
     if (String(url).includes('/rest/v1/scam_checks')) {
       if (options.saveThrows) throw new Error('private database error');
@@ -29,6 +35,8 @@ function mockFetch(t,options={}) {
   });
   return calls;
 }
+const provider=calls=>calls.find(call=>call.url.includes('api.anthropic.com'));
+const saved=calls=>calls.find(call=>call.url.includes('/rest/v1/scam_checks'));
 test('only POST is allowed and responses cannot be cached',async()=>{
   const res=response(); await handler({method:'GET',headers:{}},res);
   assert.equal(res.code,405); assert.equal(res.headers.Allow,'POST'); assert.equal(res.headers['Cache-Control'],'no-store');
@@ -57,15 +65,15 @@ test('authenticated checks return only validated output and isolate message from
   process.env.ANTHROPIC_API_KEY='test-placeholder';
   const calls=mockFetch(t),res=response(); await handler(request(),res);
   assert.equal(res.code,200); assert.equal(res.body.result.verdict,'caution');
-  const sent=JSON.parse(calls[1].init.body);
+  const sent=JSON.parse(provider(calls).init.body);
   assert.ok(sent.system.includes('UNTRUSTED DATA'));
   assert.deepEqual(sent.messages[0].content,[{type:'text',text:request().body.message}]);
   assert.equal(res.body.historySaved,true);
-  const saved=JSON.parse(calls[2].init.body);
-  assert.equal(saved.snippet,'');
-  assert.equal(saved.was_photo,false);
-  assert.equal(new Headers(calls[2].init.headers).get('authorization'),'Bearer test-session-token');
-  assert.ok(!calls[2].init.body.includes(request().body.message));
+  const row=JSON.parse(saved(calls).init.body);
+  assert.equal(row.snippet,'');
+  assert.equal(row.was_photo,false);
+  assert.equal(new Headers(saved(calls).init.headers).get('authorization'),'Bearer test-session-token');
+  assert.ok(!saved(calls).init.body.includes(request().body.message));
   assert.ok(!JSON.stringify(res.body).includes('test-placeholder'));
   delete process.env.ANTHROPIC_API_KEY;
 });
@@ -106,14 +114,14 @@ test('photo-only and photo-plus-note requests preserve the image and save only t
     const calls=mockFetch(t,{userId:'image-'+message}),res=response();
     await handler(request({message,image:{media_type:'image/png',data:png},user_id:'another-user'}),res);
     assert.equal(res.code,200);
-    const content=JSON.parse(calls[1].init.body).messages[0].content;
+    const content=JSON.parse(provider(calls).init.body).messages[0].content;
     assert.equal(content[0].source.data,png);
     assert.ok(content[1].text.includes(message));
-    const saved=JSON.parse(calls[2].init.body);
-    assert.equal(saved.user_id,'image-'+message);
-    assert.equal(saved.was_photo,true);
-    assert.equal(saved.snippet,'');
-    assert.ok(!calls[2].init.body.includes(png));
+    const row=JSON.parse(saved(calls).init.body);
+    assert.equal(row.user_id,'image-'+message);
+    assert.equal(row.was_photo,true);
+    assert.equal(row.snippet,'');
+    assert.ok(!saved(calls).init.body.includes(png));
     t.mock.restoreAll();
   }
 });
@@ -156,7 +164,7 @@ test('linked checks verify person ownership before paid analysis and save the ch
   assert.equal(res.code,200);
   assert.ok(calls[1].url.includes('user_id=eq.owner'));
   assert.ok(calls[1].url.includes('id=eq.'+personId));
-  assert.equal(JSON.parse(calls[3].init.body).person_id,personId);
+  assert.equal(JSON.parse(saved(calls).init.body).person_id,personId);
   assert.equal(res.body.check.person_id,personId);
   assert.equal(res.body.historySaved,true);
 });
@@ -171,4 +179,53 @@ test('invalid and unavailable family links never call the paid provider',async t
   await handler(request({message:'Hello',person_id:'22222222-2222-4222-8222-222222222222'}),missing);
   assert.equal(missing.code,404);
   assert.equal(calls.length,2);
+});
+
+test('the durable daily quota is claimed with the caller\'s session before any paid request',async t=>{
+  process.env.ANTHROPIC_API_KEY='test-placeholder';
+  t.after(()=>delete process.env.ANTHROPIC_API_KEY);
+  const calls=mockFetch(t),res=response();
+  await handler(request(),res);
+  assert.equal(res.code,200);
+  const claim=calls.findIndex(call=>call.url.includes('/rest/v1/rpc/claim_scam_check'));
+  assert.ok(claim>0 && claim<calls.indexOf(provider(calls)));
+  assert.equal(new Headers(calls[claim].init.headers).get('authorization'),'Bearer test-session-token');
+  assert.ok(!calls[claim].init.body?.includes(request().body.message));
+});
+
+test('daily limits return 429 with a reset time and never call the paid provider',async t=>{
+  process.env.ANTHROPIC_API_KEY='test-placeholder';
+  t.after(()=>delete process.env.ANTHROPIC_API_KEY);
+  for (const quota of ['account','project']) {
+    const calls=mockFetch(t,{quota}),res=response();
+    await handler(request(),res);
+    assert.equal(res.code,429);
+    assert.ok(Number(res.headers['Retry-After'])>=60);
+    assert.match(res.body.error,quota==='account'?/You have reached/:/Proteva has reached/);
+    assert.equal(provider(calls),undefined);
+    assert.equal(saved(calls),undefined);
+    t.mock.restoreAll();
+  }
+});
+
+test('an unconfirmed quota fails closed without leaking database details',async t=>{
+  process.env.ANTHROPIC_API_KEY='test-placeholder';
+  t.after(()=>delete process.env.ANTHROPIC_API_KEY);
+  for (const quota of ['error','throw']) {
+    const calls=mockFetch(t,{quota}),res=response();
+    await handler(request(),res);
+    assert.equal(res.code,503);
+    assert.ok(!JSON.stringify(res.body).includes('private quota'));
+    assert.equal(provider(calls),undefined);
+    t.mock.restoreAll();
+  }
+});
+
+test('requests rejected before the paid step do not use up quota',async t=>{
+  const calls=mockFetch(t,{personMissing:true});
+  delete process.env.ANTHROPIC_API_KEY;
+  for (const body of [{message:'Hello',person_id:'22222222-2222-4222-8222-222222222222'},{message:'Hello'}]) {
+    await handler(request(body),response());
+  }
+  assert.ok(!calls.some(call=>call.url.includes('claim_scam_check')));
 });

@@ -551,6 +551,8 @@ async function checkScam(event) {
     const response=await fetch('/api/check-scam',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+data.session.access_token},body:JSON.stringify({message:input,...(image?{image}:{}),person_id:personId}),signal:controller.signal});
     if (!response.ok) {
       const errors={400:'Please check your message or choose a valid JPG, PNG, GIF, or WEBP image.',404:'That family member is no longer available. Choose another person or check without linking.',413:'Please choose an image no larger than 3MB.',429:'You\u2019ve made several checks. Please wait a minute and try again.',401:'Please sign in again to check a message.'};
+      // A long Retry-After means the durable daily limit, not a short burst limit.
+      if (response.status===429 && Number(response.headers.get('Retry-After'))>120) throw new Error('Today’s message-check limit has been reached. Please try again tomorrow.');
       throw new Error(errors[response.status] || 'The checker is unavailable right now. Please try again in a moment.');
     }
     const parsed=await response.json();
