@@ -52,7 +52,6 @@ create policy plan_interest_owner_insert on public.plan_interest
   for insert to authenticated with check ((select auth.uid()) = user_id and plan <> 'free');
 
 -- The per-account limit now comes from the plan.
--- Replace the claim function before dropping the column it used.
 create or replace function public.claim_scam_check()
 returns table (allowed boolean, limit_reason text, remaining integer, resets_at timestamptz)
 language plpgsql
@@ -133,7 +132,9 @@ begin
 end;
 $$;
 
-alter table public.scam_check_limits drop column per_account_daily;
+-- Kept (not dropped) so this migration has no destructive step; nothing reads it any more.
+comment on column public.scam_check_limits.per_account_daily is
+  'Unused since 20261110190000: daily limits now come from scam_check_plans.daily_checks.';
 
 -- Read-only summary for the signed-in caregiver's sidebar. Never changes a counter.
 create function public.get_scam_check_usage()
