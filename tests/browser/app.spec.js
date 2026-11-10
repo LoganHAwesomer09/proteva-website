@@ -252,6 +252,46 @@ test('scam checker explains short burst limits and daily limits differently',asy
   await expect(page.locator('#checker-result')).toContainText('try again tomorrow');
   await expect(page.locator('#checker-btn')).toBeEnabled();
 });
+test('sidebar shows today\'s checks and updates after each check',async({page})=>{
+  const db=await setup(page); await page.goto('/app.html'); await openView(page,'checker');
+  const card=page.locator('#usage-card');
+  await expect(card).toBeVisible();
+  await expect(page.locator('#usage-count')).toHaveText('10 of 10 left');
+  await expect(page.locator('#usage-plan')).toHaveText('Free plan');
+  await expect(page.locator('#usage-reset')).toContainText('Resets at');
+  await page.locator('#checker-input').fill('Your account is locked. Send a payment right away.');
+  await page.locator('#checker-btn').click();
+  await expect(page.locator('#checker-result')).toContainText('Verify this independently');
+  await expect(page.locator('#usage-count')).toHaveText('9 of 10 left');
+  await expect(page.locator('#usage-meter')).toHaveAttribute('aria-valuenow','1');
+  db.usage.used_today=10; db.checkerLimit='daily';
+  await page.locator('#checker-btn').click();
+  await expect(page.locator('#usage-count')).toHaveText('All 10 used');
+  await expect(card).toHaveClass(/used-up/);
+  await page.locator('#checker-result [data-action="upgrade"]').click();
+  await expect(page.locator('#upgrade-dialog')).toBeVisible();
+});
+test('upgrade dialog lists plan limits and records interest without charging',async({page})=>{
+  const db=await setup(page); db.interest=['shield']; await page.goto('/app.html');
+  if (await page.locator('#mobile-menu').isVisible()) await page.locator('#mobile-menu').click();
+  await page.locator('#usage-card [data-action="upgrade"]').click();
+  const dialog=page.locator('#upgrade-dialog');
+  await expect(dialog).toContainText('25 scam checks a day');
+  await expect(dialog).toContainText('$20 / month');
+  await expect(dialog.locator('.upgrade-plan.current')).toContainText('Free');
+  await expect(dialog.locator('.upgrade-plan').nth(3)).toContainText('let you know');
+  await dialog.locator('[data-notify-plan="family"]').click();
+  await expect(page.locator('#upgrade-message')).toContainText('Nothing has been charged');
+  await expect(dialog.locator('[data-notify-plan="family"]')).toHaveCount(0);
+  expect(db.interest).toEqual(['shield','family']);
+  await dialog.locator('[data-close="upgrade-dialog"]').click();
+  await expect(dialog).toBeHidden();
+});
+test('a usage failure hides the card without breaking the app',async({page})=>{
+  const db=await setup(page); db.usageFail=true; await page.goto('/app.html');
+  await expect(page.locator('#dashboard-content')).not.toBeEmpty();
+  await expect(page.locator('#usage-card')).toBeHidden();
+});
 test('password confirmation and dark mode work across navigation and reload',async({page})=>{
   await setup(page); await page.goto('/app.html'); await openView(page,'settings');
   await page.locator('#new-password').fill('Example-password-only');

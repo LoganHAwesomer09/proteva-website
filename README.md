@@ -107,14 +107,28 @@ Expected advisor notices after the November 10 changes: the three `scam_check_*`
 
 ## Scam-check daily limits
 
-Every paid check first claims a slot through the `claim_scam_check` database function, using the caller's own session (no service-role key). Without a slot, the server makes no provider request. Default limits, stored in the `scam_check_limits` table:
+Every paid check first claims a slot through the `claim_scam_check` database function, using the caller's own session (no service-role key). Without a slot, the server makes no provider request.
+
+Each account's daily allowance comes from its subscription plan (`scam_check_plans`; edit `daily_checks` in the table editor):
+
+| Plan | Checks per day | Price shown |
+| --- | --- | --- |
+| Free | 10 | none |
+| Home | 25 | $10 / month |
+| Family | 50 | $20 / month |
+| Shield | 100 | $35 / month |
+
+Accounts are on Free unless `account_plans` has a row for them. Browsers cannot read or change `account_plans`. Until billing is connected, put someone on a plan from the Supabase SQL Editor, for example `insert into public.account_plans (user_id, plan) values ('<user id>', 'family') on conflict (user_id) do update set plan = excluded.plan, updated_at = now();`. Delete the row to return them to Free.
+
+Project-wide limits, stored in the `scam_check_limits` table:
 
 | Limit | Default | Purpose |
 | --- | --- | --- |
-| `per_account_daily` | 20 | Checks per account per day |
-| `new_account_daily` | 5 | Checks per day for accounts created in the last 24 hours |
+| `new_account_daily` | 5 | Checks per day for Free accounts created in the last 24 hours |
 | `project_daily` | 300 | All checks across Proteva per day; caps provider spend |
 | `new_accounts_project_daily` | 50 | Part of `project_daily` that new accounts may use, so a wave of fresh sign-ups cannot use up the day for existing families |
+
+The app sidebar shows "Scam checks today" (checks left, plan, reset time) from the read-only `get_scam_check_usage` function, and refreshes after every check. "Get more checks" opens the plan list. Paid plans cannot be bought yet, so each paid plan has a "Notify me" button instead. It records the request in `plan_interest` (one row per account and plan, readable only by that account) and charges nothing. To see demand, run `select plan, count(*) from public.plan_interest group by plan;`. Connecting real billing (for example Stripe Checkout plus a webhook that writes `account_plans` with the service role) is the next step, and needs the company's own Stripe account.
 
 Days reset at midnight UTC (4 or 5 pm Pacific). Attempts count even if the AI provider fails, so retrying cannot get around a limit. If the quota cannot be confirmed (for example, the migration is missing), the checker fails closed with "temporarily unavailable" and spends nothing. Browsers cannot read or change the limit or usage tables; owners edit `scam_check_limits` in the Supabase table editor, and changes apply to the next check.
 

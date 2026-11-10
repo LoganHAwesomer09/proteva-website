@@ -103,12 +103,35 @@ input[type="checkbox"] { accent-color: #0f7659; width: 20px; height: 20px; flex:
 .auth-panel form { background: var(--surface); border: 1px solid var(--line); padding: 28px; border-radius: var(--radius); }
 .auth-toggle { text-align: center; margin-top: 18px; font-size: 14px; }
 .auth-footer { text-align: center; font-size: 13px; color: var(--muted); margin-top: 28px; }
-.sidebar { width: 232px; position: fixed; inset: 0 auto 0 0; z-index: 30; background: var(--surface); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 28px 16px 20px; }
+.sidebar { width: 232px; position: fixed; inset: 0 auto 0 0; z-index: 30; background: var(--surface); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 28px 16px 20px; overflow-y: auto; }
 .sidebar .logo { padding: 0 12px; margin-bottom: 42px; }
 .nav-label { color: var(--muted); font-size: 11px; font-weight: 650; margin: 0 14px 12px; text-transform: uppercase; }
 .nav-item { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 46px; padding: 11px 14px; margin-bottom: 6px; background: none; border: none; border-radius: var(--radius); color: var(--muted); text-align: left; font-weight: 550; font-size: 14px; }
 .nav-item:hover { background: var(--soft); color: var(--ink); }
 .nav-item[aria-current="page"] { background: var(--mint); color: var(--brand-deep); font-weight: 650; }
+.usage-card { margin: auto 0 16px; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--soft); }
+.usage-card + .sidebar-bottom { margin-top: 0; }
+.usage-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.usage-head h2 { font-size: 12px; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: .02em; }
+.usage-head .pill { font-size: 11px; padding: 2px 7px; white-space: nowrap; }
+.usage-count { font-size: 18px; font-weight: 700; margin: 8px 0 8px; }
+.meter { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.meter span { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--brand); transition: width .3s ease; }
+.usage-card.used-up .meter span { background: var(--amber); }
+.usage-card.used-up .usage-count { color: var(--amber); }
+.usage-reset { color: var(--muted); font-size: 12px; margin: 8px 0 12px; }
+.usage-btn { width: 100%; min-height: 40px; padding: 8px 12px; font-size: 13px; }
+.usage-card.used-up .usage-btn { background: #0f7659; border-color: #0f7659; color: #fff; }
+.upgrade-plans { display: grid; gap: 10px; }
+.upgrade-plan { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); }
+.upgrade-plan.current { border-color: var(--brand); background: var(--mint); }
+.upgrade-plan h3 { font-size: 16px; }
+.upgrade-plan h3 span { font-weight: 500; color: var(--muted); font-size: 14px; margin-left: 4px; }
+.upgrade-plan p { color: var(--muted); font-size: 13px; margin-top: 3px; }
+.upgrade-plan p strong { color: var(--ink); font-weight: 600; }
+.upgrade-plan .btn { flex-shrink: 0; min-height: 38px; padding: 7px 14px; font-size: 13px; }
+.upgrade-plan .pill { flex-shrink: 0; }
+.message .btn { margin-top: 12px; }
 .sidebar-bottom { margin-top: auto; padding: 20px 12px 0; border-top: 1px solid var(--line); }
 .sidebar-bottom p { color: var(--muted); font-size: 12px; margin-top: 8px; }
 .main { margin-left: 232px; padding: 0 44px 50px; }
@@ -290,6 +313,8 @@ dialog .page-sub { font-size: 14px; margin-bottom: 24px; }
   .site-nav-links > a:not(.btn) { display: none; }
 }
 @media (max-width: 520px) {
+  .upgrade-plan { flex-direction: column; align-items: flex-start; }
+  .upgrade-plan .btn { width: 100%; }
   body { font-size: 14px; }
   h1 { font-size: 26px; }
   .main { padding: 0 18px 32px; }

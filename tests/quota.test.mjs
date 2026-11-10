@@ -33,7 +33,8 @@ async function database(t) {
       ('${fresh2}', now() - interval '2 hours'),
       ('${anonymous}', now() - interval '30 days');
   `);
-  await db.exec(await readFile(new URL('../supabase/migrations/20261110180000_scam_check_quotas.sql',import.meta.url),'utf8'));
+  for (const name of ['20261110180000_scam_check_quotas.sql','20261110190000_plan_based_check_limits.sql'])
+    await db.exec(await readFile(new URL('../supabase/migrations/'+name,import.meta.url),'utf8'));
   return db;
 }
 async function as(db,user,claims={}) {
@@ -45,13 +46,13 @@ async function owner(db) {
 }
 const claim=async db=>(await db.query('select * from public.claim_scam_check()')).rows[0];
 
-test('established accounts get their daily allowance, then a clear account-limit denial',async t=>{
+test('established free accounts get their daily allowance, then a clear account-limit denial',async t=>{
   const db=await database(t);
   await as(db,established);
-  for (let i=1;i<=20;i++) {
+  for (let i=1;i<=10;i++) {
     const row=await claim(db);
     assert.equal(row.allowed,true);
-    assert.equal(row.remaining,20-i);
+    assert.equal(row.remaining,10-i);
     assert.equal(row.limit_reason,null);
   }
   const denied=await claim(db);
@@ -61,7 +62,7 @@ test('established accounts get their daily allowance, then a clear account-limit
   assert.equal(denied.resets_at.getTime(),midnight.getTime());
   await owner(db);
   // The denied attempt did not use up project capacity.
-  assert.equal((await db.query('select checks from public.scam_check_daily_totals')).rows[0].checks,20);
+  assert.equal((await db.query('select checks from public.scam_check_daily_totals')).rows[0].checks,10);
 });
 
 test('accounts created in the last day get a smaller allowance',async t=>{
@@ -101,11 +102,11 @@ test('a burst of new accounts cannot use up capacity reserved for existing famil
 
 test('zero limits deny without creating usage',async t=>{
   const db=await database(t);
-  await db.exec('update public.scam_check_limits set per_account_daily = 0');
+  await db.exec("update public.scam_check_plans set daily_checks = 0 where plan = 'free'");
   await as(db,established);
   assert.equal((await claim(db)).limit_reason,'account');
   await owner(db);
-  await db.exec('update public.scam_check_limits set per_account_daily = 20, project_daily = 0');
+  await db.exec("update public.scam_check_plans set daily_checks = 10 where plan = 'free'; update public.scam_check_limits set project_daily = 0");
   await as(db,established);
   assert.equal((await claim(db)).limit_reason,'project');
   await owner(db);
@@ -116,8 +117,8 @@ test('a new UTC day starts fresh and old account history is pruned',async t=>{
   const db=await database(t);
   await db.exec(`
     insert into public.scam_check_usage values
-      ('${established}', (now() at time zone 'utc')::date - 1, 20),
-      ('${established}', (now() at time zone 'utc')::date - 45, 20);
+      ('${established}', (now() at time zone 'utc')::date - 1, 10),
+      ('${established}', (now() at time zone 'utc')::date - 45, 10);
     insert into public.scam_check_daily_totals values ((now() at time zone 'utc')::date - 1, 300, 0);
   `);
   await as(db,established);
@@ -135,7 +136,10 @@ test('signed-in users cannot read, change, or reset limits and counters directly
     'select * from public.scam_check_usage',
     'select * from public.scam_check_daily_totals',
     'select * from public.scam_check_limits',
-    'update public.scam_check_limits set per_account_daily = 1000',
+    'update public.scam_check_limits set project_daily = 100000',
+    "update public.scam_check_plans set daily_checks = 100000",
+    'select * from public.account_plans',
+    `insert into public.account_plans (user_id, plan) values ('${established}', 'shield')`,
     'delete from public.scam_check_usage',
     `insert into public.scam_check_daily_totals values (current_date, 0, 0)`
   ]) await assert.rejects(db.query(sql),/permission denied/i,sql);
@@ -165,4 +169,61 @@ test('missing limits fail closed and deleting an account removes its usage',asyn
   await db.exec('delete from public.scam_check_limits');
   await as(db,other);
   await assert.rejects(claim(db),/not configured/);
+});
+
+test('paid plans get their own allowance, including brand-new paid accounts',async t=>{
+  const db=await database(t);
+  await db.exec(`insert into public.account_plans (user_id, plan) values ('${established}','home'), ('${fresh}','family')`);
+  await as(db,established);
+  for (let i=1;i<=25;i++) assert.equal((await claim(db)).remaining,25-i);
+  assert.equal((await claim(db)).limit_reason,'account');
+  await as(db,fresh);
+  for (let i=0;i<6;i++) assert.equal((await claim(db)).allowed,true);
+  await owner(db);
+  // A paid account is not counted against the new-account slice.
+  assert.equal((await db.query('select new_account_checks from public.scam_check_daily_totals')).rows[0].new_account_checks,0);
+});
+
+test('the usage summary reports plan, limit and today\'s count without using a check',async t=>{
+  const db=await database(t);
+  await as(db,established);
+  const usage=async()=>(await db.query('select * from public.get_scam_check_usage()')).rows[0];
+  let row=await usage();
+  assert.deepEqual([row.plan,row.plan_name,row.daily_limit,row.used_today],['free','Free',10,0]);
+  await claim(db); await claim(db);
+  row=await usage(); await usage();
+  assert.equal(row.used_today,2);
+  const midnight=new Date(); midnight.setUTCHours(24,0,0,0);
+  assert.equal(row.resets_at.getTime(),midnight.getTime());
+  await as(db,fresh);
+  assert.equal((await usage()).daily_limit,5);
+  await owner(db);
+  await db.exec(`insert into public.account_plans values ('${fresh}','shield',now())`);
+  await as(db,fresh);
+  row=await usage();
+  assert.deepEqual([row.plan_name,row.daily_limit],['Shield',100]);
+  await owner(db);
+  assert.equal((await db.query('select sum(checks)::int as n from public.scam_check_usage')).rows[0].n,2);
+  await as(db,anonymous,{is_anonymous:true});
+  await assert.rejects(usage(),/Sign in/);
+  await db.exec('reset role; set role anon;');
+  await assert.rejects(usage(),/permission denied/i);
+});
+
+test('plan details are public, but caregivers can only record their own interest in paid plans',async t=>{
+  const db=await database(t);
+  await db.exec('reset role; set role anon;');
+  const plans=(await db.query('select plan,daily_checks,monthly_price_cents from public.scam_check_plans order by sort_order')).rows;
+  assert.deepEqual(plans.map(p=>[p.plan,p.daily_checks,p.monthly_price_cents]),[['free',10,null],['home',25,1000],['family',50,2000],['shield',100,3500]]);
+  await assert.rejects(db.query("insert into public.plan_interest (plan) values ('family')"),/permission denied/i);
+  await as(db,established);
+  await db.query("insert into public.plan_interest (plan) values ('family')");
+  await assert.rejects(db.query("insert into public.plan_interest (plan) values ('family')"),/duplicate key/);
+  await assert.rejects(db.query("insert into public.plan_interest (plan) values ('free')"),/row-level security/);
+  await assert.rejects(db.query(`insert into public.plan_interest (user_id, plan) values ('${other}','home')`),/permission denied/i);
+  await assert.rejects(db.query("insert into public.plan_interest (plan) values ('platinum')"),/foreign key/i);
+  await as(db,other);
+  assert.equal((await db.query('select * from public.plan_interest')).rows.length,0);
+  await as(db,established);
+  assert.deepEqual((await db.query('select plan from public.plan_interest')).rows,[{plan:'family'}]);
 });

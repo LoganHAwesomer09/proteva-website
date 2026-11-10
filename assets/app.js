@@ -271,6 +271,74 @@ function setMobile(open) {
   $('sidebar').inert=matchMedia('(max-width:800px)').matches&&!open;
 }
 function showDialog(id) { $(id).showModal(); icons(); }
+// Daily scam-check allowance in the sidebar. A failed read hides the card; it never blocks the app.
+let usageRequest=0;
+async function loadUsage() {
+  const epoch=state.epoch, request=++usageRequest;
+  try {
+    const {data,error}=await sb.rpc('get_scam_check_usage');
+    if (epoch!==state.epoch || request!==usageRequest) return;
+    const row=Array.isArray(data)?data[0]:data;
+    if (error || !row || !Number.isInteger(row.daily_limit) || !Number.isInteger(row.used_today)) throw new Error('Usage unavailable');
+    renderUsage(row);
+  } catch { if (epoch===state.epoch && request===usageRequest) $('usage-card').hidden=true; }
+}
+function renderUsage(row) {
+  const limit=Math.max(0,row.daily_limit), used=Math.min(Math.max(0,row.used_today),limit), left=limit-used;
+  state.plan=row.plan;
+  $('usage-plan').textContent=(row.plan_name || 'Free')+' plan';
+  $('usage-count').textContent=left>0?left+' of '+limit+' left':'All '+limit+' used';
+  $('usage-meter').setAttribute('aria-valuemax',String(limit));
+  $('usage-meter').setAttribute('aria-valuenow',String(used));
+  $('usage-meter').setAttribute('aria-valuetext',used+' of '+limit+' checks used today');
+  $('usage-fill').style.width=(limit?Math.round(used/limit*100):100)+'%';
+  $('usage-card').classList.toggle('used-up',left===0);
+  const resets=new Date(row.resets_at);
+  $('usage-reset').textContent=Number.isFinite(resets.getTime())?'Resets at '+dateLabel(resets,true):'Resets daily';
+  $('usage-card').hidden=false;
+}
+function priceLabel(cents) { return Number.isInteger(cents)?'$'+(cents/100).toFixed(cents%100?2:0)+' / month':'Free'; }
+async function openUpgrade() {
+  const epoch=state.epoch;
+  message('upgrade-message');
+  $('upgrade-plans').innerHTML=loading();
+  showDialog('upgrade-dialog');
+  try {
+    const [plans,interest]=await Promise.all([
+      result(sb.from('scam_check_plans').select('plan,display_name,daily_checks,monthly_price_cents,family_members').order('sort_order')),
+      result(sb.from('plan_interest').select('plan').eq('user_id',state.user.id))
+    ]);
+    if (epoch!==state.epoch) return;
+    const asked=new Set((interest.data || []).map(row=>row.plan));
+    $('upgrade-plans').innerHTML=(plans.data || []).map(plan=>{
+      const current=plan.plan===(state.plan || 'free');
+      const action=current?'<span class="pill">Your plan</span>'
+        : plan.plan==='free'?''
+        : asked.has(plan.plan)?'<span class="pill neutral">'+icon('check')+'We&rsquo;ll let you know</span>'
+        : '<button class="btn btn-primary" type="button" data-notify-plan="'+esc(plan.plan)+'">Notify me</button>';
+      const members=Number.isInteger(plan.family_members)?' &middot; up to '+plan.family_members+' family members':'';
+      return '<article class="upgrade-plan'+(current?' current':'')+'"><div><h3>'+esc(plan.display_name)+(Number.isInteger(plan.monthly_price_cents)?' <span>'+esc(priceLabel(plan.monthly_price_cents))+'</span>':'')+'</h3><p><strong>'+esc(plan.daily_checks)+' scam checks a day</strong>'+members+'</p></div>'+action+'</article>';
+    }).join('') || empty('Plans are not available right now','Please try again in a moment.');
+    icons();
+  } catch {
+    if (epoch===state.epoch) { $('upgrade-plans').replaceChildren(); message('upgrade-message','We couldn’t load the plans. Please try again in a moment.'); }
+  }
+}
+async function notifyPlan(button) {
+  const plan=button.dataset.notifyPlan;
+  button.disabled=true; message('upgrade-message');
+  try {
+    const {error}=await sb.from('plan_interest').insert({plan});
+    if (error && error.code!=='23505') throw error;
+    const done=document.createElement('span');
+    done.className='pill neutral'; done.innerHTML=icon('check')+'We&rsquo;ll let you know';
+    button.replaceWith(done); icons();
+    message('upgrade-message','Thanks! We’ll email '+(state.user?.email || 'you')+' when this plan opens. Nothing has been charged.','success');
+  } catch {
+    button.disabled=false;
+    message('upgrade-message','We couldn’t save that just now. Please try again.');
+  }
+}
 function closeDialog(id) {
   if ($(id).getAttribute('aria-busy')==='true' || $(id).querySelector('[aria-busy="true"]')) return;
   $(id).close();
@@ -288,6 +356,7 @@ function clearSession() {
   for (const id of ['auth-form','member-form','password-form']) $(id).reset();
   for (const id of ['account-email','settings-email','user-initial']) $(id).textContent='';
   $('onboarding-content').replaceChildren(); $('delete-description').textContent='';
+  usageRequest++; state.plan=null; $('usage-card').hidden=true; $('upgrade-plans').replaceChildren(); message('upgrade-message');
   onboardDraft={name:'',relationship:'',devices:''}; activeCounts={};
   $('app-shell').hidden=true; $('auth-screen').hidden=false;
   closeMenu(); setMobile(false); message('auth-message');
@@ -301,6 +370,7 @@ async function enterApp(user, recovery = false) {
   $('settings-email').textContent=user.email || '';
   $('user-initial').textContent=initials(user.email);
   $('password').value='';
+  loadUsage();
   await navigate(recovery?'settings':'dashboard',{focus:false});
   if (epoch!==state.epoch) return;
   if (recovery) { message('password-message','Choose your new password below.','success'); $('new-password').focus(); return; }
@@ -552,7 +622,7 @@ async function checkScam(event) {
     if (!response.ok) {
       const errors={400:'Please check your message or choose a valid JPG, PNG, GIF, or WEBP image.',404:'That family member is no longer available. Choose another person or check without linking.',413:'Please choose an image no larger than 3MB.',429:'You\u2019ve made several checks. Please wait a minute and try again.',401:'Please sign in again to check a message.'};
       // A long Retry-After means the durable daily limit, not a short burst limit.
-      if (response.status===429 && Number(response.headers.get('Retry-After'))>120) throw new Error('Today’s message-check limit has been reached. Please try again tomorrow.');
+      if (response.status===429 && Number(response.headers.get('Retry-After'))>120) throw Object.assign(new Error('Today’s message-check limit has been reached. Please try again tomorrow.'),{dailyLimit:true});
       throw new Error(errors[response.status] || 'The checker is unavailable right now. Please try again in a moment.');
     }
     const parsed=await response.json();
@@ -570,10 +640,11 @@ async function checkScam(event) {
     icons();
     clearCheckerImage();
   } catch(error) {
-    if (epoch===state.epoch) $('checker-result').innerHTML='<div class="message error" role="alert"><strong>We couldn\u2019t check this message.</strong><p>'+esc(error.name==='AbortError'?'The check took too long. Please try again.':error.message)+'</p><p>Avoid links or payments until you can verify the request independently.</p></div>';
+    if (epoch===state.epoch) $('checker-result').innerHTML='<div class="message error" role="alert"><strong>We couldn\u2019t check this message.</strong><p>'+esc(error.name==='AbortError'?'The check took too long. Please try again.':error.message)+'</p><p>Avoid links or payments until you can verify the request independently.</p>'+(error.dailyLimit?'<button class="btn btn-secondary" type="button" data-action="upgrade">'+icon('sparkles')+'Get more checks</button>':'')+'</div>';
+    if (epoch===state.epoch && error.dailyLimit) icons();
   } finally {
     clearTimeout(timeout);
-    if (epoch===state.epoch) { busy(form,false); $('checker-thinking').hidden=true; }
+    if (epoch===state.epoch) { busy(form,false); $('checker-thinking').hidden=true; loadUsage(); }
   }
 }
 document.addEventListener('click', async event => {
@@ -588,6 +659,7 @@ document.addEventListener('click', async event => {
     if (button.dataset.talk) openConversation(button.dataset.talk);
     if (button.dataset.checkPerson) { suggestedPerson=button.dataset.checkPerson; await navigate('checker'); }
     if (button.dataset.close) closeDialog(button.dataset.close);
+    if (button.dataset.notifyPlan) await notifyPlan(button);
     if (button.dataset.password) {
       const input=$(button.dataset.password), show=input.type==='password';
       input.type=show?'text':'password';
@@ -601,6 +673,7 @@ document.addEventListener('click', async event => {
       case 'retry': await loadView(); break;
       case 'more': state.limit+=20; await loadView(); break;
       case 'simulate': await openSimulation(); break;
+      case 'upgrade': setMobile(false); await openUpgrade(); break;
       case 'ob-next':
         if (state.onboardStep===1) {
           state.consent=$('ob-consent').checked;

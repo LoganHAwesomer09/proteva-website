@@ -44,6 +44,13 @@
       <button class="nav-item" data-view="settings"><i data-lucide="settings-2"></i>Settings</button>
       <button class="nav-item" data-view="help"><i data-lucide="circle-help"></i>Help &amp; support</button>
     </nav>
+    <section class="usage-card" id="usage-card" aria-labelledby="usage-title" hidden>
+      <div class="usage-head"><h2 id="usage-title">Scam checks today</h2><span class="pill neutral" id="usage-plan"></span></div>
+      <p class="usage-count" id="usage-count"></p>
+      <div class="meter" id="usage-meter" role="progressbar" aria-labelledby="usage-title" aria-valuemin="0"><span id="usage-fill"></span></div>
+      <p class="usage-reset" id="usage-reset"></p>
+      <button class="btn btn-secondary usage-btn" type="button" data-action="upgrade"><i data-lucide="sparkles"></i>Get more checks</button>
+    </section>
     <div class="sidebar-bottom"><span class="pill neutral">Family preview</span><p>Looking out for the people<br>who matter most.</p></div>
   </aside>
   <button class="nav-backdrop" id="nav-backdrop" aria-label="Close navigation" tabindex="-1"></button>
@@ -141,6 +148,12 @@
   <div class="field"><label for="conversation-draft">Your message</label><textarea id="conversation-draft" rows="9" maxlength="3000"></textarea></div>
   <div id="conversation-message" class="message" role="status" hidden></div>
   <div class="dialog-actions"><button class="btn btn-secondary" type="button" id="copy-conversation"><i data-lucide="copy"></i>Copy message</button><button class="btn btn-primary" type="button" id="share-conversation" hidden><i data-lucide="share-2"></i>Share message</button></div>
+</dialog>
+<dialog id="upgrade-dialog" aria-labelledby="upgrade-title">
+  <div class="dialog-head"><h2 id="upgrade-title">Get more scam checks</h2><button class="icon-btn" type="button" data-close="upgrade-dialog" aria-label="Close plans" title="Close"><i data-lucide="x"></i></button></div>
+  <p class="page-sub">Each plan includes a number of scam checks every day. Paid plans aren&rsquo;t available to buy yet. Choose one and we&rsquo;ll email you when it opens. You won&rsquo;t be charged.</p>
+  <div id="upgrade-message" class="message" role="status" hidden></div>
+  <div class="upgrade-plans" id="upgrade-plans"></div>
 </dialog>
 <dialog id="delete-dialog" aria-labelledby="delete-title"><h2 id="delete-title">Remove family member?</h2><p id="delete-description" class="page-sub"></p><div id="delete-message" class="message" role="alert" hidden></div><div class="dialog-actions"><button class="btn btn-secondary" data-close="delete-dialog">Keep member</button><button class="btn btn-danger" id="delete-confirm">Remove member</button></div></dialog>
 <dialog id="simulation-dialog" aria-labelledby="simulation-title"><form id="simulation-form"><h2 id="simulation-title">Explore a sample event</h2><p class="page-sub">See how Proteva will explain a threat. This creates a clearly labeled demonstration, not a real device event.</p><div id="simulation-message" class="message" role="alert" hidden></div><div class="field"><label for="simulation-person">Family member</label><select id="simulation-person" required></select></div><div class="dialog-actions"><button class="btn btn-secondary" type="button" data-close="simulation-dialog">Cancel</button><button class="btn btn-primary" id="simulation-btn">Create sample</button></div></form></dialog>
