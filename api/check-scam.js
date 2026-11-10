@@ -1,4 +1,4 @@
-import { prepare, readBody, authorize, withinRateLimit, parseAssessment, saveAssessment, isUuid, verifyPerson } from '../lib/server.js';
+import { prepare, readBody, authorize, withinRateLimit, parseAssessment, saveAssessment, isUuid, verifyPerson, claimCheck } from '../lib/server.js';
 import { IMAGE_TYPES, MAX_IMAGE_BYTES, MAX_CHECK_BYTES } from '../assets/checker-limits.js';
 
 function validImage(image) {
@@ -44,6 +44,8 @@ export default async function handler(req, res) {
   if (!user || !withinRateLimit(user.id, res)) return;
   if (!await verifyPerson(req,res,user,personId,deadline)) return;
   if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'The checker is temporarily unavailable.' });
+  // Claim a durable daily slot last, so validation and configuration failures never use up quota.
+  if (!await claimCheck(req,res,deadline)) return;
 
   // Build the message content: image first (if present), then text.
   const content = [];

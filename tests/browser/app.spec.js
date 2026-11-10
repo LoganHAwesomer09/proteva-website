@@ -241,6 +241,17 @@ test('scam checker handles success, server failure and malformed output',async({
   await page.locator('#checker-btn').click();
   await expect(page.locator('#checker-result')).toContainText('couldn');
 });
+test('scam checker explains short burst limits and daily limits differently',async({page})=>{
+  const db=await setup(page); await page.goto('/app.html'); await openView(page,'checker');
+  await page.locator('#checker-input').fill('Your account is locked. Send a payment right away.');
+  db.checkerLimit='burst';
+  await page.locator('#checker-btn').click();
+  await expect(page.locator('#checker-result')).toContainText('wait a minute');
+  db.checkerLimit='daily';
+  await page.locator('#checker-btn').click();
+  await expect(page.locator('#checker-result')).toContainText('try again tomorrow');
+  await expect(page.locator('#checker-btn')).toBeEnabled();
+});
 test('password confirmation and dark mode work across navigation and reload',async({page})=>{
   await setup(page); await page.goto('/app.html'); await openView(page,'settings');
   await page.locator('#new-password').fill('Example-password-only');

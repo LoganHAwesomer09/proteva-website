@@ -39,7 +39,7 @@ This is JavaScript, not TypeScript. ESLint, server tests, browser tests, accessi
 | `assets/config.js` | Public Supabase connection settings, not a secret |
 | `api/check-scam.js` | Authenticated text/photo assessment and account-scoped history save |
 | `api/generate-threat.js` | Authenticated sample event, no paid provider request |
-| `lib/server.js` | Request/auth validation and per-instance burst limit |
+| `lib/server.js` | Request/auth validation, per-instance burst limit, daily quota claim |
 | `tests/` | Server and Playwright regression coverage |
 | `scripts/` | Static build, local server, file-reference checks |
 | `dist/` | Generated deployable assets; ignored by Git |
@@ -66,11 +66,11 @@ Supabase password recovery requires the app URL in the project's allowed redirec
 
 The former client-side preview password was public. Remove any reuse of it elsewhere and rotate it wherever it was reused. Its removal from current code does not remove it from existing Git history.
 
-The burst limiter is per warm serverless instance, not a global billing quota. Add durable account quotas/gateway limits before a public paid launch. Production RLS, email delivery, provider billing, and real device protection require separate operational verification.
+Scam checks have two limits. A short burst limiter (10 per minute per account) runs in each warm serverless instance. Durable daily quotas are enforced in Postgres; see "Scam-check daily limits" below. Production RLS, email delivery, provider billing, and real device protection require separate operational verification.
 
 ## Scam-checker backend
 
-Flow: sign in -> submit text/photo -> server verifies the Supabase user -> Claude assessment -> validated result -> save assessment under that user's JWT -> show result and save status.
+Flow: sign in -> submit text/photo -> server verifies the Supabase user -> claim a daily quota slot -> Claude assessment -> validated result -> save assessment under that user's JWT -> show result and save status.
 
 Photos are limited to 3 MiB, leaving room for base64 and JSON inside Vercel's 4.5 MB request limit. Browser, local server, and deployed handler share limits in assets/checker-limits.js. The handler checks image signatures and base64; the AI provider still decodes the image. Authentication, analysis, and saving share a 28-second deadline within the configured 30-second function duration.
 
@@ -102,3 +102,28 @@ The new Postgres test uses development-only PGlite with synthetic accounts to ex
 After migration: check with a dedicated test account, verify the saved check is listed for only the selected person, mark follow-up, reload, undo, and confirm the verdict is unchanged. Review Supabase security advisors. The existing per-instance rate limit and other pre-launch checks remain unchanged.
 
 The October 15 security advisor reported pre-existing warnings for public/signed-in execution of `public.rls_auto_enable()` and disabled leaked-password protection. These are not changed by this release and still need review before launch. No real signed-in production scam check or paid provider request was performed as part of this release verification.
+
+## Scam-check daily limits
+
+Every paid check first claims a slot through the `claim_scam_check` database function, using the caller's own session (no service-role key). Without a slot, the server makes no provider request. Default limits, stored in the `scam_check_limits` table:
+
+| Limit | Default | Purpose |
+| --- | --- | --- |
+| `per_account_daily` | 20 | Checks per account per day |
+| `new_account_daily` | 5 | Checks per day for accounts created in the last 24 hours |
+| `project_daily` | 300 | All checks across Proteva per day; caps provider spend |
+| `new_accounts_project_daily` | 50 | Part of `project_daily` that new accounts may use, so a wave of fresh sign-ups cannot use up the day for existing families |
+
+Days reset at midnight UTC (4 or 5 pm Pacific). Attempts count even if the AI provider fails, so retrying cannot get around a limit. If the quota cannot be confirmed (for example, the migration is missing), the checker fails closed with "temporarily unavailable" and spends nothing. Browsers cannot read or change the limit or usage tables; owners edit `scam_check_limits` in the Supabase table editor, and changes apply to the next check.
+
+`npm test` runs the actual migration in PGlite with Supabase-style default grants and synthetic accounts. It covers each limit, refunds, zero limits, day rollover, history pruning, blocked direct table access, and anonymous/anon rejection. Before release the migration was also run on a real PostgreSQL 16 server with 1,000 simultaneous claims from 40 accounts. Exactly the configured caps were allowed, there were no deadlocks, and the counters stayed consistent.
+
+### Rollout (in this order)
+
+1. In Supabase, open Project Proteva, then SQL Editor. Paste all of `supabase/migrations/20261110180000_scam_check_quotas.sql` and run it. It should say "Success. No rows returned."
+2. Still in the SQL Editor, run `select * from public.claim_scam_check();`. Because the editor is not signed in as a user, it should fail with "Sign in to check a message." That error means the function exists.
+3. Only now deploy the app code. Deploying the code first makes every check fail closed until step 1 is done.
+4. Sign in with a test account and run one check. Then, in the Table Editor, `scam_check_daily_totals` should show today's date with `checks` = 1.
+5. Check Supabase's security advisor. A warning that `claim_scam_check` is a security-definer function callable by signed-in users is expected; that is how the server calls it with the user's session.
+
+Limits do not replace launch protections. Turn on email confirmation and a sign-up CAPTCHA before a public launch, and keep a provider-side monthly spend limit in the Anthropic console. A determined attacker who prepares accounts a day ahead can still use up the daily project cap (a denial of service, not extra spending). If `limit_reason = 'project'` starts appearing, raise the cap or block the accounts involved.
