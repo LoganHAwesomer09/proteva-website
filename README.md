@@ -157,3 +157,12 @@ Every scam check also runs free, local link checks (`lib/links.js`, using `tldts
 - **Low (informational):** links written with plain `http://`.
 
 The app shows a "Links in this message" section with each domain, a plain-language reason, and which real site it imitates. Results are also returned at the daily limit, since they cost nothing. Findings are added to the AI's input as labeled context data (domains and fixed warning text only, never paths or query strings), which helps the verdict without trusting message content. Real company domains are allow-listed, so `paypal.com` or `secure.chase.com` are not flagged. The checks look at addresses only and cannot prove a site is safe; text inside photos is not link-checked. `tests/links.test.mjs` covers scam patterns, real-site non-flags, and email/file-name false positives.
+
+## Database performance
+
+`supabase/migrations/20261110200000_rls_and_index_performance.sql` addresses the Supabase performance advisor:
+
+- The three ownership policies (`protected_people`, `activity`, `scam_checks`) keep their names, roles and conditions, but use `(select auth.uid())`, so Postgres evaluates it once per query instead of once per row.
+- It adds indexes for account-scoped reads and foreign keys.
+
+`tests/performance-migration.test.mjs` runs the migration against a model of the live policies and confirms that cross-account reads, inserts, updates and deletes are still blocked. The advisor's "multiple permissive UPDATE policies on scam_checks" notice is left as is: both policies use the same owner condition, and removing one is a separate, destructive change.
