@@ -4,7 +4,7 @@ export function event(id,tag='stopped',resolved=false) {
   return {id:String(id),user_id:user.id,person_id:person.id,text:'Sample event '+id,icon:'shield-check',tag,resolved,created_at:new Date(Date.now()-id*60000).toISOString(),detail_why:'A suspicious request appeared.',detail_did:'The request was stopped in this sample.',detail_actions:'No action needed for this sample.'};
 }
 export async function setup(page,options={}) {
-  const db={user:{...user},people:options.empty?[]:[{...person}],activity:options.empty?[]:[event(1),event(2,'attention'),event(3,'stopped',true)],checks:[],checkerRequests:[],historySaveFail:false,fail:null,writes:0,signupConfirmation:false,checkerFail:false,checkerMalformed:false,waitlistFail:false,signedOut:false};
+  const db={user:{...user},people:options.empty?[]:[{...person}],activity:options.empty?[]:[event(1),event(2,'attention'),event(3,'stopped',true)],checks:[],checkerRequests:[],historySaveFail:false,fail:null,writes:0,signupConfirmation:false,checkerFail:false,checkerMalformed:false,waitlistFail:false,signedOut:false,usage:{plan:'free',plan_name:'Free',daily_limit:10,used_today:0},usageFail:false,interest:[],plans:[{plan:'free',display_name:'Free',daily_checks:10,monthly_price_cents:null,family_members:null},{plan:'home',display_name:'Home',daily_checks:25,monthly_price_cents:1000,family_members:2},{plan:'family',display_name:'Family',daily_checks:50,monthly_price_cents:2000,family_members:5},{plan:'shield',display_name:'Shield',daily_checks:100,monthly_price_cents:3500,family_members:10}]};
   const session={access_token:'test-access-token',refresh_token:'test-refresh-token',expires_in:3600,expires_at:Math.floor(Date.now()/1000)+3600,token_type:'bearer',user};
   if (!options.signedOut) await page.addInitScript(({session})=>{
     localStorage.setItem('sb-njjhioejdqjwpeblrewb-auth-token',JSON.stringify(session));
@@ -24,6 +24,16 @@ export async function setup(page,options={}) {
     const table=url.pathname.split('/').pop();
     if (table==='waitlist') { db.writes++; return send(db.waitlistFail?500:201,db.waitlistFail?{message:'Database unavailable'}:[]); }
     if (db.fail && (db.fail===method || db.fail==='ALL')) return send(500,{message:'Simulated failure',code:'XX000'});
+    if (table==='get_scam_check_usage') {
+      if (db.usageFail) return send(500,{message:'Simulated failure'});
+      const reset=new Date(); reset.setUTCHours(24,0,0,0);
+      return send(200,[{...db.usage,resets_at:reset.toISOString()}]);
+    }
+    if (table==='scam_check_plans') return send(200,db.plans);
+    if (table==='plan_interest') {
+      if (method==='POST') { db.writes++; const {plan}=req.postDataJSON(); if (db.interest.includes(plan)) return send(409,{code:'23505',message:'duplicate'}); db.interest.push(plan); return send(201,null); }
+      return send(200,db.interest.map(plan=>({plan})));
+    }
     if (table==='set_check_followup') {
       const {check_id,completed}=req.postDataJSON();
       const row=db.checks.find(c=>c.id===check_id && c.user_id===db.user.id);
@@ -60,6 +70,7 @@ export async function setup(page,options={}) {
     if (!route.request().headers().authorization) throw new Error('Missing bearer auth');
     await new Promise(resolve=>setTimeout(resolve,50));
     db.checkerRequests.push(route.request().postDataJSON());
+    if (!db.checkerLimit && !db.checkerFail) db.usage.used_today=Math.min(db.usage.daily_limit,db.usage.used_today+1);
     if (db.checkerLimit) return route.fulfill({status:429,contentType:'application/json',headers:{'Retry-After':db.checkerLimit==='daily'?'30000':'45'},body:JSON.stringify({error:'Limit reached'})});
     const result={verdict:'caution',headline:'Verify this independently',why:'This message asks for urgent payment.',whatToDo:'Contact the company through a number you already trust.'};
     let check=null;
