@@ -101,7 +101,9 @@ The new Postgres test uses development-only PGlite with synthetic accounts to ex
 
 After migration: check with a dedicated test account, verify the saved check is listed for only the selected person, mark follow-up, reload, undo, and confirm the verdict is unchanged. Review Supabase security advisors. The existing per-instance rate limit and other pre-launch checks remain unchanged.
 
-The October 15 security advisor reported pre-existing warnings for public/signed-in execution of `public.rls_auto_enable()` and disabled leaked-password protection. These are not changed by this release and still need review before launch. No real signed-in production scam check or paid provider request was performed as part of this release verification.
+The October 15 security advisor reported public/signed-in execution of `public.rls_auto_enable()` and disabled leaked-password protection. On November 10, 2026, `supabase/migrations/20261110181500_revoke_rls_auto_enable_execute.sql` removed the execute grants. The `ensure_rls` event trigger still turns on RLS for new public tables (verified with a temporary table). Leaked-password protection requires the Supabase Pro plan; the project is on the free plan, so it remains off.
+
+Expected advisor notices after the November 10 changes: the three `scam_check_*` tables have RLS with no policies (deliberate, so browsers have no access), and signed-in users can execute `claim_scam_check` (deliberate, so the server can claim quota with the caller's session). No real signed-in production scam check or paid provider request was performed as part of this release verification.
 
 ## Scam-check daily limits
 
@@ -119,6 +121,8 @@ Days reset at midnight UTC (4 or 5 pm Pacific). Attempts count even if the AI pr
 `npm test` runs the actual migration in PGlite with Supabase-style default grants and synthetic accounts. It covers each limit, refunds, zero limits, day rollover, history pruning, blocked direct table access, and anonymous/anon rejection. Before release the migration was also run on a real PostgreSQL 16 server with 1,000 simultaneous claims from 40 accounts. Exactly the configured caps were allowed, there were no deadlocks, and the counters stayed consistent.
 
 ### Rollout (in this order)
+
+Applied to Project Proteva on November 10, 2026 and verified (limits row present, counters closed to browsers, signed-out calls refused, signed-in claim allowed in a rolled-back test). Keep these steps for any new environment.
 
 1. In Supabase, open Project Proteva, then SQL Editor. Paste all of `supabase/migrations/20261110180000_scam_check_quotas.sql` and run it. It should say "Success. No rows returned."
 2. Still in the SQL Editor, run `select * from public.claim_scam_check();`. Because the editor is not signed in as a user, it should fail with "Sign in to check a message." That error means the function exists.
