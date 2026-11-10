@@ -90,6 +90,7 @@
         <div class="field"><label for="checker-person">Who is this for?</label><select id="checker-person"><option value="">Just checking / not linked</option></select><p id="checker-person-message" class="message" role="status" hidden></p></div>
         <div class="field"><label for="checker-input">Message to check</label><textarea class="checker-input" id="checker-input" rows="6" maxlength="4000" required placeholder="Paste the message, or describe what happened..." aria-describedby="checker-privacy checker-count"></textarea>
         <p class="help-text" id="checker-privacy">Remove names, account numbers, passwords, and other personal details from text and photos. Submitted content goes to our AI provider for analysis. Proteva saves the assessment in your History, not the original text or photo. Assessments may still mention details you submit.</p><p class="help-text" id="checker-count">0 / 4,000 characters</p></div>
+        <div id="checker-link-preview" class="link-preview" role="status" aria-live="polite" hidden></div>
         <div class="checker-photo">
           <input type="file" id="checker-photo-input" accept="image/jpeg,image/png,image/gif,image/webp" hidden>
           <button class="btn btn-secondary" type="button" id="checker-photo-btn"><i data-lucide="camera"></i>Add a photo</button>

@@ -316,6 +316,24 @@ test('link checks explain look-alike addresses and stay visible at the daily lim
   await expect(page.locator('#checker-result')).toContainText('try again tomorrow');
   await expect(page.locator('#checker-result .link-report')).toContainText('paypa1-secure.com');
 });
+test('look-alike links are flagged instantly while typing, without using a check',async({page})=>{
+  const db=await setup(page); await page.goto('/app.html'); await openView(page,'checker');
+  const preview=page.locator('#checker-link-preview');
+  await page.locator('#checker-input').fill('Your PayPal is locked. Verify at paypa1-secure.com/login');
+  await expect(preview).toBeVisible();
+  await expect(preview).toContainText('warning signs');
+  await expect(preview).toContainText('paypa1-secure.com');
+  await expect(preview).toContainText('This is not paypal.com');
+  await page.locator('#checker-input').fill('See the photos at https://www.icloud.com');
+  await expect(preview).toBeHidden();
+  await page.locator('#checker-input').fill('Open https://bit.ly/3xYz and http://192.168.4.20/office');
+  await expect(preview.locator('.link-item')).toHaveCount(2);
+  expect(db.checkerRequests.length).toBe(0);
+  expect(db.usage.used_today).toBe(0);
+  db.links=[]; await page.locator('#checker-btn').click();
+  await expect(page.locator('#checker-result')).toContainText('Verify this independently');
+  await expect(preview).toBeHidden();
+});
 test('password confirmation and dark mode work across navigation and reload',async({page})=>{
   await setup(page); await page.goto('/app.html'); await openView(page,'settings');
   await page.locator('#new-password').fill('Example-password-only');
