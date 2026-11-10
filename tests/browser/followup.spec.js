@@ -34,12 +34,14 @@ test('a linked check appears only for its person and follow-up survives reload a
 test('failed and zero-row follow-ups revert the checkbox instead of claiming success',async({page})=>{
   const db=await setup(page); await checkForRose(page);
   const toggle=page.locator('#checker-result [data-followup]');
-  db.fail='POST'; await toggle.check();
+  // click(), not check(): the app may revert the box before check() can confirm it changed.
+  db.fail='POST'; await toggle.click();
+  await expect(page.locator('#toast')).toContainText('could not save');
   await expect(toggle).not.toBeChecked();
-  await expect(page.locator('#toast')).toContainText('could not save');
   db.fail=null; db.checks=[];
-  await toggle.check(); await expect(toggle).not.toBeChecked();
+  await toggle.click();
   await expect(page.locator('#toast')).toContainText('could not save');
+  await expect(toggle).not.toBeChecked();
 });
 
 test('conversation is editable, copied only on request, and cleared on logout',async({page,context})=>{
