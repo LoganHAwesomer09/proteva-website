@@ -16,7 +16,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "2.117.0",
-    "lucide": "1.47.0"
+    "lucide": "1.47.0",
+    "tldts": "7.4.19"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",

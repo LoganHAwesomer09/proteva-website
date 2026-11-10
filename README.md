@@ -40,6 +40,8 @@ This is JavaScript, not TypeScript. ESLint, server tests, browser tests, accessi
 | `api/check-scam.js` | Authenticated text/photo assessment and account-scoped history save |
 | `api/generate-threat.js` | Authenticated sample event, no paid provider request |
 | `lib/server.js` | Request/auth validation, per-instance burst limit, daily quota claim |
+| `lib/links.js` | Free local link checks (Tier 0): look-alike brands, hidden destinations, risky endings |
+| `assets/link-signals.js` | Plain-language link warnings shared by server and app |
 | `tests/` | Server and Playwright regression coverage |
 | `scripts/` | Static build, local server, file-reference checks |
 | `dist/` | Generated deployable assets; ignored by Git |
@@ -145,3 +147,13 @@ Applied to Project Proteva on November 10, 2026 and verified (limits row present
 5. Check Supabase's security advisor. A warning that `claim_scam_check` is a security-definer function callable by signed-in users is expected; that is how the server calls it with the user's session.
 
 Limits do not replace launch protections. Turn on email confirmation and a sign-up CAPTCHA before a public launch, and keep a provider-side monthly spend limit in the Anthropic console. A determined attacker who prepares accounts a day ahead can still use up the daily project cap (a denial of service, not extra spending). If `limit_reason = 'project'` starts appearing, raise the cap or block the accounts involved.
+
+## Link checks (Tier 0)
+
+Every scam check also runs free, local link checks (`lib/links.js`, using `tldts` for domain parsing) before the paid AI step. No network requests are made, and nothing is stored. It finds up to 10 links or bare domains in the message and flags:
+
+- **High:** look-alikes of commonly impersonated companies (`paypa1-secure.com`, `amaz0n-refunds.top`, `chase-alerts.net`), a company name in front of someone else's domain (`paypal.com.account-verify.xyz`), punycode or unusual characters, raw IP addresses, and `user@host` links that hide the destination.
+- **Medium:** URL shorteners, endings often used by scam sites (such as `.xyz` and `.top`), very long layered addresses, and words like "login" or "verify" alongside another warning.
+- **Low (informational):** links written with plain `http://`.
+
+The app shows a "Links in this message" section with each domain, a plain-language reason, and which real site it imitates. Results are also returned at the daily limit, since they cost nothing. Findings are added to the AI's input as labeled context data (domains and fixed warning text only, never paths or query strings), which helps the verdict without trusting message content. Real company domains are allow-listed, so `paypal.com` or `secure.chase.com` are not flagged. The checks look at addresses only and cannot prove a site is safe; text inside photos is not link-checked. `tests/links.test.mjs` covers scam patterns, real-site non-flags, and email/file-name false positives.

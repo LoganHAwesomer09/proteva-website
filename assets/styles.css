@@ -132,6 +132,18 @@ input[type="checkbox"] { accent-color: #0f7659; width: 20px; height: 20px; flex:
 .upgrade-plan .btn { flex-shrink: 0; min-height: 38px; padding: 7px 14px; font-size: 13px; }
 .upgrade-plan .pill { flex-shrink: 0; }
 .message .btn { margin-top: 12px; }
+.pill.warn { color: var(--danger); background: var(--danger-bg); }
+.link-list { list-style: none; display: grid; gap: 10px; margin: 10px 0 8px; padding: 0; }
+.link-item { border: 1px solid var(--line); border-left-width: 4px; border-radius: var(--radius); padding: 12px 14px; }
+.link-item.high { border-left-color: var(--danger); }
+.link-item.medium { border-left-color: var(--blue); }
+.link-item.low { border-left-color: var(--line); }
+.link-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.link-domain { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; overflow-wrap: anywhere; }
+.link-real { margin-top: 6px; font-size: 14px; }
+.link-item ul { margin: 6px 0 0 18px; color: var(--muted); font-size: 14px; }
+.link-item li + li { margin-top: 3px; }
+.message.error + .link-report { margin-top: 16px; }
 .sidebar-bottom { margin-top: auto; padding: 20px 12px 0; border-top: 1px solid var(--line); }
 .sidebar-bottom p { color: var(--muted); font-size: 12px; margin-top: 8px; }
 .main { margin-left: 232px; padding: 0 44px 50px; }
