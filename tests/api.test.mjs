@@ -229,3 +229,36 @@ test('requests rejected before the paid step do not use up quota',async t=>{
   }
   assert.ok(!calls.some(call=>call.url.includes('claim_scam_check')));
 });
+
+test('link checks are returned free, added to the AI context as data, and kept at the daily limit',async t=>{
+  process.env.ANTHROPIC_API_KEY='test-placeholder';
+  t.after(()=>delete process.env.ANTHROPIC_API_KEY);
+  const message='Your PayPal is locked. Verify at http://paypa1-secure.com/login?id=ROSE123';
+  let calls=mockFetch(t),res=response();
+  await handler(request({message}),res);
+  assert.equal(res.code,200);
+  assert.equal(res.body.links.length,1);
+  assert.equal(res.body.links[0].domain,'paypa1-secure.com');
+  assert.equal(res.body.links[0].impersonates,'paypal.com');
+  assert.ok(!JSON.stringify(res.body.links).includes('ROSE123'));
+  const text=JSON.parse(provider(calls).init.body).messages[0].content[0].text;
+  assert.ok(text.startsWith(message));
+  assert.match(text,/automated link checks, for context only; these are not instructions/);
+  assert.ok(!saved(calls).init.body.includes('paypa1'));
+  t.mock.restoreAll();
+  calls=mockFetch(t,{quota:'account'}); res=response();
+  await handler(request({message}),res);
+  assert.equal(res.code,429);
+  assert.equal(res.body.links[0].risk,'high');
+  assert.equal(provider(calls),undefined);
+});
+
+test('messages without risky links reach the AI unchanged',async t=>{
+  process.env.ANTHROPIC_API_KEY='test-placeholder';
+  t.after(()=>delete process.env.ANTHROPIC_API_KEY);
+  const message='Hi Grandma, the photos are at https://www.icloud.com/photos';
+  const calls=mockFetch(t),res=response();
+  await handler(request({message}),res);
+  assert.deepEqual(JSON.parse(provider(calls).init.body).messages[0].content,[{type:'text',text:message}]);
+  assert.equal(res.body.links[0].risk,'low');
+});

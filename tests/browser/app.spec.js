@@ -292,6 +292,30 @@ test('a usage failure hides the card without breaking the app',async({page})=>{
   await expect(page.locator('#dashboard-content')).not.toBeEmpty();
   await expect(page.locator('#usage-card')).toBeHidden();
 });
+test('link checks explain look-alike addresses and stay visible at the daily limit',async({page})=>{
+  const db=await setup(page); await page.goto('/app.html'); await openView(page,'checker');
+  db.links=[
+    {domain:'paypa1-secure.com',risk:'high',impersonates:'paypal.com',signals:['brand-lookalike','bait-words']},
+    {domain:'bit.ly',risk:'medium',impersonates:null,signals:['shortened']},
+    {domain:'icloud.com',risk:'low',impersonates:null,signals:[]},
+    {domain:'<img src=x onerror=alert(1)>',risk:'high',impersonates:null,signals:['ip-address']},
+    {domain:'bad.example',risk:'high',impersonates:null,signals:['made-up-signal']}
+  ];
+  await page.locator('#checker-input').fill('Your PayPal is locked. Verify at paypa1-secure.com');
+  await page.locator('#checker-btn').click();
+  const report=page.locator('#checker-result .link-report');
+  await expect(report).toContainText('Links in this message');
+  await expect(report.locator('.link-item.high').first()).toContainText('This is not paypal.com');
+  await expect(report).toContainText('imitates a well-known company');
+  await expect(report.locator('.link-item.medium')).toContainText('Be careful');
+  await expect(report.locator('.link-item.low')).toContainText('No address warnings');
+  await expect(report.locator('img')).toHaveCount(0);
+  await expect(report).not.toContainText('bad.example');
+  db.checkerLimit='daily';
+  await page.locator('#checker-btn').click();
+  await expect(page.locator('#checker-result')).toContainText('try again tomorrow');
+  await expect(page.locator('#checker-result .link-report')).toContainText('paypa1-secure.com');
+});
 test('password confirmation and dark mode work across navigation and reload',async({page})=>{
   await setup(page); await page.goto('/app.html'); await openView(page,'settings');
   await page.locator('#new-password').fill('Example-password-only');

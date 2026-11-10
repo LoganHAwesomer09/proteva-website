@@ -1,6 +1,7 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 import { IMAGE_TYPES, MAX_IMAGE_BYTES } from './checker-limits.js';
 import { conversationDraft } from './followup.js';
+import { SIGNALS } from './link-signals.js';
 import { $, escapeHtml as esc, icons, icon, message, busy, toast, initials, empty, loading, dateLabel, errorText } from './ui.js';
 
 const sb = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -296,6 +297,20 @@ function renderUsage(row) {
   const resets=new Date(row.resets_at);
   $('usage-reset').textContent=Number.isFinite(resets.getTime())?'Resets at '+dateLabel(resets,true):'Resets daily';
   $('usage-card').hidden=false;
+}
+// Free address checks returned by the server. Only fixed labels are shown; domains are escaped.
+function linkReport(links) {
+  if (!Array.isArray(links)) return '';
+  const valid=links.filter(link=>link && typeof link.domain==='string' && link.domain.length<=253 && ['high','medium','low'].includes(link.risk) && Array.isArray(link.signals) && link.signals.every(id=>Object.hasOwn(SIGNALS,id))).slice(0,10);
+  if (!valid.length) return '';
+  const items=valid.map(link=>{
+    const flagged=link.signals.length>0;
+    const pill=link.risk==='high'?'<span class="pill warn">Warning signs</span>':link.risk==='medium'?'<span class="pill attention">Be careful</span>':'<span class="pill neutral">No address warnings</span>';
+    const real=typeof link.impersonates==='string' && /^[a-z0-9.-]{3,253}$/.test(link.impersonates)?'<p class="link-real">This is not <strong>'+esc(link.impersonates)+'</strong>.</p>':'';
+    const reasons=flagged?'<ul>'+link.signals.map(id=>'<li>'+esc(SIGNALS[id].label)+'</li>').join('')+'</ul>':'';
+    return '<li class="link-item '+link.risk+'"><div class="link-head"><strong class="link-domain">'+esc(link.domain)+'</strong>'+pill+'</div>'+real+reasons+'</li>';
+  }).join('');
+  return '<section class="result-section link-report"><h3>Links in this message</h3><ul class="link-list">'+items+'</ul><p class="help-text">This checks the address only. It cannot confirm a website is safe. To visit a company, type its address yourself or use its app.</p></section>';
 }
 function priceLabel(cents) { return Number.isInteger(cents)?'$'+(cents/100).toFixed(cents%100?2:0)+' / month':'Free'; }
 async function openUpgrade() {
@@ -622,14 +637,17 @@ async function checkScam(event) {
     if (!response.ok) {
       const errors={400:'Please check your message or choose a valid JPG, PNG, GIF, or WEBP image.',404:'That family member is no longer available. Choose another person or check without linking.',413:'Please choose an image no larger than 3MB.',429:'You\u2019ve made several checks. Please wait a minute and try again.',401:'Please sign in again to check a message.'};
       // A long Retry-After means the durable daily limit, not a short burst limit.
-      if (response.status===429 && Number(response.headers.get('Retry-After'))>120) throw Object.assign(new Error('Today’s message-check limit has been reached. Please try again tomorrow.'),{dailyLimit:true});
+      if (response.status===429 && Number(response.headers.get('Retry-After'))>120) {
+        const body=await response.json().catch(()=>({}));
+        throw Object.assign(new Error('Today’s message-check limit has been reached. Please try again tomorrow.'),{dailyLimit:true,links:body.links});
+      }
       throw new Error(errors[response.status] || 'The checker is unavailable right now. Please try again in a moment.');
     }
     const parsed=await response.json();
     if (epoch!==state.epoch) return;
     const r=parsed.result;
     if (!r || !['danger','caution','safe'].includes(r.verdict) || !['headline','why','whatToDo'].every(k=>typeof r[k]==='string' && r[k].trim() && r[k].length<=2000)) throw new Error('We couldn\u2019t read the result. Please try again.');
-    $('checker-result').innerHTML='<div class="verdict '+r.verdict+'"><h2>'+esc(r.verdict==='safe'?'No obvious warning signs':r.headline)+'</h2></div><section class="result-section"><h3>What we noticed</h3><p>'+esc(r.why)+'</p></section><section class="result-section"><h3>Your next step</h3><p>'+esc(r.whatToDo)+'</p></section>'+(r.verdict==='safe'?'<p class="help-text">This does not verify who sent the message or whether a link is safe. Confirm independently before sharing information or money.</p>':'');
+    $('checker-result').innerHTML='<div class="verdict '+r.verdict+'"><h2>'+esc(r.verdict==='safe'?'No obvious warning signs':r.headline)+'</h2></div><section class="result-section"><h3>What we noticed</h3><p>'+esc(r.why)+'</p></section><section class="result-section"><h3>Your next step</h3><p>'+esc(r.whatToDo)+'</p></section>'+linkReport(parsed.links)+(r.verdict==='safe'?'<p class="help-text">This does not verify who sent the message or whether a link is safe. Confirm independently before sharing information or money.</p>':'');
     $('checker-result').focus();
     const saved=document.createElement('p');
     saved.className='help-text';
@@ -640,7 +658,7 @@ async function checkScam(event) {
     icons();
     clearCheckerImage();
   } catch(error) {
-    if (epoch===state.epoch) $('checker-result').innerHTML='<div class="message error" role="alert"><strong>We couldn\u2019t check this message.</strong><p>'+esc(error.name==='AbortError'?'The check took too long. Please try again.':error.message)+'</p><p>Avoid links or payments until you can verify the request independently.</p>'+(error.dailyLimit?'<button class="btn btn-secondary" type="button" data-action="upgrade">'+icon('sparkles')+'Get more checks</button>':'')+'</div>';
+    if (epoch===state.epoch) $('checker-result').innerHTML='<div class="message error" role="alert"><strong>We couldn\u2019t check this message.</strong><p>'+esc(error.name==='AbortError'?'The check took too long. Please try again.':error.message)+'</p><p>Avoid links or payments until you can verify the request independently.</p>'+(error.dailyLimit?'<button class="btn btn-secondary" type="button" data-action="upgrade">'+icon('sparkles')+'Get more checks</button>':'')+'</div>'+(error.dailyLimit?linkReport(error.links):'');
     if (epoch===state.epoch && error.dailyLimit) icons();
   } finally {
     clearTimeout(timeout);

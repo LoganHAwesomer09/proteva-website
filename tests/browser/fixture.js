@@ -71,14 +71,14 @@ export async function setup(page,options={}) {
     await new Promise(resolve=>setTimeout(resolve,50));
     db.checkerRequests.push(route.request().postDataJSON());
     if (!db.checkerLimit && !db.checkerFail) db.usage.used_today=Math.min(db.usage.daily_limit,db.usage.used_today+1);
-    if (db.checkerLimit) return route.fulfill({status:429,contentType:'application/json',headers:{'Retry-After':db.checkerLimit==='daily'?'30000':'45'},body:JSON.stringify({error:'Limit reached'})});
+    if (db.checkerLimit) return route.fulfill({status:429,contentType:'application/json',headers:{'Retry-After':db.checkerLimit==='daily'?'30000':'45'},body:JSON.stringify({error:'Limit reached',links:db.links})});
     const result={verdict:'caution',headline:'Verify this independently',why:'This message asks for urgent payment.',whatToDo:'Contact the company through a number you already trust.'};
     let check=null;
     if (!db.checkerFail && !db.checkerMalformed && !db.historySaveFail) {
       check={id:crypto.randomUUID(),user_id:db.user.id,...result,what_to_do:result.whatToDo,snippet:'',person_id:route.request().postDataJSON().person_id || null,followed_up_at:null,was_photo:!!route.request().postDataJSON().image,created_at:new Date().toISOString()};
       db.checks.push(check);
     }
-    return route.fulfill({status:db.checkerFail?503:200,contentType:'application/json',body:JSON.stringify(db.checkerFail?{error:'Unavailable'}:db.checkerMalformed?{result:{verdict:'safe',headline:12}}:{result,historySaved:!db.historySaveFail,check})});
+    return route.fulfill({status:db.checkerFail?503:200,contentType:'application/json',body:JSON.stringify(db.checkerFail?{error:'Unavailable'}:db.checkerMalformed?{result:{verdict:'safe',headline:12}}:{result,historySaved:!db.historySaveFail,check,links:db.links})});
   });
   return db;
 }
