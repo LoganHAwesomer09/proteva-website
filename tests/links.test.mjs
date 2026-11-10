@@ -56,3 +56,14 @@ test('results contain only domains and fixed signal IDs, never paths or query st
   assert.deepEqual(Object.keys(link).sort(),['domain','impersonates','risk','signals']);
   assert.equal(analyzeUrl('https://example.com').risk,'low');
 });
+
+test('carriers, card issuers, payment apps and toll texts are covered',()=>{
+  for (const [text,real] of [['verizon-billing-update.com','verizon.com'],['https://t-mobile-rewards.top','t-mobile.com'],['xfinity-account-alert.net','xfinity.com'],['capital0ne-secure.com','capitalone.com'],['cashapp-refund.support','cash.app'],['https://ezpass-unpaid-toll.com/pay','e-zpassny.com']]) {
+    const [link]=checkLinks(text);
+    assert.equal(link.risk,'high',text); assert.equal(link.impersonates,real,text);
+  }
+  for (const text of ['https://www.verizon.com','https://www.t-mobile.com/account','https://cash.app/$rose','https://www.capitalone.com','discovery-museum.org','spectrum-health.org','https://linkedin.com/in/rose']) {
+    const [link]=checkLinks(text);
+    assert.deepEqual(link.signals,[],text);
+  }
+});

@@ -4,6 +4,7 @@ import { SIGNALS } from './link-signals.js';
 
 export function createLinkChecker(parse) {
   // Brands commonly impersonated in scams targeting older adults, with their real domains.
+  // Leave out brands that are everyday words ("discover", "spectrum"): they cause false alarms.
   const BRANDS = {
     paypal: ['paypal.com', 'paypal.me'],
     amazon: ['amazon.com', 'amazon.co.uk', 'amazon.ca', 'amzn.to', 'amazon.de'],
@@ -34,7 +35,23 @@ export function createLinkChecker(parse) {
     norton: ['norton.com'],
     mcafee: ['mcafee.com'],
     docusign: ['docusign.com', 'docusign.net'],
-    ebay: ['ebay.com']
+    ebay: ['ebay.com'],
+    verizon: ['verizon.com', 'verizonwireless.com'],
+    tmobile: ['t-mobile.com'],
+    xfinity: ['xfinity.com', 'comcast.com', 'comcast.net'],
+    comcast: ['comcast.com', 'xfinity.com', 'comcast.net'],
+    capitalone: ['capitalone.com'],
+    americanexpress: ['americanexpress.com', 'aexp.com'],
+    amex: ['americanexpress.com'],
+    cashapp: ['cash.app', 'cash.me', 'squareup.com'],
+    binance: ['binance.com', 'binance.us'],
+    instagram: ['instagram.com'],
+    whatsapp: ['whatsapp.com', 'whatsapp.net', 'wa.me'],
+    linkedin: ['linkedin.com'],
+    dropbox: ['dropbox.com'],
+    adobe: ['adobe.com'],
+    publishersclearinghouse: ['pch.com'],
+    ezpass: ['e-zpassny.com', 'ezpassnj.com', 'e-zpassiag.com', 'ezpassva.com', 'ezpassmd.com', 'mytollsmd.com']
   };
   const SHORTENERS = new Set(['bit.ly', 'tinyurl.com', 't.co', 'goo.gl', 'is.gd', 'ow.ly', 'rebrand.ly', 'cutt.ly', 'shorturl.at', 'rb.gy', 'tiny.cc', 'buff.ly', 't.ly', 's.id']);
   const RISKY_TLDS = new Set(['zip', 'mov', 'top', 'xyz', 'click', 'country', 'gq', 'tk', 'ml', 'cf', 'ga', 'work', 'support', 'rest', 'cam', 'icu', 'cyou', 'sbs', 'buzz', 'monster', 'quest', 'bond']);
